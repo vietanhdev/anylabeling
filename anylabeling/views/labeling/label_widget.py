@@ -15,6 +15,8 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (QDockWidget, QHBoxLayout, QLabel, QMessageBox,
                              QPlainTextEdit, QVBoxLayout, QWhatsThis)
 
+from anylabeling.services.yolov5 import YOLOv5Predictor
+
 from . import __appname__, utils
 from .config import get_config
 from .label_file import LabelFile, LabelFileError
@@ -66,7 +68,7 @@ class LabelmeWidget(LabelDialog):
         # AI models for auto labeling
         self.ai_model = None
 
-        # see configs/anylabeling_config.yaml for valid configuration
+        # see configs/labelme_config.yaml for valid configuration
         if config is None:
             config = get_config()
         self._config = config
@@ -2275,8 +2277,7 @@ class LabelmeWidget(LabelDialog):
             return
         file_path = file_path[0]
         try:
-            # TODO: Load AI model
-            self.ai_model = None
+            self.ai_model = YOLOv5Predictor(file_path)
         except Exception as e:
             QMessageBox.warning(self, "Error", f"Failed to load AI model: {e}")
             return

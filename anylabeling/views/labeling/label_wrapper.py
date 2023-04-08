@@ -2,7 +2,7 @@
 
 from PyQt5.QtWidgets import QVBoxLayout, QWidget
 
-from .labelme.labelme_widget import LabelmeWidget
+from .label_widget import LabelmeWidget
 
 
 class LabelingWrapper(QWidget):

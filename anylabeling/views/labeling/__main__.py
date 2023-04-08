@@ -10,7 +10,7 @@ from PyQt5 import QtCore, QtWidgets
 
 from . import __appname__, __version__
 from .config import get_config
-from .labelme_widget import MainWindow
+from .label_widget import MainWindow
 from .logger import logger
 from .utils import new_icon
 

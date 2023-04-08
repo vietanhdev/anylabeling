@@ -21,11 +21,11 @@ class MainWindow(QMainWindow):
         header_layout = QHBoxLayout(header_widget)
         program_title = QLabel("AnyLabeling - Effortless Labeling Tool")
         program_title.setStyleSheet(
-            "QLabel {background-color: #333; color: #fff; font: bold;}"
+            "QLabel {background-color: #ffffff; color: #333333; font: bold;}"
         )
         program_title.setFont(QFont("Arial", 16))
         header_layout.addWidget(program_title)
-        header_widget.setStyleSheet("background-color: #333;")
+        header_widget.setStyleSheet("background-color: #ffffff;")
 
         self.maintabs_widget = MainTabsWidget(self)
 

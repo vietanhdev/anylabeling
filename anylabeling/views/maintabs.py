@@ -2,7 +2,7 @@
 
 from PyQt5.QtWidgets import QTabWidget
 
-from .labeling.labeling_wrapper import LabelingWrapper
+from .labeling.label_wrapper import LabelingWrapper
 
 
 class MainTabsWidget(QTabWidget):
