@@ -1,7 +1,7 @@
 <p align="center">
   <h1 align="center">🌟 AnyLabeling 🌟</h1>
-  <p align="center">Effortless data labeling with AI support<p>
-  <p align="center">With <b>Improved Labelme</b> and <b>Segment Anything</b><p>
+  <p align="center">Effortless data labeling with AI support from <b>YOLOv8</b> and <b>Segment Anything</b>!<p>
+  <p align="center"><b>AnyLabeling = LabelImg + Labelme + Improved UI + Auto-labeling</b><p>
 </p>
 
 ![](https://i.imgur.com/waxVImv.png)
@@ -59,6 +59,5 @@ python anylabeling/app.py
 
 ## III. References
 
-- labelme
-- gpu_util
+- Labeling UI built with ideas and components from [LabelImg](https://github.com/heartexlabs/labelImg), [labelme](https://github.com/wkentaro/labelme).
 - Icons: Flat Icons
