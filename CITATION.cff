@@ -1,0 +1,8 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Nguyen"
+  given-names: "Viet Anh"
+title: "Effortless data labeling with AI support"
+url: "https://github.com/vietanhdev/anylabeling"
+license: GPL-3
