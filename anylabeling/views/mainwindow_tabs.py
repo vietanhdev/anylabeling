@@ -4,7 +4,8 @@ from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import (QHBoxLayout, QLabel, QMainWindow, QStatusBar,
                              QVBoxLayout, QWidget)
 
-from .labeling.label_wrapper import LabelingWrapper
+from .maintabs import MainTabsWidget
+
 
 class MainWindow(QMainWindow):
     """Main application window"""
@@ -16,10 +17,22 @@ class MainWindow(QMainWindow):
         self.setContentsMargins(0, 0, 0, 0)
         self.setWindowTitle("AnyLabeling")
 
+        header_widget = QWidget(self)
+        header_layout = QHBoxLayout(header_widget)
+        program_title = QLabel("AnyLabeling - Effortless Labeling Tool")
+        program_title.setStyleSheet(
+            "QLabel {background-color: #ffffff; color: #333333; font: bold;}"
+        )
+        program_title.setFont(QFont("Arial", 16))
+        header_layout.addWidget(program_title)
+        header_widget.setStyleSheet("background-color: #ffffff;")
+
+        self.maintabs_widget = MainTabsWidget(self)
+
         main_layout = QVBoxLayout()
-        main_layout.setContentsMargins(10, 10, 10, 10)
-        self.labeling_widget = LabelingWrapper(self)
-        main_layout.addWidget(self.labeling_widget)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.addWidget(header_widget)
+        main_layout.addWidget(self.maintabs_widget)
         widget = QWidget()
         widget.setLayout(main_layout)
         self.setCentralWidget(widget)

@@ -3,5 +3,7 @@ pylint==2.14.4
 isort==5.10.1
 github2pypi==1.0.0
 pre-commit==2.20.0
+onnx==1.13.1
+onnxruntime==1.14.1
 build
 twine

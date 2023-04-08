@@ -16,3 +16,5 @@ imutils==0.5.4
 pyinstaller==4.8
 PyYAML==6.0
 colorama==0.4.5
+onnx==1.13.1
+onnxruntime==1.14.1

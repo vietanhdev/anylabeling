@@ -22,7 +22,6 @@ from .config import get_config
 from .label_file import LabelFile, LabelFileError
 from .logger import logger
 from .shape import Shape
-from .tracker import Tracker
 from .widgets import (BrightnessContrastDialog, Canvas, FileDialogPreview,
                       LabelDialog, LabelListWidget, LabelListWidgetItem,
                       ToolBar, UniqueLabelQListWidget, ZoomWidget)
@@ -61,9 +60,6 @@ class LabelmeWidget(LabelDialog):
         self.image_data = None
         self.label_file = None
         self.other_data = {}
-
-        # Tracker
-        self.tracker = Tracker()
 
         # AI models for auto labeling
         self.ai_model = None
@@ -605,13 +601,6 @@ class LabelmeWidget(LabelDialog):
         fill_drawing.trigger()
 
         # AI Actions
-        track = action(
-            self.tr("&Tracking"),
-            self.track,
-            shortcuts["tracking"],
-            "app",
-            self.tr("Track object"),
-        )
         ai_load_model = action(
             self.tr("&Load AI Model"),
             self.ai_load_model,
@@ -815,16 +804,15 @@ class LabelmeWidget(LabelDialog):
             self.actions.create_point_mode,
             self.actions.create_line_strip_mode,
             edit_mode,
-            duplicate,
-            copy,
-            paste,
+            # duplicate,
+            # copy,
+            # paste,
             delete,
             undo,
-            brightness_contrast,
+            # brightness_contrast,
             None,
             zoom,
             fit_width,
-            track,
             ai_load_model,
             ai_predict,
         )
@@ -948,7 +936,7 @@ class LabelmeWidget(LabelDialog):
             QWhatsThis.enterWhatsThisMode()
 
     def menu(self, title, actions=None):
-        menu = self.parent.parent.parent.menuBar().addMenu(title)
+        menu = self.parent.parent.menuBar().addMenu(title)
         if actions:
             utils.add_actions(menu, actions)
         return menu
@@ -968,7 +956,7 @@ class LabelmeWidget(LabelDialog):
         return toolbar
 
     def statusBar(self):
-        return self.parent.parent.parent.statusBar()
+        return self.parent.parent.statusBar()
 
     def no_shape(self):
         return len(self.label_list) == 0
@@ -1639,9 +1627,6 @@ class LabelmeWidget(LabelDialog):
     def load_file(self, filename=None):
         """Load the specified file, or the last opened file if None."""
 
-        # Update tracker
-        self.tracker.update(self.canvas.shapes, self.image)
-
         # Changing file_list_widget loads file
         if filename in self.image_list and (
             self.file_list_widget.currentRow()
@@ -1834,9 +1819,9 @@ class LabelmeWidget(LabelDialog):
         self.settings.setValue("window/size", self.size())
         self.settings.setValue("window/position", self.pos())
         self.settings.setValue(
-            "window/state", self.parent.parent.parent.saveState()
+            "window/state", self.parent.parent.saveState()
         )
-        self.settings.setValue("recent_files", self.recent_files)
+        self.settings.setValue("recent_files", sFelf.recent_files)
         # ask the use for where to save the labels
         # self.settings.setValue('window/geometry', self.saveGeometry())
 
@@ -2261,12 +2246,6 @@ class LabelmeWidget(LabelDialog):
                     images.append(relative_path)
         images = natsort.os_sorted(images)
         return images
-
-    def track(self):
-        QMessageBox.warning(self, "Warning", "Tracking is not supported now.")
-        # predicted_shapes = self.tracker.get(self.image)
-        # self.load_shapes(predicted_shapes, replace=True)
-        # self.set_dirty()
 
     def ai_load_model(self):
         """Load AI model from disk."""
