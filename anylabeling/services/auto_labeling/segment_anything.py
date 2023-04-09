@@ -5,6 +5,7 @@ from copy import deepcopy
 import onnxruntime
 import cv2
 import numpy as np
+from PyQt5 import QtCore
 
 from anylabeling.views.labeling.shape import Shape
 from anylabeling.views.labeling.utils.opencv import qt_img_to_cv_img
@@ -57,7 +58,7 @@ class SegmentAnything(Model):
             decoder_model_abs_path
         )
 
-    def preprocess(self, image):
+    def pre_process(self, image):
         image_size = self.input_size
 
         # Resize longest side
@@ -123,7 +124,7 @@ class SegmentAnything(Model):
         return coords
 
     def run_decoder(self, image_embedding):
-        input_point = np.array([[500, 375]])
+        input_point = np.array([[100, 100]])
         input_label = np.array([1])
 
         # Add a batch index, concatenate a padding point, and transform.
@@ -153,7 +154,43 @@ class SegmentAnything(Model):
             None, decoder_inputs
         )
         masks = masks > 0.0
+        masks = masks.reshape(self.original_size)
         return masks
+
+    def post_process(self, masks):
+        """
+        Post process masks
+        """
+        shapes = []
+        # Find contours
+        contours, _ = cv2.findContours(
+            masks.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE
+        )
+        for contour in contours:
+            # Approximate contour
+            epsilon = 0.001 * cv2.arcLength(contour, True)
+            approx = cv2.approxPolyDP(contour, epsilon, True)
+            points = approx.reshape(-1, 2).tolist()
+            if len(points) < 3:
+                continue
+            points.append(points[0])
+
+            # Create shape
+            shape = Shape(flags={})
+            for point in points:
+                point[0] = int(point[0])
+                point[1] = int(point[1])
+                shape.add_point(QtCore.QPointF(point[0], point[1]))
+            shape.type = "polygon"
+            shape.closed = True
+            shape.fill_color = "#000000"
+            shape.line_color = "#000000"
+            shape.line_width = 1
+            shape.label = "unknown"
+            shape.selected = False
+            shapes.append(shape)
+
+        return shapes
 
     def predict_shapes(self, image):
         """
@@ -162,14 +199,17 @@ class SegmentAnything(Model):
         if image is None:
             return []
 
+        shapes = []
         try:
             image = qt_img_to_cv_img(image)
+            encoder_inputs = self.pre_process(image)
+            image_embedding = self.run_encoder(encoder_inputs)
+            masks = self.run_decoder(image_embedding)
+            shapes = self.post_process(masks)
         except Exception as e:
             logging.warning("Could not inference model")
             logging.warning(e)
             return []
-
-        shapes = []
 
         return shapes
 

@@ -1261,6 +1261,7 @@ class LabelmeWidget(LabelDialog):
             item = QtWidgets.QListWidgetItem()
             item.setData(Qt.UserRole, shape.label)
             self.unique_label_list.addItem(item)
+        self.unique_label_list.sortItems()
 
     def file_search_changed(self):
         self.import_image_folder(
@@ -1359,6 +1360,9 @@ class LabelmeWidget(LabelDialog):
 
     def _get_rgb_by_label(self, label):
         if self._config["shape_color"] == "auto":
+            if not self.unique_label_list.find_items_by_label(label):
+                item = self.unique_label_list.create_item_from_label(label)
+                self.unique_label_list.addItem(item)
             item = self.unique_label_list.find_items_by_label(label)[0]
             label_id = self.unique_label_list.indexFromItem(item).row() + 1
             label_id += self._config["shift_auto_shape_color"]
@@ -1418,7 +1422,8 @@ class LabelmeWidget(LabelDialog):
                         for key in keys:
                             default_flags[key] = False
             shape.flags = default_flags
-            shape.flags.update(flags)
+            if flags:
+                shape.flags.update(flags)
             shape.other_data = other_data
 
             s.append(shape)
