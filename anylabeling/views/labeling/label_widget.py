@@ -11,7 +11,7 @@ import webbrowser
 import imgviz
 import natsort
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, pyqtSlot
 from PyQt5.QtWidgets import (
     QDockWidget,
     QHBoxLayout,
@@ -2300,8 +2300,10 @@ class LabelmeWidget(LabelDialog):
         else:
             self.auto_labeling_widget.show()
 
+    @pyqtSlot()
     def new_shapes_from_auto_labeling(self, shapes):
         """Apply auto labeling results to the current image."""
-        shapes = self.ai_model.predict_shapes(self.image)
+        if not self.image or not self.image_path:
+            return
         self.load_shapes(shapes, replace=True)
         self.set_dirty()
