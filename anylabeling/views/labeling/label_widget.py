@@ -24,7 +24,7 @@ from .logger import logger
 from .shape import Shape
 from .widgets import (BrightnessContrastDialog, Canvas, FileDialogPreview,
                       LabelDialog, LabelListWidget, LabelListWidgetItem,
-                      ToolBar, UniqueLabelQListWidget, ZoomWidget)
+                      ToolBar, UniqueLabelQListWidget, ZoomWidget, AutoLabelingWidget)
 
 LABEL_COLORMAP = imgviz.label_colormap()
 
@@ -827,8 +827,10 @@ class LabelmeWidget(LabelDialog):
             "<b>Shortcuts:</b> Previous: <b>A</b>, Next: <b>D</b>, Rectangle:"
             " <b>R</b>, Polygon: <b>P</b>"
         )
-        label_instruction.setContentsMargins(0, 10, 0, 10)
+        label_instruction.setContentsMargins(0, 0, 0, 0)
+        auto_labeling = AutoLabelingWidget(self)
         central_layout.addWidget(label_instruction)
+        central_layout.addWidget(auto_labeling)
         central_layout.addWidget(scroll_area)
         layout.addItem(central_layout)
 

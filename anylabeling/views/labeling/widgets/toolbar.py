@@ -17,10 +17,11 @@ class ToolBar(QtWidgets.QToolBar):
 
         self.setStyleSheet("""
             QToolBar {
-                background: #ddd;
+                background: #fff;
                 padding: 0px;
                 border: 0px;
                 border-radius: 5px;
+                border: 2px solid #aaa;
             }
             """)
 
