@@ -17,8 +17,9 @@ class ModelManager(QObject):
     new_prediction_shapes = pyqtSignal(list)
 
     model_configs = {
-        "yolov5s": "autolabel_yolov5s.yaml",
         "segment_anything_vit_b": "autolabel_segment_anything.yaml",
+        "yolov5s": "autolabel_yolov5s.yaml",
+        "yolov5m": "autolabel_yolov5m.yaml",
     }
 
     def __init__(self):

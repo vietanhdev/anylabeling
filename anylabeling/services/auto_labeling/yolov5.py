@@ -13,12 +13,6 @@ from .model import Model
 class YOLOv5(Model):
     """Object detection model using YOLOv5"""
 
-    INPUT_WIDTH = 640
-    INPUT_HEIGHT = 640
-    SCORE_THRESHOLD = 0.5
-    NMS_THRESHOLD = 0.45
-    CONFIDENCE_THRESHOLD = 0.45
-
     class Meta:
         required_config_names = [
             "type",

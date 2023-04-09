@@ -2305,5 +2305,9 @@ class LabelmeWidget(LabelDialog):
         """Apply auto labeling results to the current image."""
         if not self.image or not self.image_path:
             return
+        # Clear existing shapes
+        self.load_shapes([], replace=True)
+        self.label_list.clear()
+        # Add new shapes
         self.load_shapes(shapes, replace=True)
         self.set_dirty()
