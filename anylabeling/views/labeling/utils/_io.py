@@ -6,7 +6,6 @@ import PIL.Image
 
 
 def lblsave(filename, lbl):
-
     if osp.splitext(filename)[1] != ".png":
         filename += ".png"
     # Assume label ranses [-1, 254] for int32,

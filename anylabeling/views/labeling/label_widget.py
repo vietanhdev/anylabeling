@@ -12,19 +12,32 @@ import imgviz
 import natsort
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import (QDockWidget, QHBoxLayout, QLabel, QMessageBox,
-                             QPlainTextEdit, QVBoxLayout, QWhatsThis)
-
-from anylabeling.services.yolov5 import YOLOv5Predictor
+from PyQt5.QtWidgets import (
+    QDockWidget,
+    QHBoxLayout,
+    QLabel,
+    QPlainTextEdit,
+    QVBoxLayout,
+    QWhatsThis,
+)
 
 from . import __appname__, utils
 from .config import get_config
 from .label_file import LabelFile, LabelFileError
 from .logger import logger
 from .shape import Shape
-from .widgets import (BrightnessContrastDialog, Canvas, FileDialogPreview,
-                      LabelDialog, LabelListWidget, LabelListWidgetItem,
-                      ToolBar, UniqueLabelQListWidget, ZoomWidget, AutoLabelingWidget)
+from .widgets import (
+    BrightnessContrastDialog,
+    Canvas,
+    FileDialogPreview,
+    LabelDialog,
+    LabelListWidget,
+    LabelListWidgetItem,
+    ToolBar,
+    UniqueLabelQListWidget,
+    ZoomWidget,
+    AutoLabelingWidget,
+)
 
 LABEL_COLORMAP = imgviz.label_colormap()
 
@@ -117,8 +130,17 @@ class LabelmeWidget(LabelDialog):
         self.flag_widget = QtWidgets.QListWidget()
         if config["flags"]:
             self.load_flags({k: False for k in config["flags"]})
+        else:
+            self.flag_dock.hide()
         self.flag_dock.setWidget(self.flag_widget)
         self.flag_widget.itemChanged.connect(self.set_dirty)
+        self.flag_dock.setStyleSheet(
+            "QDockWidget::title {"
+            "text-align: center;"
+            "padding: 0px;"
+            "background-color: #f0f0f0;"
+            "}"
+        )
 
         self.label_list.item_selection_changed.connect(
             self.label_selection_changed
@@ -129,6 +151,13 @@ class LabelmeWidget(LabelDialog):
         self.shape_dock = QtWidgets.QDockWidget(self.tr("Objects"), self)
         self.shape_dock.setObjectName("Labels")
         self.shape_dock.setWidget(self.label_list)
+        self.shape_dock.setStyleSheet(
+            "QDockWidget::title {"
+            "text-align: center;"
+            "padding: 0px;"
+            "background-color: #f0f0f0;"
+            "}"
+        )
 
         self.unique_label_list = UniqueLabelQListWidget()
         self.unique_label_list.setToolTip(
@@ -146,6 +175,13 @@ class LabelmeWidget(LabelDialog):
         self.label_dock = QtWidgets.QDockWidget(self.tr("Labels"), self)
         self.label_dock.setObjectName("Labels")
         self.label_dock.setWidget(self.unique_label_list)
+        self.label_dock.setStyleSheet(
+            "QDockWidget::title {"
+            "text-align: center;"
+            "padding: 0px;"
+            "background-color: #f0f0f0;"
+            "}"
+        )
 
         self.file_search = QtWidgets.QLineEdit()
         self.file_search.setPlaceholderText(self.tr("Search Filename"))
@@ -159,11 +195,18 @@ class LabelmeWidget(LabelDialog):
         file_list_layout.setSpacing(0)
         file_list_layout.addWidget(self.file_search)
         file_list_layout.addWidget(self.file_list_widget)
-        self.file_dock = QtWidgets.QDockWidget(self.tr("File List"), self)
+        self.file_dock = QtWidgets.QDockWidget(self.tr("Files"), self)
         self.file_dock.setObjectName("Files")
         file_list_widget = QtWidgets.QWidget()
         file_list_widget.setLayout(file_list_layout)
         self.file_dock.setWidget(file_list_widget)
+        self.file_dock.setStyleSheet(
+            "QDockWidget::title {"
+            "text-align: center;"
+            "padding: 0px;"
+            "background-color: #f0f0f0;"
+            "}"
+        )
 
         self.zoom_widget = ZoomWidget()
         self.setAcceptDrops(True)
@@ -601,19 +644,12 @@ class LabelmeWidget(LabelDialog):
         fill_drawing.trigger()
 
         # AI Actions
-        ai_load_model = action(
-            self.tr("&Load AI Model"),
-            self.ai_load_model,
-            shortcuts["load_ai_model"],
-            "upload_brain",
-            self.tr("Load AI Model"),
-        )
-        ai_predict = action(
-            self.tr("&Predict Shapes"),
-            self.ai_predict,
+        toggle_auto_labeling_widget = action(
+            self.tr("&Auto Labeling"),
+            self.toggle_auto_labeling_widget,
             shortcuts["auto_label"],
             "brain",
-            self.tr("Predict shapes"),
+            self.tr("Auto Labeling"),
         )
 
         # Lavel list context menu.
@@ -813,8 +849,7 @@ class LabelmeWidget(LabelDialog):
             None,
             zoom,
             fit_width,
-            ai_load_model,
-            ai_predict,
+            toggle_auto_labeling_widget,
         )
 
         layout = QHBoxLayout()
@@ -828,9 +863,10 @@ class LabelmeWidget(LabelDialog):
             " <b>R</b>, Polygon: <b>P</b>"
         )
         label_instruction.setContentsMargins(0, 0, 0, 0)
-        auto_labeling = AutoLabelingWidget(self)
+        self.auto_labeling_widget = AutoLabelingWidget(self)
+        self.auto_labeling_widget.hide()  # Hide by default
         central_layout.addWidget(label_instruction)
-        central_layout.addWidget(auto_labeling)
+        central_layout.addWidget(self.auto_labeling_widget)
         central_layout.addWidget(scroll_area)
         layout.addItem(central_layout)
 
@@ -842,9 +878,19 @@ class LabelmeWidget(LabelDialog):
 
         right_sidebar_layout = QVBoxLayout()
         right_sidebar_layout.setContentsMargins(0, 0, 0, 0)
-        self.shape_text_label = QLabel("Shape Text")
+        self.shape_text_label = QLabel("Object Text")
+        self.shape_text_label.setStyleSheet(
+            "QLabel {"
+            "text-align: center;"
+            "padding: 0px;"
+            "font-size: 11px;"
+            "margin-bottom: 5px;"
+            "}"
+        )
         self.shape_text_edit = QPlainTextEdit()
-        right_sidebar_layout.addWidget(self.shape_text_label)
+        right_sidebar_layout.addWidget(
+            self.shape_text_label, 0, Qt.AlignCenter
+        )
         right_sidebar_layout.addWidget(self.shape_text_edit)
         right_sidebar_layout.addWidget(self.flag_dock)
         right_sidebar_layout.addWidget(self.label_dock)
@@ -1257,7 +1303,7 @@ class LabelmeWidget(LabelDialog):
         self.actions.copy.setEnabled(n_selected)
         self.actions.edit.setEnabled(n_selected == 1)
         if len(selected_shapes) == 1:
-            self.shape_text_label.setText("Shape Text")
+            self.shape_text_label.setText("Object Text")
             self.shape_text_edit.textChanged.disconnect()
             self.shape_text_edit.setPlainText(selected_shapes[0].text)
             self.shape_text_edit.textChanged.connect(self.shape_text_changed)
@@ -1820,9 +1866,7 @@ class LabelmeWidget(LabelDialog):
         )
         self.settings.setValue("window/size", self.size())
         self.settings.setValue("window/position", self.pos())
-        self.settings.setValue(
-            "window/state", self.parent.parent.saveState()
-        )
+        self.settings.setValue("window/state", self.parent.parent.saveState())
         self.settings.setValue("recent_files", sFelf.recent_files)
         # ask the use for where to save the labels
         # self.settings.setValue('window/geometry', self.saveGeometry())
@@ -2249,34 +2293,15 @@ class LabelmeWidget(LabelDialog):
         images = natsort.os_sorted(images)
         return images
 
-    def ai_load_model(self):
-        """Load AI model from disk."""
-        file_path = QtWidgets.QFileDialog.getOpenFileName(
-            self, "Select AI Model Config", ".", "Model config file (*.yaml)"
-        )
-        if not file_path[0]:
-            return
-        file_path = file_path[0]
-        try:
-            self.ai_model = YOLOv5Predictor(file_path)
-        except Exception as e:
-            QMessageBox.warning(self, "Error", f"Failed to load AI model: {e}")
-            return
-        self.statusBar().showMessage(f"AI Model loaded from {file_path}", 5000)
+    def toggle_auto_labeling_widget(self):
+        """Toggle auto labeling widget visibility."""
+        if self.auto_labeling_widget.isVisible():
+            self.auto_labeling_widget.hide()
+        else:
+            self.auto_labeling_widget.show()
 
-    def ai_predict(self):
-        """Predict shapes using AI model"""
-        if self.image_path is None:
-            QMessageBox.warning(self, "Warning", "Please load images first.")
-            return
-        if self.ai_model is None:
-            QMessageBox.warning(
-                self,
-                "Warning",
-                "No AI model is loaded. Please load a model first.",
-            )
-            return
-
+    def new_shapes_from_auto_labeling(self, shapes):
+        """Apply auto labeling results to the current image."""
         shapes = self.ai_model.predict_shapes(self.image)
         self.load_shapes(shapes, replace=True)
         self.set_dirty()

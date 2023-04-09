@@ -49,7 +49,6 @@ class ColoredFormatter(logging.Formatter):
 
 
 class ColoredLogger(logging.Logger):
-
     FORMAT = (
         "[%(levelname2)s] %(module2)s:%(funcName2)s:%(lineno2)s - %(message2)s"
     )

@@ -14,7 +14,6 @@ def qt_img_to_cv_img(in_image):
     mat = np.array(ptr).reshape(height, width, 3)  # Shape the data
 
     rgb = cv2.cvtColor(mat, cv2.COLOR_BGR2RGB)
-    # cv2.imwrite('tmp.png', rgb)
     return rgb
 
 

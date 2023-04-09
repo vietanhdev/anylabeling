@@ -47,7 +47,7 @@
     </message>
     <message>
         <location filename="../app.py" line="134"/>
-        <source>File List</source>
+        <source>Files</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

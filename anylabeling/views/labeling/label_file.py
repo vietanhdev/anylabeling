@@ -24,7 +24,6 @@ class LabelFileError(Exception):
 
 
 class LabelFile:
-
     suffix = ".json"
 
     def __init__(self, filename=None):
@@ -87,9 +86,11 @@ class LabelFile:
                 version.split(".")[0] != __version__.split(".", maxsplit=1)[0]
             ):
                 logger.warning(
-                    "This JSON file (%s) may be incompatible with "
-                    "current labelme. version in file: %s, "
-                    "current version: %s",
+                    (
+                        "This JSON file (%s) may be incompatible with "
+                        "current labelme. version in file: %s, "
+                        "current version: %s"
+                    ),
                     filename,
                     version,
                     __version__,

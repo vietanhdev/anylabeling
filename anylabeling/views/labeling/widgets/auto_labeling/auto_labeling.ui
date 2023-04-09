@@ -51,7 +51,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QComboBox" name="model_name">
+      <widget class="QComboBox" name="model_select_combobox">
        <property name="enabled">
         <bool>true</bool>
        </property>
@@ -76,56 +76,56 @@
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="btn_run">
+      <widget class="QPushButton" name="button_run">
        <property name="text">
         <string>Run (i)</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="btn_add_point">
+      <widget class="QPushButton" name="button_add_point">
        <property name="text">
         <string>+Point</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="btn_remove_point">
+      <widget class="QPushButton" name="button_remove_point">
        <property name="text">
         <string>-Point</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="btn_add_rect">
+      <widget class="QPushButton" name="button_add_rect">
        <property name="text">
         <string>+Rect</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="btn_undo">
+      <widget class="QPushButton" name="button_undo">
        <property name="text">
         <string>Undo</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="btn_clear">
+      <widget class="QPushButton" name="button_clear">
        <property name="text">
         <string>Clear</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="btn_finish_object">
+      <widget class="QPushButton" name="button_finish_object">
        <property name="text">
         <string>Finish Object</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QLabel" name="model_status">
+      <widget class="QLabel" name="model_status_label">
        <property name="styleSheet">
         <string notr="true">margin-left: 10px;</string>
        </property>
@@ -148,7 +148,7 @@
       </spacer>
      </item>
      <item>
-      <widget class="QPushButton" name="btn_close">
+      <widget class="QPushButton" name="button_close">
        <property name="text">
         <string>Close</string>
        </property>

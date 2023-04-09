@@ -95,7 +95,6 @@ class LabelListWidgetItem(QtGui.QStandardItem):
 
 
 class StandardItemModel(QtGui.QStandardItemModel):
-
     itemDropped = QtCore.pyqtSignal()
 
     # QT Overload
@@ -106,7 +105,6 @@ class StandardItemModel(QtGui.QStandardItemModel):
 
 
 class LabelListWidget(QtWidgets.QListView):
-
     item_double_clicked = QtCore.pyqtSignal(LabelListWidgetItem)
     item_selection_changed = QtCore.pyqtSignal(list, list)
 
