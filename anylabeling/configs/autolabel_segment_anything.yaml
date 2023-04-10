@@ -4,3 +4,5 @@ display_name: Segment Anything (ViT-B)
 encoder_model_path: anylabeling_assets/models/segment_anything/vit_b-encoder-quant.onnx
 decoder_model_path: anylabeling_assets/models/segment_anything/vit_b-decoder-quant.onnx
 input_size: 1024
+max_width: 1024
+max_height: 682

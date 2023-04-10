@@ -30,8 +30,8 @@ class Canvas(
     shape_moved = QtCore.pyqtSignal()
     drawing_polygon = QtCore.pyqtSignal(bool)
     vertex_selected = QtCore.pyqtSignal(bool)
+    auto_labeling_marks_updated = QtCore.pyqtSignal(list)
 
-    CREATE, EDIT = 0, 1
     CREATE, EDIT = 0, 1
 
     # polygon, rectangle, line, or point
@@ -50,6 +50,7 @@ class Canvas(
         super().__init__(*args, **kwargs)
         # Initialise local state.
         self.mode = self.EDIT
+        self.is_auto_labeling = False
         self.shapes = []
         self.shapes_backups = []
         self.current = None
@@ -179,6 +180,21 @@ class Canvas(
     def editing(self):
         """Check if user is editing (mode==EDIT)"""
         return self.mode == self.EDIT
+
+    def set_auto_labeling(self, value=True):
+        """Set auto labeling mode"""
+        self.is_auto_labeling = value
+
+    def get_mode(self):
+        """Get current mode"""
+        if self.is_auto_labeling:
+            return "Auto Labeling"
+        if self.mode == self.CREATE:
+            return "Drawing"
+        elif self.mode == self.EDIT:
+            return "Editing"
+        else:
+            return "Unknown"
 
     def set_editing(self, value=True):
         """Set editing mode. Editing is set to False, user is drawing"""
@@ -828,6 +844,8 @@ class Canvas(
     def finalise(self):
         """Finish drawing for a shape"""
         assert self.current
+        if self.is_auto_labeling:
+            self.current.label = "AUTOLABEL_ADD"
         self.current.close()
         self.shapes.append(self.current)
         self.store_shapes()
@@ -835,6 +853,25 @@ class Canvas(
         self.set_hiding(False)
         self.new_shape.emit()
         self.update()
+        if self.is_auto_labeling:
+            self.update_auto_labeling_marks()
+
+    def update_auto_labeling_marks(self):
+        """Update the auto labeling marks"""
+        marks = []
+        for shape in self.shapes:
+            if shape.label == "AUTOLABEL_ADD" and shape.shape_type == "point":
+                marks.append(
+                    {
+                        "type": "point",
+                        "data": [
+                            int(shape.points[0].x()),
+                            int(shape.points[0].y()),
+                        ],
+                        "label": 1,
+                    }
+                )
+        self.auto_labeling_marks_updated.emit(marks)
 
     def close_enough(self, p1, p2):
         """Check if 2 points are close enough (by an threshold epsilon)"""
@@ -983,7 +1020,10 @@ class Canvas(
     def set_last_label(self, text, flags):
         """Set label and flags for last shape"""
         assert text
-        self.shapes[-1].label = text
+        if self.is_auto_labeling:
+            self.shapes[-1].label = "AUTOLABEL_ADD"
+        else:
+            self.shapes[-1].label = text
         self.shapes[-1].flags = flags
         self.shapes_backups.pop()
         self.store_shapes()

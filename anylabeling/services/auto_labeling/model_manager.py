@@ -15,6 +15,8 @@ class ModelManager(QObject):
     new_model_status = pyqtSignal(str)
     model_loaded = pyqtSignal(list)
     new_prediction_shapes = pyqtSignal(list)
+    auto_segmentation_model_selected = pyqtSignal()
+    auto_segmentation_model_unselected = pyqtSignal()
 
     model_configs = {
         "segment_anything_vit_b": "autolabel_segment_anything.yaml",
@@ -98,6 +100,7 @@ class ModelManager(QObject):
         if self.loaded_model_info is not None:
             self.loaded_model_info["model"].unload()
             self.loaded_model_info = None
+            self.auto_segmentation_model_unselected.emit()
 
         model_info = copy.deepcopy(self.model_infos[model_name])
 
@@ -105,15 +108,28 @@ class ModelManager(QObject):
             from .yolov5 import YOLOv5
 
             model_info["model"] = YOLOv5(model_info)
+            self.auto_segmentation_model_unselected.emit()
         elif model_info["type"] == "segment_anything":
             from .segment_anything import SegmentAnything
 
             model_info["model"] = SegmentAnything(model_info)
+            self.auto_segmentation_model_selected.emit()
         else:
             raise Exception(f"Unknown model type: {model_info['type']}")
 
         self.loaded_model_info = model_info
         return self.loaded_model_info
+
+    def set_auto_labeling_marks(self, marks):
+        """Set auto labeling marks
+        (For example, for segment_anything model, it is the marks for)
+        """
+        if (
+            self.loaded_model_info is None
+            or self.loaded_model_info["type"] != "segment_anything"
+        ):
+            return
+        self.loaded_model_info["model"].set_auto_labeling_marks(marks)
 
     def unload_model(self):
         """Unload model"""

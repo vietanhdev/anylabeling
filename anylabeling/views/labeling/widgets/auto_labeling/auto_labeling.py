@@ -11,6 +11,8 @@ from anylabeling.services.auto_labeling.model_manager import ModelManager
 class AutoLabelingWidget(QWidget):
     new_model_selected = pyqtSignal(str)
     prediction_requested = pyqtSignal(QtGui.QImage)
+    auto_segmentation_requested = pyqtSignal()
+    auto_segmentation_disabled = pyqtSignal()
 
     def __init__(self, parent):
         super().__init__()
@@ -22,11 +24,21 @@ class AutoLabelingWidget(QWidget):
         self.model_manager.new_model_status.connect(self.on_new_model_status)
         self.new_model_selected.connect(self.model_manager.load_model)
         self.model_manager.model_loaded.connect(self.update_visible_buttons)
-        self.model_manager.model_loaded.connect(self.enable_model_select_combobox)
+        self.model_manager.model_loaded.connect(
+            self.enable_model_select_combobox
+        )
         self.model_manager.new_prediction_shapes.connect(
             lambda shapes: self.parent.new_shapes_from_auto_labeling(shapes)
         )
-        self.prediction_requested.connect(lambda image: self.model_manager.predict_shapes(image))
+        self.prediction_requested.connect(
+            lambda image: self.model_manager.predict_shapes(image)
+        )
+        self.model_manager.auto_segmentation_model_selected.connect(
+            self.auto_segmentation_requested
+        )
+        self.model_manager.auto_segmentation_model_unselected.connect(
+            self.auto_segmentation_disabled
+        )
 
         # Add models to combobox
         self.model_select_combobox.clear()
@@ -94,6 +106,11 @@ class AutoLabelingWidget(QWidget):
         ]
         for button in buttons:
             getattr(self, button).hide()
+
+    def on_new_marks(self, marks):
+        """Handle new marks"""
+        self.model_manager.set_auto_labeling_marks(marks)
+        self.run_prediction()
 
     def on_open(self):
         pass

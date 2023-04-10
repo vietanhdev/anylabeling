@@ -858,14 +858,20 @@ class LabelmeWidget(LabelDialog):
         layout.addWidget(self.tools)
         central_layout = QVBoxLayout()
         central_layout.setContentsMargins(0, 0, 0, 0)
-        label_instruction = QLabel(
-            "<b>Shortcuts:</b> Previous: <b>A</b>, Next: <b>D</b>, Rectangle:"
-            " <b>R</b>, Polygon: <b>P</b>"
-        )
-        label_instruction.setContentsMargins(0, 0, 0, 0)
+        self.label_instruction = QLabel(self.get_labeling_instruction())
+        self.label_instruction.setContentsMargins(0, 0, 0, 0)
         self.auto_labeling_widget = AutoLabelingWidget(self)
+        self.auto_labeling_widget.auto_segmentation_requested.connect(
+            self.on_auto_segmentation_requested
+        )
+        self.auto_labeling_widget.auto_segmentation_disabled.connect(
+            self.on_auto_segmentation_disabled
+        )
+        self.canvas.auto_labeling_marks_updated.connect(
+            self.auto_labeling_widget.on_new_marks
+        )
         self.auto_labeling_widget.hide()  # Hide by default
-        central_layout.addWidget(label_instruction)
+        central_layout.addWidget(self.label_instruction)
         central_layout.addWidget(self.auto_labeling_widget)
         central_layout.addWidget(scroll_area)
         layout.addItem(central_layout)
@@ -982,6 +988,23 @@ class LabelmeWidget(LabelDialog):
         self.first_start = True
         if self.first_start:
             QWhatsThis.enterWhatsThisMode()
+
+    def get_labeling_instruction(self):
+        return (
+            f"<b>Mode:</b> {self.canvas.get_mode()} - <b>Shortcuts:</b>"
+            " Previous: <b>A</b>, Next: <b>D</b>, Rectangle: <b>R</b>,"
+            " Polygon: <b>P</b>"
+        )
+
+    @pyqtSlot()
+    def on_auto_segmentation_requested(self):
+        self.canvas.set_auto_labeling(True)
+        self.label_instruction.setText(self.get_labeling_instruction())
+
+    @pyqtSlot()
+    def on_auto_segmentation_disabled(self):
+        self.canvas.set_auto_labeling(False)
+        self.label_instruction.setText(self.get_labeling_instruction())
 
     def menu(self, title, actions=None):
         menu = self.parent.parent.menuBar().addMenu(title)
@@ -1249,10 +1272,14 @@ class LabelmeWidget(LabelDialog):
 
         # Update unique label list
         if not self.unique_label_list.find_items_by_label(shape.label):
-            unique_label_item = self.unique_label_list.create_item_from_label(shape.label)
+            unique_label_item = self.unique_label_list.create_item_from_label(
+                shape.label
+            )
             self.unique_label_list.addItem(unique_label_item)
             rgb = self._get_rgb_by_label(shape.label)
-            self.unique_label_list.set_item_label(unique_label_item, shape.label, rgb)
+            self.unique_label_list.set_item_label(
+                unique_label_item, shape.label, rgb
+            )
 
         self._update_shape_color(shape)
         if shape.group_id is None:
@@ -1546,7 +1573,10 @@ class LabelmeWidget(LabelDialog):
             text = items[0].data(Qt.UserRole)
         flags = {}
         group_id = None
-        if self._config["display_label_popup"] or not text:
+
+        if self.canvas.shapes[-1].label == "AUTOLABEL_ADD":
+            text = self.canvas.shapes[-1].label
+        elif self._config["display_label_popup"] or not text:
             previous_text = self.label_dialog.edit.text()
             text, flags, group_id = self.label_dialog.pop_up(text)
             if not text:
@@ -1875,7 +1905,7 @@ class LabelmeWidget(LabelDialog):
         self.settings.setValue("window/size", self.size())
         self.settings.setValue("window/position", self.pos())
         self.settings.setValue("window/state", self.parent.parent.saveState())
-        self.settings.setValue("recent_files", sFelf.recent_files)
+        self.settings.setValue("recent_files", self.recent_files)
         # ask the use for where to save the labels
         # self.settings.setValue('window/geometry', self.saveGeometry())
 
