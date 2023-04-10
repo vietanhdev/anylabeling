@@ -149,7 +149,7 @@ class LabelmeWidget(LabelDialog):
         self.label_list.item_changed.connect(self.label_item_changed)
         self.label_list.item_dropped.connect(self.label_order_changed)
         self.shape_dock = QtWidgets.QDockWidget(self.tr("Objects"), self)
-        self.shape_dock.setObjectName("Labels")
+        self.shape_dock.setObjectName("Objects")
         self.shape_dock.setWidget(self.label_list)
         self.shape_dock.setStyleSheet(
             "QDockWidget::title {"
@@ -1247,21 +1247,24 @@ class LabelmeWidget(LabelDialog):
         shape.flags = flags
         shape.group_id = group_id
 
+        # Update unique label list
+        if not self.unique_label_list.find_items_by_label(shape.label):
+            unique_label_item = self.unique_label_list.create_item_from_label(shape.label)
+            self.unique_label_list.addItem(unique_label_item)
+            rgb = self._get_rgb_by_label(shape.label)
+            self.unique_label_list.set_item_label(unique_label_item, shape.label, rgb)
+
         self._update_shape_color(shape)
         if shape.group_id is None:
+            color = shape.fill_color.getRgb()[:3]
             item.setText(
                 '{} <font color="#{:02x}{:02x}{:02x}">●</font>'.format(
-                    html.escape(shape.label), *shape.fill_color.getRgb()[:3]
+                    html.escape(shape.label), *color
                 )
             )
         else:
             item.setText(f"{shape.label} ({shape.group_id})")
         self.set_dirty()
-        if not self.unique_label_list.find_items_by_label(shape.label):
-            item = QtWidgets.QListWidgetItem()
-            item.setData(Qt.UserRole, shape.label)
-            self.unique_label_list.addItem(item)
-        self.unique_label_list.sortItems()
 
     def file_search_changed(self):
         self.import_image_folder(
