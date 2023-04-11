@@ -7,6 +7,7 @@ from anylabeling.utils import GenericWorker
 import importlib.resources as pkg_resources
 
 from anylabeling import configs as anylabeling_configs
+from anylabeling.services.auto_labeling.types import AutoLabelingResult
 
 
 class ModelManager(QObject):
@@ -14,7 +15,7 @@ class ModelManager(QObject):
 
     new_model_status = pyqtSignal(str)
     model_loaded = pyqtSignal(list)
-    new_prediction_shapes = pyqtSignal(list)
+    new_auto_labeling_result = pyqtSignal(AutoLabelingResult)
     auto_segmentation_model_selected = pyqtSignal()
     auto_segmentation_model_unselected = pyqtSignal()
 
@@ -142,5 +143,7 @@ class ModelManager(QObject):
         """Predict shapes"""
         if self.loaded_model_info is None:
             raise Exception("Model is not loaded")
-        shapes = self.loaded_model_info["model"].predict_shapes(image)
-        self.new_prediction_shapes.emit(shapes)
+        auto_labeling_result = self.loaded_model_info["model"].predict_shapes(
+            image
+        )
+        self.new_auto_labeling_result.emit(auto_labeling_result)

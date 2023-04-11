@@ -10,6 +10,7 @@ from PyQt5 import QtCore
 from anylabeling.views.labeling.shape import Shape
 from anylabeling.views.labeling.utils.opencv import qt_img_to_cv_img
 from .model import Model
+from .types import AutoLabelingResult
 
 
 class SegmentAnything(Model):
@@ -24,11 +25,10 @@ class SegmentAnything(Model):
             "decoder_model_path",
         ]
         buttons = [
-            "button_run",
             "button_add_point",
             "button_remove_point",
             "button_add_rect",
-            "button_undo",
+            # "button_undo", # Dont support undo now
             "button_clear",
             "button_finish_object",
         ]
@@ -80,6 +80,11 @@ class SegmentAnything(Model):
             if mark["type"] == "point":
                 points.append(mark["data"])
                 labels.append(mark["label"])
+            elif mark["type"] == "rectangle":
+                points.append([mark["data"][0], mark["data"][1]])  # top left
+                points.append([mark["data"][2], mark["data"][3]])  # top right
+                labels.append(2)
+                labels.append(3)
         points, labels = np.array(points), np.array(labels)
 
         # Resize points based on scales
@@ -235,18 +240,18 @@ class SegmentAnything(Model):
             shape.fill_color = "#000000"
             shape.line_color = "#000000"
             shape.line_width = 1
-            shape.label = "unknown"
+            shape.label = "AUTOLABEL_OBJECT"
             shape.selected = False
             shapes.append(shape)
 
         return shapes
 
-    def predict_shapes(self, image):
+    def predict_shapes(self, image) -> AutoLabelingResult:
         """
         Predict shapes from image
         """
-        if image is None:
-            return []
+        if image is None or not self.marks:
+            return AutoLabelingResult([], replace=False)
 
         shapes = []
         try:
@@ -264,9 +269,10 @@ class SegmentAnything(Model):
         except Exception as e:
             logging.warning("Could not inference model")
             logging.warning(e)
-            return []
+            return AutoLabelingResult([], replace=False)
 
-        return shapes
+        result = AutoLabelingResult(shapes, replace=False)
+        return result
 
     def unload(self):
         if self.encoder_session:

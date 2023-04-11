@@ -39,6 +39,8 @@ from .widgets import (
     AutoLabelingWidget,
 )
 
+from anylabeling.services.auto_labeling.types import AutoLabelingMode
+
 LABEL_COLORMAP = imgviz.label_colormap()
 
 # Green for the first label
@@ -73,9 +75,6 @@ class LabelmeWidget(LabelDialog):
         self.image_data = None
         self.label_file = None
         self.other_data = {}
-
-        # AI models for auto labeling
-        self.ai_model = None
 
         # see configs/labelme_config.yaml for valid configuration
         if config is None:
@@ -212,6 +211,7 @@ class LabelmeWidget(LabelDialog):
         self.setAcceptDrops(True)
 
         self.canvas = self.label_list.canvas = Canvas(
+            parent=self,
             epsilon=self._config["epsilon"],
             double_click=self._config["canvas"]["double_click"],
             num_backups=self._config["canvas"]["num_backups"],
@@ -869,6 +869,18 @@ class LabelmeWidget(LabelDialog):
         )
         self.canvas.auto_labeling_marks_updated.connect(
             self.auto_labeling_widget.on_new_marks
+        )
+        self.auto_labeling_widget.auto_labeling_mode_changed.connect(
+            self.canvas.set_auto_labeling_mode
+        )
+        self.auto_labeling_widget.clear_auto_labeling_action_requested.connect(
+            self.clear_auto_labeling_marks
+        )
+        self.auto_labeling_widget.finish_auto_labeling_object_action_requested.connect(
+            self.finish_auto_labeling_object
+        )
+        self.canvas.auto_labeling_mode_changed.connect(
+            lambda mode: self.auto_labeling_widget.update_button_colors(mode)
         )
         self.auto_labeling_widget.hide()  # Hide by default
         central_layout.addWidget(self.label_instruction)
@@ -1574,7 +1586,10 @@ class LabelmeWidget(LabelDialog):
         flags = {}
         group_id = None
 
-        if self.canvas.shapes[-1].label == "AUTOLABEL_ADD":
+        if self.canvas.shapes[-1].label in [
+            AutoLabelingMode.ADD,
+            AutoLabelingMode.REMOVE,
+        ]:
             text = self.canvas.shapes[-1].label
         elif self._config["display_label_popup"] or not text:
             previous_text = self.label_dialog.edit.text()
@@ -2339,13 +2354,126 @@ class LabelmeWidget(LabelDialog):
             self.auto_labeling_widget.show()
 
     @pyqtSlot()
-    def new_shapes_from_auto_labeling(self, shapes):
+    def new_shapes_from_auto_labeling(self, auto_labeling_result):
         """Apply auto labeling results to the current image."""
         if not self.image or not self.image_path:
             return
         # Clear existing shapes
-        self.load_shapes([], replace=True)
-        self.label_list.clear()
-        # Add new shapes
-        self.load_shapes(shapes, replace=True)
+        if auto_labeling_result.replace:
+            self.load_shapes([], replace=True)
+            self.label_list.clear()
+            self.load_shapes(auto_labeling_result.shapes, replace=True)
+        else:  # Just update existing shapes
+            # Remove shapes with label "AUTOLABEL_OBJECT"
+            for shape in self.canvas.shapes:
+                if shape.label == "AUTOLABEL_OBJECT":
+                    item = self.label_list.find_item_by_shape(shape)
+                    self.label_list.remove_item(item)
+            self.load_shapes(auto_labeling_result.shapes, replace=False)
+
         self.set_dirty()
+
+    def clear_auto_labeling_marks(self):
+        """Clear auto labeling marks."""
+        for shape in self.canvas.shapes:
+            if shape.label in [
+                AutoLabelingMode.OBJECT,
+                AutoLabelingMode.ADD,
+                AutoLabelingMode.REMOVE,
+            ]:
+                item = self.label_list.find_item_by_shape(shape)
+                self.label_list.remove_item(item)
+        self.canvas.update()
+
+    def finish_auto_labeling_object(self):
+        """Finish auto labeling object."""
+        has_object = False
+        for shape in self.canvas.shapes:
+            if shape.label == AutoLabelingMode.OBJECT:
+                has_object = True
+                break
+
+        # If there is no object, do nothing
+        if not has_object:
+            return
+
+        # Ask a label for the object
+        text, flags, group_id = self.label_dialog.pop_up(
+            text="",
+            flags={},
+            group_id=None,
+        )
+        if text is None:
+            return
+        if not self.validate_label(text):
+            self.error_message(
+                self.tr("Invalid label"),
+                self.tr("Invalid label '{}' with validation type '{}'").format(
+                    text, self._config["validate_label"]
+                ),
+            )
+            return
+
+        # Update label for the object
+        updated_shapes = False
+        for shape in self.canvas.shapes:
+            if shape.label == AutoLabelingMode.OBJECT:
+                updated_shapes = True
+                shape.label = text
+                shape.flags = flags
+                shape.group_id = group_id
+                # Update unique label list
+                if not self.unique_label_list.find_items_by_label(shape.label):
+                    unique_label_item = (
+                        self.unique_label_list.create_item_from_label(
+                            shape.label
+                        )
+                    )
+                    self.unique_label_list.addItem(unique_label_item)
+
+                # Update label list
+                item = self.label_list.find_item_by_shape(shape)
+                if shape.group_id is None:
+                    color = shape.fill_color.getRgb()[:3]
+                    item.setText(
+                        '{} <font color="#{:02x}{:02x}{:02x}">●</font>'.format(
+                            html.escape(shape.label), *color
+                        )
+                    )
+                else:
+                    item.setText(f"{shape.label} ({shape.group_id})")
+
+        # Remove all ADD and REMOVE marks
+        for shape in self.canvas.shapes:
+            if shape.label in [AutoLabelingMode.ADD, AutoLabelingMode.REMOVE]:
+                item = self.label_list.find_item_by_shape(shape)
+                self.label_list.remove_item(item)
+
+        # Remove all auto labeling marks from unique label list
+        for item in self.unique_label_list.find_items_by_label(
+            AutoLabelingMode.OBJECT
+        ):
+            self.unique_label_list.takeItem(self.unique_label_list.row(item))
+        for item in self.unique_label_list.find_items_by_label(
+            AutoLabelingMode.ADD
+        ):
+            self.unique_label_list.takeItem(self.unique_label_list.row(item))
+        for item in self.unique_label_list.find_items_by_label(
+            AutoLabelingMode.REMOVE
+        ):
+            self.unique_label_list.takeItem(self.unique_label_list.row(item))
+
+        # Update all shapes color
+        for shape in self.canvas.shapes:
+            unique_label_item = self.unique_label_list.create_item_from_label(
+                shape.label
+            )
+            rgb = self._get_rgb_by_label(shape.label)
+            self.unique_label_list.set_item_label(
+                unique_label_item, shape.label, rgb
+            )
+            self._update_shape_color(shape)
+        self.canvas.update()
+
+        if updated_shapes:
+            self.set_dirty()

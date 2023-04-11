@@ -5,6 +5,8 @@ import pathlib
 import urllib.request
 import yaml
 
+from .types import AutoLabelingResult
+
 
 class Model:
     BASE_DOWNLOAD_URL = (
@@ -80,7 +82,7 @@ class Model:
                 raise Exception(f"Missing config: {name}")
 
     @abstractmethod
-    def predict_shapes(self, image):
+    def predict_shapes(self, image) -> AutoLabelingResult:
         """
         Predict image and return AnyLabeling shapes
         """

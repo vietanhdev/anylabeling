@@ -8,6 +8,7 @@ from PyQt5 import QtCore
 from anylabeling.views.labeling.shape import Shape
 from anylabeling.views.labeling.utils.opencv import qt_img_to_cv_img
 from .model import Model
+from .types import AutoLabelingResult
 
 
 class YOLOv5(Model):
@@ -165,7 +166,8 @@ class YOLOv5(Model):
             shape.add_point(QtCore.QPointF(box["x2"], box["y2"]))
             shapes.append(shape)
 
-        return shapes
+        result = AutoLabelingResult(shapes, replace=True)
+        return result
 
     def unload(self):
         del self.net

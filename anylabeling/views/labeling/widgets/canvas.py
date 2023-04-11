@@ -7,6 +7,8 @@ from PyQt5.QtGui import QWheelEvent
 from .. import utils
 from ..shape import Shape
 
+from anylabeling.services.auto_labeling.types import AutoLabelingMode
+
 CURSOR_DEFAULT = QtCore.Qt.ArrowCursor
 CURSOR_POINT = QtCore.Qt.PointingHandCursor
 CURSOR_DRAW = QtCore.Qt.CrossCursor
@@ -31,6 +33,7 @@ class Canvas(
     drawing_polygon = QtCore.pyqtSignal(bool)
     vertex_selected = QtCore.pyqtSignal(bool)
     auto_labeling_marks_updated = QtCore.pyqtSignal(list)
+    auto_labeling_mode_changed = QtCore.pyqtSignal(AutoLabelingMode)
 
     CREATE, EDIT = 0, 1
 
@@ -47,10 +50,12 @@ class Canvas(
                 f"Unexpected value for double_click event: {self.double_click}"
             )
         self.num_backups = kwargs.pop("num_backups", 10)
+        self.parent = kwargs.pop("parent")
         super().__init__(*args, **kwargs)
         # Initialise local state.
         self.mode = self.EDIT
         self.is_auto_labeling = False
+        self.auto_labeling_mode: AutoLabelingMode = None
         self.shapes = []
         self.shapes_backups = []
         self.current = None
@@ -91,6 +96,14 @@ class Canvas(
         self.show_cross_line = True
         self.show_shape_groups = True
         self.show_texts = True
+
+    def set_auto_labeling_mode(self, mode: AutoLabelingMode):
+        """Set auto labeling mode"""
+        self.is_auto_labeling = True
+        self.auto_labeling_mode = mode
+        self.create_mode = mode.shape_type
+        self.parent.toggle_draw_mode(False, mode.shape_type)
+        self.auto_labeling_mode_changed.emit(mode)
 
     def fill_drawing(self):
         """Get option to fill shapes by color"""
@@ -184,6 +197,15 @@ class Canvas(
     def set_auto_labeling(self, value=True):
         """Set auto labeling mode"""
         self.is_auto_labeling = value
+        if self.auto_labeling_mode is None:
+            self.auto_labeling_mode = AutoLabelingMode.get_default_mode()
+            self.parent.toggle_draw_mode(
+                False, self.auto_labeling_mode.shape_type
+            )
+        if not self.auto_labeling_mode:
+            self.auto_labeling_mode_changed.emit(None)
+        else:
+            self.auto_labeling_mode_changed.emit(self.auto_labeling_mode)
 
     def get_mode(self):
         """Get current mode"""
@@ -845,7 +867,7 @@ class Canvas(
         """Finish drawing for a shape"""
         assert self.current
         if self.is_auto_labeling:
-            self.current.label = "AUTOLABEL_ADD"
+            self.current.label = self.auto_labeling_mode.edit_mode
         self.current.close()
         self.shapes.append(self.current)
         self.store_shapes()
@@ -860,17 +882,57 @@ class Canvas(
         """Update the auto labeling marks"""
         marks = []
         for shape in self.shapes:
-            if shape.label == "AUTOLABEL_ADD" and shape.shape_type == "point":
-                marks.append(
-                    {
-                        "type": "point",
-                        "data": [
-                            int(shape.points[0].x()),
-                            int(shape.points[0].y()),
-                        ],
-                        "label": 1,
-                    }
-                )
+            if shape.label == AutoLabelingMode.ADD:
+                if shape.shape_type == AutoLabelingMode.POINT:
+                    marks.append(
+                        {
+                            "type": "point",
+                            "data": [
+                                int(shape.points[0].x()),
+                                int(shape.points[0].y()),
+                            ],
+                            "label": 1,
+                        }
+                    )
+                elif shape.shape_type == AutoLabelingMode.RECTANGLE:
+                    marks.append(
+                        {
+                            "type": "rectangle",
+                            "data": [
+                                int(shape.points[0].x()),
+                                int(shape.points[0].y()),
+                                int(shape.points[1].x()),
+                                int(shape.points[1].y()),
+                            ],
+                            "label": 1,
+                        }
+                    )
+            elif shape.label == AutoLabelingMode.REMOVE:
+                if shape.shape_type == AutoLabelingMode.POINT:
+                    marks.append(
+                        {
+                            "type": "point",
+                            "data": [
+                                int(shape.points[0].x()),
+                                int(shape.points[0].y()),
+                            ],
+                            "label": 0,
+                        }
+                    )
+                elif shape.shape_type == AutoLabelingMode.RECTANGLE:
+                    marks.append(
+                        {
+                            "type": "rectangle",
+                            "data": [
+                                int(shape.points[0].x()),
+                                int(shape.points[0].y()),
+                                int(shape.points[1].x()),
+                                int(shape.points[1].y()),
+                            ],
+                            "label": 0,
+                        }
+                    )
+
         self.auto_labeling_marks_updated.emit(marks)
 
     def close_enough(self, p1, p2):
@@ -1021,7 +1083,7 @@ class Canvas(
         """Set label and flags for last shape"""
         assert text
         if self.is_auto_labeling:
-            self.shapes[-1].label = "AUTOLABEL_ADD"
+            self.shapes[-1].label = self.auto_labeling_mode.edit_mode
         else:
             self.shapes[-1].label = text
         self.shapes[-1].flags = flags

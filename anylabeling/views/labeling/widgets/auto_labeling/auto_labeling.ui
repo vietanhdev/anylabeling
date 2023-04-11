@@ -120,7 +120,7 @@
      <item>
       <widget class="QPushButton" name="button_finish_object">
        <property name="text">
-        <string>Finish Object</string>
+        <string>Finish Object (f)</string>
        </property>
       </widget>
      </item>
