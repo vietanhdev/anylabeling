@@ -2424,12 +2424,14 @@ class LabelmeWidget(LabelDialog):
                 shape.group_id = group_id
                 # Update unique label list
                 if not self.unique_label_list.find_items_by_label(shape.label):
-                    unique_label_item = (
-                        self.unique_label_list.create_item_from_label(
-                            shape.label
-                        )
+                    unique_label_item = self.unique_label_list.create_item_from_label(
+                        shape.label
                     )
                     self.unique_label_list.addItem(unique_label_item)
+                    rgb = self._get_rgb_by_label(shape.label)
+                    self.unique_label_list.set_item_label(
+                        unique_label_item, shape.label, rgb
+                    )
 
                 # Update label list
                 item = self.label_list.find_item_by_shape(shape)
@@ -2463,17 +2465,9 @@ class LabelmeWidget(LabelDialog):
         ):
             self.unique_label_list.takeItem(self.unique_label_list.row(item))
 
-        # Update all shapes color
+        # Update shape colors
         for shape in self.canvas.shapes:
-            unique_label_item = self.unique_label_list.create_item_from_label(
-                shape.label
-            )
-            rgb = self._get_rgb_by_label(shape.label)
-            self.unique_label_list.set_item_label(
-                unique_label_item, shape.label, rgb
-            )
             self._update_shape_color(shape)
-        self.canvas.update()
 
         if updated_shapes:
             self.set_dirty()
