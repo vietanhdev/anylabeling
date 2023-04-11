@@ -6,6 +6,13 @@
 
 ![](https://i.imgur.com/waxVImv.png)
 
+[![PyPI](https://img.shields.io/pypi/v/anylabeling)](https://pypi.org/project/anylabeling)
+[![license](https://img.shields.io/github/license/vietanhdev/anylabeling.svg)](https://github.com/vietanhdev/anylabeling/blob/master/LICENSE)
+[![open issues](https://isitmaintained.com/badge/open/vietanhdev/anylabeling.svg)](https://github.com/vietanhdev/anylabeling/issues)
+[![Pypi Downloads](https://pepy.tech/badge/anylabeling)](https://pypi.org/project/anylabeling/)
+
+[![AnyLabeling 0.0.2](https://img.youtube.com/vi/5iQSGL7ebXE/0.jpg)](https://www.youtube.com/watch?v=5iQSGL7ebXE)
+
 
 ## I. Install and run
 
