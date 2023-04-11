@@ -6,11 +6,14 @@ class ZoomWidget(QtWidgets.QSpinBox):
         super().__init__()
         self.setButtonSymbols(QtWidgets.QAbstractSpinBox.NoButtons)
         self.setRange(1, 1000)
-        self.setSuffix(" %")
+        self.setSuffix("%")
         self.setValue(value)
         self.setToolTip("Zoom Level")
         self.setStatusTip(self.toolTip())
         self.setAlignment(QtCore.Qt.AlignCenter)
+        font = self.font()
+        font.setPointSize(9)
+        self.setFont(font)
 
     # QT Overload
     def minimumSizeHint(self):

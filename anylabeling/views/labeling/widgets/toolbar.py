@@ -15,6 +15,18 @@ class ToolBar(QtWidgets.QToolBar):
         self.setContentsMargins(*margin)
         self.setWindowFlags(self.windowFlags() | QtCore.Qt.FramelessWindowHint)
 
+        self.setStyleSheet(
+            """
+            QToolBar {
+                background: #fff;
+                padding: 0px;
+                border: 0px;
+                border-radius: 5px;
+                border: 2px solid #aaa;
+            }
+            """
+        )
+
     def add_action(self, action):
         """Add an action (button) to the toolbar"""
         if isinstance(action, QtWidgets.QWidgetAction):

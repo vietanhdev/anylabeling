@@ -9,7 +9,6 @@ from .escapable_qlist_widget import EscapableQListWidget
 
 
 class UniqueLabelQListWidget(EscapableQListWidget):
-
     # QT Overload
     def mousePressEvent(self, event):
         super().mousePressEvent(event)

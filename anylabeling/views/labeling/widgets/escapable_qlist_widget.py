@@ -3,7 +3,6 @@ from PyQt5.QtCore import Qt
 
 
 class EscapableQListWidget(QtWidgets.QListWidget):
-
     # QT Overload
     def keyPressEvent(self, event):
         super(EscapableQListWidget, self).keyPressEvent(event)

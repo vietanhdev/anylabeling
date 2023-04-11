@@ -33,6 +33,9 @@ def get_install_requires():
         "opencv-python-headless",
         "imutils",
         'PyQt5>=5.15.7; platform_system != "Darwin"',
+        "onnx==1.13.1",
+        "onnxruntime==1.14.1",
+        "qimage2ndarray==1.10.0",
     ]
 
     if os.name == "nt":  # Windows
@@ -70,6 +73,8 @@ setup(
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3 :: Only",
     ],
     include_package_data=True,

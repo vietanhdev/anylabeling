@@ -32,7 +32,7 @@ def main():
 
     main_win = MainWindow(app)
 
-    main_win.show()
+    main_win.showMaximized()
     sys.exit(app.exec_())
 
 

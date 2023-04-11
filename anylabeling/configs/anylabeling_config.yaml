@@ -110,6 +110,4 @@ shortcuts:
   group_selected_shapes: G
   ungroup_selected_shapes: U
 
-  tracking: T
-  load_ai_model: L
-  auto_label: I
+  auto_label: Ctrt+A

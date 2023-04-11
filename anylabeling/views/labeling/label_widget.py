@@ -11,21 +11,35 @@ import webbrowser
 import imgviz
 import natsort
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import (QDockWidget, QHBoxLayout, QLabel, QMessageBox,
-                             QPlainTextEdit, QVBoxLayout, QWhatsThis)
-
-from anylabeling.services.yolov5 import YOLOv5Predictor
+from PyQt5.QtCore import Qt, pyqtSlot
+from PyQt5.QtWidgets import (
+    QDockWidget,
+    QHBoxLayout,
+    QLabel,
+    QPlainTextEdit,
+    QVBoxLayout,
+    QWhatsThis,
+)
 
 from . import __appname__, utils
 from .config import get_config
 from .label_file import LabelFile, LabelFileError
 from .logger import logger
 from .shape import Shape
-from .tracker import Tracker
-from .widgets import (BrightnessContrastDialog, Canvas, FileDialogPreview,
-                      LabelDialog, LabelListWidget, LabelListWidgetItem,
-                      ToolBar, UniqueLabelQListWidget, ZoomWidget)
+from .widgets import (
+    BrightnessContrastDialog,
+    Canvas,
+    FileDialogPreview,
+    LabelDialog,
+    LabelListWidget,
+    LabelListWidgetItem,
+    ToolBar,
+    UniqueLabelQListWidget,
+    ZoomWidget,
+    AutoLabelingWidget,
+)
+
+from anylabeling.services.auto_labeling.types import AutoLabelingMode
 
 LABEL_COLORMAP = imgviz.label_colormap()
 
@@ -61,12 +75,6 @@ class LabelmeWidget(LabelDialog):
         self.image_data = None
         self.label_file = None
         self.other_data = {}
-
-        # Tracker
-        self.tracker = Tracker()
-
-        # AI models for auto labeling
-        self.ai_model = None
 
         # see configs/labelme_config.yaml for valid configuration
         if config is None:
@@ -121,8 +129,17 @@ class LabelmeWidget(LabelDialog):
         self.flag_widget = QtWidgets.QListWidget()
         if config["flags"]:
             self.load_flags({k: False for k in config["flags"]})
+        else:
+            self.flag_dock.hide()
         self.flag_dock.setWidget(self.flag_widget)
         self.flag_widget.itemChanged.connect(self.set_dirty)
+        self.flag_dock.setStyleSheet(
+            "QDockWidget::title {"
+            "text-align: center;"
+            "padding: 0px;"
+            "background-color: #f0f0f0;"
+            "}"
+        )
 
         self.label_list.item_selection_changed.connect(
             self.label_selection_changed
@@ -131,8 +148,15 @@ class LabelmeWidget(LabelDialog):
         self.label_list.item_changed.connect(self.label_item_changed)
         self.label_list.item_dropped.connect(self.label_order_changed)
         self.shape_dock = QtWidgets.QDockWidget(self.tr("Objects"), self)
-        self.shape_dock.setObjectName("Labels")
+        self.shape_dock.setObjectName("Objects")
         self.shape_dock.setWidget(self.label_list)
+        self.shape_dock.setStyleSheet(
+            "QDockWidget::title {"
+            "text-align: center;"
+            "padding: 0px;"
+            "background-color: #f0f0f0;"
+            "}"
+        )
 
         self.unique_label_list = UniqueLabelQListWidget()
         self.unique_label_list.setToolTip(
@@ -150,6 +174,13 @@ class LabelmeWidget(LabelDialog):
         self.label_dock = QtWidgets.QDockWidget(self.tr("Labels"), self)
         self.label_dock.setObjectName("Labels")
         self.label_dock.setWidget(self.unique_label_list)
+        self.label_dock.setStyleSheet(
+            "QDockWidget::title {"
+            "text-align: center;"
+            "padding: 0px;"
+            "background-color: #f0f0f0;"
+            "}"
+        )
 
         self.file_search = QtWidgets.QLineEdit()
         self.file_search.setPlaceholderText(self.tr("Search Filename"))
@@ -163,16 +194,24 @@ class LabelmeWidget(LabelDialog):
         file_list_layout.setSpacing(0)
         file_list_layout.addWidget(self.file_search)
         file_list_layout.addWidget(self.file_list_widget)
-        self.file_dock = QtWidgets.QDockWidget(self.tr("File List"), self)
+        self.file_dock = QtWidgets.QDockWidget(self.tr("Files"), self)
         self.file_dock.setObjectName("Files")
         file_list_widget = QtWidgets.QWidget()
         file_list_widget.setLayout(file_list_layout)
         self.file_dock.setWidget(file_list_widget)
+        self.file_dock.setStyleSheet(
+            "QDockWidget::title {"
+            "text-align: center;"
+            "padding: 0px;"
+            "background-color: #f0f0f0;"
+            "}"
+        )
 
         self.zoom_widget = ZoomWidget()
         self.setAcceptDrops(True)
 
         self.canvas = self.label_list.canvas = Canvas(
+            parent=self,
             epsilon=self._config["epsilon"],
             double_click=self._config["canvas"]["double_click"],
             num_backups=self._config["canvas"]["num_backups"],
@@ -605,26 +644,12 @@ class LabelmeWidget(LabelDialog):
         fill_drawing.trigger()
 
         # AI Actions
-        track = action(
-            self.tr("&Tracking"),
-            self.track,
-            shortcuts["tracking"],
-            "app",
-            self.tr("Track object"),
-        )
-        ai_load_model = action(
-            self.tr("&Load AI Model"),
-            self.ai_load_model,
-            shortcuts["load_ai_model"],
-            "upload_brain",
-            self.tr("Load AI Model"),
-        )
-        ai_predict = action(
-            self.tr("&Predict Shapes"),
-            self.ai_predict,
+        toggle_auto_labeling_widget = action(
+            self.tr("&Auto Labeling"),
+            self.toggle_auto_labeling_widget,
             shortcuts["auto_label"],
             "brain",
-            self.tr("Predict shapes"),
+            self.tr("Auto Labeling"),
         )
 
         # Lavel list context menu.
@@ -815,18 +840,16 @@ class LabelmeWidget(LabelDialog):
             self.actions.create_point_mode,
             self.actions.create_line_strip_mode,
             edit_mode,
-            duplicate,
-            copy,
-            paste,
+            # duplicate,
+            # copy,
+            # paste,
             delete,
             undo,
-            brightness_contrast,
+            # brightness_contrast,
             None,
             zoom,
             fit_width,
-            track,
-            ai_load_model,
-            ai_predict,
+            toggle_auto_labeling_widget,
         )
 
         layout = QHBoxLayout()
@@ -835,12 +858,33 @@ class LabelmeWidget(LabelDialog):
         layout.addWidget(self.tools)
         central_layout = QVBoxLayout()
         central_layout.setContentsMargins(0, 0, 0, 0)
-        label_instruction = QLabel(
-            "<b>Shortcuts:</b> Previous: <b>A</b>, Next: <b>D</b>, Rectangle:"
-            " <b>R</b>, Polygon: <b>P</b>"
+        self.label_instruction = QLabel(self.get_labeling_instruction())
+        self.label_instruction.setContentsMargins(0, 0, 0, 0)
+        self.auto_labeling_widget = AutoLabelingWidget(self)
+        self.auto_labeling_widget.auto_segmentation_requested.connect(
+            self.on_auto_segmentation_requested
         )
-        label_instruction.setContentsMargins(0, 10, 0, 10)
-        central_layout.addWidget(label_instruction)
+        self.auto_labeling_widget.auto_segmentation_disabled.connect(
+            self.on_auto_segmentation_disabled
+        )
+        self.canvas.auto_labeling_marks_updated.connect(
+            self.auto_labeling_widget.on_new_marks
+        )
+        self.auto_labeling_widget.auto_labeling_mode_changed.connect(
+            self.canvas.set_auto_labeling_mode
+        )
+        self.auto_labeling_widget.clear_auto_labeling_action_requested.connect(
+            self.clear_auto_labeling_marks
+        )
+        self.auto_labeling_widget.finish_auto_labeling_object_action_requested.connect(
+            self.finish_auto_labeling_object
+        )
+        self.canvas.auto_labeling_mode_changed.connect(
+            lambda mode: self.auto_labeling_widget.update_button_colors(mode)
+        )
+        self.auto_labeling_widget.hide()  # Hide by default
+        central_layout.addWidget(self.label_instruction)
+        central_layout.addWidget(self.auto_labeling_widget)
         central_layout.addWidget(scroll_area)
         layout.addItem(central_layout)
 
@@ -852,9 +896,19 @@ class LabelmeWidget(LabelDialog):
 
         right_sidebar_layout = QVBoxLayout()
         right_sidebar_layout.setContentsMargins(0, 0, 0, 0)
-        self.shape_text_label = QLabel("Shape Text")
+        self.shape_text_label = QLabel("Object Text")
+        self.shape_text_label.setStyleSheet(
+            "QLabel {"
+            "text-align: center;"
+            "padding: 0px;"
+            "font-size: 11px;"
+            "margin-bottom: 5px;"
+            "}"
+        )
         self.shape_text_edit = QPlainTextEdit()
-        right_sidebar_layout.addWidget(self.shape_text_label)
+        right_sidebar_layout.addWidget(
+            self.shape_text_label, 0, Qt.AlignCenter
+        )
         right_sidebar_layout.addWidget(self.shape_text_edit)
         right_sidebar_layout.addWidget(self.flag_dock)
         right_sidebar_layout.addWidget(self.label_dock)
@@ -947,8 +1001,25 @@ class LabelmeWidget(LabelDialog):
         if self.first_start:
             QWhatsThis.enterWhatsThisMode()
 
+    def get_labeling_instruction(self):
+        return (
+            f"<b>Mode:</b> {self.canvas.get_mode()} - <b>Shortcuts:</b>"
+            " Previous: <b>A</b>, Next: <b>D</b>, Rectangle: <b>R</b>,"
+            " Polygon: <b>P</b>"
+        )
+
+    @pyqtSlot()
+    def on_auto_segmentation_requested(self):
+        self.canvas.set_auto_labeling(True)
+        self.label_instruction.setText(self.get_labeling_instruction())
+
+    @pyqtSlot()
+    def on_auto_segmentation_disabled(self):
+        self.canvas.set_auto_labeling(False)
+        self.label_instruction.setText(self.get_labeling_instruction())
+
     def menu(self, title, actions=None):
-        menu = self.parent.parent.parent.menuBar().addMenu(title)
+        menu = self.parent.parent.menuBar().addMenu(title)
         if actions:
             utils.add_actions(menu, actions)
         return menu
@@ -968,7 +1039,7 @@ class LabelmeWidget(LabelDialog):
         return toolbar
 
     def statusBar(self):
-        return self.parent.parent.parent.statusBar()
+        return self.parent.parent.statusBar()
 
     def no_shape(self):
         return len(self.label_list) == 0
@@ -1211,20 +1282,28 @@ class LabelmeWidget(LabelDialog):
         shape.flags = flags
         shape.group_id = group_id
 
+        # Update unique label list
+        if not self.unique_label_list.find_items_by_label(shape.label):
+            unique_label_item = self.unique_label_list.create_item_from_label(
+                shape.label
+            )
+            self.unique_label_list.addItem(unique_label_item)
+            rgb = self._get_rgb_by_label(shape.label)
+            self.unique_label_list.set_item_label(
+                unique_label_item, shape.label, rgb
+            )
+
         self._update_shape_color(shape)
         if shape.group_id is None:
+            color = shape.fill_color.getRgb()[:3]
             item.setText(
                 '{} <font color="#{:02x}{:02x}{:02x}">●</font>'.format(
-                    html.escape(shape.label), *shape.fill_color.getRgb()[:3]
+                    html.escape(shape.label), *color
                 )
             )
         else:
             item.setText(f"{shape.label} ({shape.group_id})")
         self.set_dirty()
-        if not self.unique_label_list.find_items_by_label(shape.label):
-            item = QtWidgets.QListWidgetItem()
-            item.setData(Qt.UserRole, shape.label)
-            self.unique_label_list.addItem(item)
 
     def file_search_changed(self):
         self.import_image_folder(
@@ -1267,7 +1346,7 @@ class LabelmeWidget(LabelDialog):
         self.actions.copy.setEnabled(n_selected)
         self.actions.edit.setEnabled(n_selected == 1)
         if len(selected_shapes) == 1:
-            self.shape_text_label.setText("Shape Text")
+            self.shape_text_label.setText("Object Text")
             self.shape_text_edit.textChanged.disconnect()
             self.shape_text_edit.setPlainText(selected_shapes[0].text)
             self.shape_text_edit.textChanged.connect(self.shape_text_changed)
@@ -1323,6 +1402,9 @@ class LabelmeWidget(LabelDialog):
 
     def _get_rgb_by_label(self, label):
         if self._config["shape_color"] == "auto":
+            if not self.unique_label_list.find_items_by_label(label):
+                item = self.unique_label_list.create_item_from_label(label)
+                self.unique_label_list.addItem(item)
             item = self.unique_label_list.find_items_by_label(label)[0]
             label_id = self.unique_label_list.indexFromItem(item).row() + 1
             label_id += self._config["shift_auto_shape_color"]
@@ -1382,7 +1464,8 @@ class LabelmeWidget(LabelDialog):
                         for key in keys:
                             default_flags[key] = False
             shape.flags = default_flags
-            shape.flags.update(flags)
+            if flags:
+                shape.flags.update(flags)
             shape.other_data = other_data
 
             s.append(shape)
@@ -1502,7 +1585,13 @@ class LabelmeWidget(LabelDialog):
             text = items[0].data(Qt.UserRole)
         flags = {}
         group_id = None
-        if self._config["display_label_popup"] or not text:
+
+        if self.canvas.shapes[-1].label in [
+            AutoLabelingMode.ADD,
+            AutoLabelingMode.REMOVE,
+        ]:
+            text = self.canvas.shapes[-1].label
+        elif self._config["display_label_popup"] or not text:
             previous_text = self.label_dialog.edit.text()
             text, flags, group_id = self.label_dialog.pop_up(text)
             if not text:
@@ -1638,9 +1727,6 @@ class LabelmeWidget(LabelDialog):
 
     def load_file(self, filename=None):
         """Load the specified file, or the last opened file if None."""
-
-        # Update tracker
-        self.tracker.update(self.canvas.shapes, self.image)
 
         # Changing file_list_widget loads file
         if filename in self.image_list and (
@@ -1833,9 +1919,7 @@ class LabelmeWidget(LabelDialog):
         )
         self.settings.setValue("window/size", self.size())
         self.settings.setValue("window/position", self.pos())
-        self.settings.setValue(
-            "window/state", self.parent.parent.parent.saveState()
-        )
+        self.settings.setValue("window/state", self.parent.parent.saveState())
         self.settings.setValue("recent_files", self.recent_files)
         # ask the use for where to save the labels
         # self.settings.setValue('window/geometry', self.saveGeometry())
@@ -2262,40 +2346,134 @@ class LabelmeWidget(LabelDialog):
         images = natsort.os_sorted(images)
         return images
 
-    def track(self):
-        QMessageBox.warning(self, "Warning", "Tracking is not supported now.")
-        # predicted_shapes = self.tracker.get(self.image)
-        # self.load_shapes(predicted_shapes, replace=True)
-        # self.set_dirty()
+    def toggle_auto_labeling_widget(self):
+        """Toggle auto labeling widget visibility."""
+        if self.auto_labeling_widget.isVisible():
+            self.auto_labeling_widget.hide()
+        else:
+            self.auto_labeling_widget.show()
 
-    def ai_load_model(self):
-        """Load AI model from disk."""
-        file_path = QtWidgets.QFileDialog.getOpenFileName(
-            self, "Select AI Model Config", ".", "Model config file (*.yaml)"
+    @pyqtSlot()
+    def new_shapes_from_auto_labeling(self, auto_labeling_result):
+        """Apply auto labeling results to the current image."""
+        if not self.image or not self.image_path:
+            return
+        # Clear existing shapes
+        if auto_labeling_result.replace:
+            self.load_shapes([], replace=True)
+            self.label_list.clear()
+            self.load_shapes(auto_labeling_result.shapes, replace=True)
+        else:  # Just update existing shapes
+            # Remove shapes with label "AUTOLABEL_OBJECT"
+            for shape in self.canvas.shapes:
+                if shape.label == "AUTOLABEL_OBJECT":
+                    item = self.label_list.find_item_by_shape(shape)
+                    self.label_list.remove_item(item)
+            self.load_shapes(auto_labeling_result.shapes, replace=False)
+
+        self.set_dirty()
+
+    def clear_auto_labeling_marks(self):
+        """Clear auto labeling marks."""
+        for shape in self.canvas.shapes:
+            if shape.label in [
+                AutoLabelingMode.OBJECT,
+                AutoLabelingMode.ADD,
+                AutoLabelingMode.REMOVE,
+            ]:
+                item = self.label_list.find_item_by_shape(shape)
+                self.label_list.remove_item(item)
+        self.canvas.update()
+
+    def finish_auto_labeling_object(self):
+        """Finish auto labeling object."""
+        has_object = False
+        for shape in self.canvas.shapes:
+            if shape.label == AutoLabelingMode.OBJECT:
+                has_object = True
+                break
+
+        # If there is no object, do nothing
+        if not has_object:
+            return
+
+        # Ask a label for the object
+        text, flags, group_id = self.label_dialog.pop_up(
+            text="",
+            flags={},
+            group_id=None,
         )
-        if not file_path[0]:
+        if text is None:
             return
-        file_path = file_path[0]
-        try:
-            self.ai_model = YOLOv5Predictor(file_path)
-        except Exception as e:
-            QMessageBox.warning(self, "Error", f"Failed to load AI model: {e}")
-            return
-        self.statusBar().showMessage(f"AI Model loaded from {file_path}", 5000)
-
-    def ai_predict(self):
-        """Predict shapes using AI model"""
-        if self.image_path is None:
-            QMessageBox.warning(self, "Warning", "Please load images first.")
-            return
-        if self.ai_model is None:
-            QMessageBox.warning(
-                self,
-                "Warning",
-                "No AI model is loaded. Please load a model first.",
+        if not self.validate_label(text):
+            self.error_message(
+                self.tr("Invalid label"),
+                self.tr("Invalid label '{}' with validation type '{}'").format(
+                    text, self._config["validate_label"]
+                ),
             )
             return
 
-        shapes = self.ai_model.predict_shapes(self.image)
-        self.load_shapes(shapes, replace=True)
-        self.set_dirty()
+        # Update label for the object
+        updated_shapes = False
+        for shape in self.canvas.shapes:
+            if shape.label == AutoLabelingMode.OBJECT:
+                updated_shapes = True
+                shape.label = text
+                shape.flags = flags
+                shape.group_id = group_id
+                # Update unique label list
+                if not self.unique_label_list.find_items_by_label(shape.label):
+                    unique_label_item = (
+                        self.unique_label_list.create_item_from_label(
+                            shape.label
+                        )
+                    )
+                    self.unique_label_list.addItem(unique_label_item)
+
+                # Update label list
+                item = self.label_list.find_item_by_shape(shape)
+                if shape.group_id is None:
+                    color = shape.fill_color.getRgb()[:3]
+                    item.setText(
+                        '{} <font color="#{:02x}{:02x}{:02x}">●</font>'.format(
+                            html.escape(shape.label), *color
+                        )
+                    )
+                else:
+                    item.setText(f"{shape.label} ({shape.group_id})")
+
+        # Remove all ADD and REMOVE marks
+        for shape in self.canvas.shapes:
+            if shape.label in [AutoLabelingMode.ADD, AutoLabelingMode.REMOVE]:
+                item = self.label_list.find_item_by_shape(shape)
+                self.label_list.remove_item(item)
+
+        # Remove all auto labeling marks from unique label list
+        for item in self.unique_label_list.find_items_by_label(
+            AutoLabelingMode.OBJECT
+        ):
+            self.unique_label_list.takeItem(self.unique_label_list.row(item))
+        for item in self.unique_label_list.find_items_by_label(
+            AutoLabelingMode.ADD
+        ):
+            self.unique_label_list.takeItem(self.unique_label_list.row(item))
+        for item in self.unique_label_list.find_items_by_label(
+            AutoLabelingMode.REMOVE
+        ):
+            self.unique_label_list.takeItem(self.unique_label_list.row(item))
+
+        # Update all shapes color
+        for shape in self.canvas.shapes:
+            unique_label_item = self.unique_label_list.create_item_from_label(
+                shape.label
+            )
+            rgb = self._get_rgb_by_label(shape.label)
+            self.unique_label_list.set_item_label(
+                unique_label_item, shape.label, rgb
+            )
+            self._update_shape_color(shape)
+        self.canvas.update()
+
+        if updated_shapes:
+            self.set_dirty()
