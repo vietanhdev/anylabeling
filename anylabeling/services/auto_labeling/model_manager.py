@@ -21,9 +21,13 @@ class ModelManager(QObject):
 
     model_configs = {
         "segment_anything_vit_b": "autolabel_segment_anything.yaml",
+        "yolov5n": "autolabel_yolov5n.yaml",
         "yolov5s": "autolabel_yolov5s.yaml",
         "yolov5m": "autolabel_yolov5m.yaml",
+        "yolov5l": "autolabel_yolov5l.yaml",
+        "yolov5x": "autolabel_yolov5x.yaml",
     }
+
 
     def __init__(self):
         super().__init__()

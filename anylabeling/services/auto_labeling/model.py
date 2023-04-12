@@ -11,7 +11,7 @@ from .types import AutoLabelingResult
 
 class Model:
     BASE_DOWNLOAD_URL = (
-        "https://github.com/vietanhdev/anylabeling-assets/raw/main/"
+        "https://github.com/hdnh2006/anylabeling-assets/releases/download/v0.0.0/"
     )
 
     class Meta:
@@ -57,8 +57,8 @@ class Model:
                 " while..."
             )
             relative_path = model_path.replace("anylabeling_assets/", "")
-            download_url = self.BASE_DOWNLOAD_URL + relative_path
-            home_dir = os.path.expanduser("~")
+            download_url = self.BASE_DOWNLOAD_URL + relative_path.replace("models/yolov5/","")
+            home_dir = os.getcwd()
             model_abs_path = os.path.abspath(
                 os.path.join(home_dir, "data", relative_path)
             )
