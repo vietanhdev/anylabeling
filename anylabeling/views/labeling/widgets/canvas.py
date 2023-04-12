@@ -240,7 +240,7 @@ class Canvas(
         return self.h_edge is not None
 
     # QT Overload
-    def mouseMoveEvent(self, ev):
+    def mouseMoveEvent(self, ev):  # noqa: C901
         """Update line with last point and current coordinates"""
         try:
             pos = self.transform_pos(ev.localPos())
@@ -670,7 +670,10 @@ class Canvas(
         return self.selected_shapes
 
     def bounded_shift_shapes(self, shapes):
-        """Shift shapes by an offset. Adjust positions to be bounded by pixmap borders"""
+        """
+        Shift shapes by an offset. Adjust positions to be bounded
+        by pixmap borders
+        """
         # Try to move in one direction, and if it fails in another.
         # Give up if both fail.
         point = shapes[0][0]
@@ -681,7 +684,7 @@ class Canvas(
             self.bounded_move_shapes(shapes, point + offset)
 
     # QT Overload
-    def paintEvent(self, event):
+    def paintEvent(self, event):  # noqa: C901
         """Paint event for canvas"""
         if (
             self.pixmap is None

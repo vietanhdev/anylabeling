@@ -112,8 +112,8 @@ class YOLOv5(Model):
                     box = np.array([left, top, width, height])
                     boxes.append(box)
 
-        # Perform non maximum suppression to eliminate redundant overlapping boxes with
-        # lower confidences.
+        # Perform non maximum suppression to eliminate redundant
+        # overlapping boxes with lower confidences.
         indices = cv2.dnn.NMSBoxes(
             boxes,
             confidences,
@@ -154,7 +154,7 @@ class YOLOv5(Model):
 
         try:
             image = qt_img_to_cv_img(image)
-        except Exception as e:
+        except Exception as e:  # noqa
             logging.warning("Could not inference model")
             logging.warning(e)
             return []

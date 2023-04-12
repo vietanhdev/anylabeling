@@ -12,6 +12,5 @@ exclude = '''
   | buck-out
   | build
   | dist
-  | anylabeling/models/yolov5
 )/
 '''

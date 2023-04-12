@@ -38,7 +38,7 @@ def get_default_config():
         try:
             with open(user_config_file, "w") as f:
                 yaml.safe_dump(config, f)
-        except Exception:
+        except Exception:  # noqa
             logger.warning("Failed to save config: %s", user_config_file)
 
     return config

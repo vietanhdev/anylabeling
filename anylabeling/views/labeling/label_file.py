@@ -98,20 +98,20 @@ class LabelFile:
                 data.get("imageWidth"),
             )
             shapes = [
-                dict(
-                    label=s["label"],
-                    text=s.get("text", ""),
-                    points=s["points"],
-                    shape_type=s.get("shape_type", "polygon"),
-                    flags=s.get("flags", {}),
-                    group_id=s.get("group_id"),
-                    other_data={
+                {
+                    "label": s["label"],
+                    "text": s.get("text", ""),
+                    "points": s["points"],
+                    "shape_type": s.get("shape_type", "polygon"),
+                    "flags": s.get("flags", {}),
+                    "group_id": s.get("group_id"),
+                    "other_data": {
                         k: v for k, v in s.items() if k not in shape_keys
                     },
-                )
+                }
                 for s in data["shapes"]
             ]
-        except Exception as e:
+        except Exception as e:  # noqa
             raise LabelFileError(e) from e
 
         other_data = {}
@@ -167,15 +167,15 @@ class LabelFile:
             other_data = {}
         if flags is None:
             flags = {}
-        data = dict(
-            version=__version__,
-            flags=flags,
-            shapes=shapes,
-            imagePath=image_path,
-            imageData=image_data,
-            imageHeight=image_height,
-            imageWidth=image_width,
-        )
+        data = {
+            "version": __version__,
+            "flags": flags,
+            "shapes": shapes,
+            "imagePath": image_path,
+            "imageData": image_data,
+            "imageHeight": image_height,
+            "imageWidth": image_width,
+        }
         for key, value in other_data.items():
             assert key not in data
             data[key] = value
@@ -183,7 +183,7 @@ class LabelFile:
             with io_open(filename, "w") as f:
                 json.dump(data, f, ensure_ascii=False, indent=2)
             self.filename = filename
-        except Exception as e:
+        except Exception as e:  # noqa
             raise LabelFileError(e) from e
 
     @staticmethod

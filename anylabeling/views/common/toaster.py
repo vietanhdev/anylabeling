@@ -117,13 +117,17 @@ class QToaster(QtWidgets.QFrame):
         return super().eventFilter(source, event)
 
     def enterEvent(self, _):
-        """Restore toaster (opacity) when move mouse into it
+        """
+        Restore toaster (opacity) when move mouse into it
         Keep it open as long as the mouse does not leave
         """
         self.restore()
 
     def leaveEvent(self, _):
-        """When mouse leaves the toaster, start the timer again to count down to close event"""
+        """
+        When mouse leaves the toaster, start the timer again to
+        count down to close event
+        """
         self.timer.start()
 
     def closeEvent(self, _):
@@ -177,7 +181,7 @@ class QToaster(QtWidgets.QFrame):
             # deleted as soon as the function that calls it returns, but if an
             # object is referenced to *any* other object it will not, at least
             # for PyQt (I didn't test it to a deeper level)
-            self.__self = self  # pylint: disable=attribute-defined-outside-init,unused-private-member,protected-access
+            self.__self = self
 
             current_screen = QtWidgets.QApplication.primaryScreen()
             if parent and parent.window().geometry().size().isValid():
