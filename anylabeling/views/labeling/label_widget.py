@@ -1,5 +1,3 @@
-__appname__ = "AnyLabeling"
-
 import functools
 import html
 import math
@@ -12,34 +10,21 @@ import imgviz
 import natsort
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import Qt, pyqtSlot
-from PyQt5.QtWidgets import (
-    QDockWidget,
-    QHBoxLayout,
-    QLabel,
-    QPlainTextEdit,
-    QVBoxLayout,
-    QWhatsThis,
-)
+from PyQt5.QtWidgets import (QDockWidget, QHBoxLayout, QLabel, QPlainTextEdit,
+                             QVBoxLayout, QWhatsThis)
 
+from anylabeling.services.auto_labeling.types import AutoLabelingMode
+
+from ...app_info import __appname__
 from . import utils
 from .config import get_config
 from .label_file import LabelFile, LabelFileError
 from .logger import logger
 from .shape import Shape
-from .widgets import (
-    BrightnessContrastDialog,
-    Canvas,
-    FileDialogPreview,
-    LabelDialog,
-    LabelListWidget,
-    LabelListWidgetItem,
-    ToolBar,
-    UniqueLabelQListWidget,
-    ZoomWidget,
-    AutoLabelingWidget,
-)
-
-from anylabeling.services.auto_labeling.types import AutoLabelingMode
+from .widgets import (AutoLabelingWidget, BrightnessContrastDialog, Canvas,
+                      FileDialogPreview, LabelDialog, LabelListWidget,
+                      LabelListWidgetItem, ToolBar, UniqueLabelQListWidget,
+                      ZoomWidget)
 
 LABEL_COLORMAP = imgviz.label_colormap()
 
@@ -2364,9 +2349,9 @@ class LabelmeWidget(LabelDialog):
             self.label_list.clear()
             self.load_shapes(auto_labeling_result.shapes, replace=True)
         else:  # Just update existing shapes
-            # Remove shapes with label "AUTOLABEL_OBJECT"
+            # Remove shapes with label AutoLabelingMode.OBJECT
             for shape in self.canvas.shapes:
-                if shape.label == "AUTOLABEL_OBJECT":
+                if shape.label == AutoLabelingMode.OBJECT:
                     item = self.label_list.find_item_by_shape(shape)
                     self.label_list.remove_item(item)
             self.load_shapes(auto_labeling_result.shapes, replace=False)
@@ -2381,8 +2366,11 @@ class LabelmeWidget(LabelDialog):
                 AutoLabelingMode.ADD,
                 AutoLabelingMode.REMOVE,
             ]:
-                item = self.label_list.find_item_by_shape(shape)
-                self.label_list.remove_item(item)
+                try:
+                    item = self.label_list.find_item_by_shape(shape)
+                    self.label_list.remove_item(item)
+                except ValueError:
+                    pass
         self.canvas.update()
 
     def finish_auto_labeling_object(self):
@@ -2424,8 +2412,10 @@ class LabelmeWidget(LabelDialog):
                 shape.group_id = group_id
                 # Update unique label list
                 if not self.unique_label_list.find_items_by_label(shape.label):
-                    unique_label_item = self.unique_label_list.create_item_from_label(
-                        shape.label
+                    unique_label_item = (
+                        self.unique_label_list.create_item_from_label(
+                            shape.label
+                        )
                     )
                     self.unique_label_list.addItem(unique_label_item)
                     rgb = self._get_rgb_by_label(shape.label)
@@ -2448,8 +2438,11 @@ class LabelmeWidget(LabelDialog):
         # Remove all ADD and REMOVE marks
         for shape in self.canvas.shapes:
             if shape.label in [AutoLabelingMode.ADD, AutoLabelingMode.REMOVE]:
-                item = self.label_list.find_item_by_shape(shape)
-                self.label_list.remove_item(item)
+                try:
+                    item = self.label_list.find_item_by_shape(shape)
+                    self.label_list.remove_item(item)
+                except ValueError:
+                    pass
 
         # Remove all auto labeling marks from unique label list
         for item in self.unique_label_list.find_items_by_label(

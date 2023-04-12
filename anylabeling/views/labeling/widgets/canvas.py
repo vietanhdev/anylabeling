@@ -4,10 +4,10 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QWheelEvent
 
+from anylabeling.services.auto_labeling.types import AutoLabelingMode
+
 from .. import utils
 from ..shape import Shape
-
-from anylabeling.services.auto_labeling.types import AutoLabelingMode
 
 CURSOR_DEFAULT = QtCore.Qt.ArrowCursor
 CURSOR_POINT = QtCore.Qt.PointingHandCursor

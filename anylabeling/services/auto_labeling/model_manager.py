@@ -1,13 +1,13 @@
 import copy
-import yaml
-from threading import Lock
-from PyQt5.QtCore import QObject, pyqtSignal
-from PyQt5.QtCore import QObject, QThread, pyqtSignal, pyqtSlot
-from anylabeling.utils import GenericWorker
 import importlib.resources as pkg_resources
+from threading import Lock
+
+import yaml
+from PyQt5.QtCore import QObject, QThread, pyqtSignal, pyqtSlot
 
 from anylabeling import configs as anylabeling_configs
 from anylabeling.services.auto_labeling.types import AutoLabelingResult
+from anylabeling.utils import GenericWorker
 
 
 class ModelManager(QObject):
@@ -108,12 +108,16 @@ class ModelManager(QObject):
         if model_info["type"] == "yolov5":
             from .yolov5 import YOLOv5
 
-            model_info["model"] = YOLOv5(model_info, on_message=self.new_model_status.emit)
+            model_info["model"] = YOLOv5(
+                model_info, on_message=self.new_model_status.emit
+            )
             self.auto_segmentation_model_unselected.emit()
         elif model_info["type"] == "segment_anything":
             from .segment_anything import SegmentAnything
 
-            model_info["model"] = SegmentAnything(model_info, on_message=self.new_model_status.emit)
+            model_info["model"] = SegmentAnything(
+                model_info, on_message=self.new_model_status.emit
+            )
             self.auto_segmentation_model_selected.emit()
         else:
             raise Exception(f"Unknown model type: {model_info['type']}")
