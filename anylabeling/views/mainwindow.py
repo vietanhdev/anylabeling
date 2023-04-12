@@ -1,10 +1,10 @@
 """This module defines the main application window"""
 
-from PyQt5.QtWidgets import (QMainWindow, QStatusBar,
-                             QVBoxLayout, QWidget)
+from PyQt5.QtWidgets import QMainWindow, QStatusBar, QVBoxLayout, QWidget
 
+from ..app_info import __appdescription__, __appname__
 from .labeling.label_wrapper import LabelingWrapper
-from ..app_info import __appname__, __appdescription__
+
 
 class MainWindow(QMainWindow):
     """Main application window"""
@@ -25,7 +25,5 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(widget)
 
         status_bar = QStatusBar()
-        status_bar.showMessage(
-            f"{__appname__} - {__appdescription__}"
-        )
+        status_bar.showMessage(f"{__appname__} - {__appdescription__}")
         self.setStatusBar(status_bar)
