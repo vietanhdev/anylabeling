@@ -9,8 +9,8 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 sys.path.append(".")
 
-from .resources.resources import *  # noqa
-from .views.mainwindow import MainWindow  # noqa
+from anylabeling.resources.resources import *  # noqa
+from anylabeling.views.mainwindow import MainWindow  # noqa
 
 
 def main():
