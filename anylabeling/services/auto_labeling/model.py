@@ -77,13 +77,13 @@ class Model:
                 data = urllib.request.urlopen(download_url).read()
                 with open(model_abs_path, "wb") as f:
                     f.write(data)
-            except Exception as e:
+            except Exception as e:  # noqa
                 self.on_message(
                     f"Could not downloading model from {download_url}"
                 )
                 raise Exception(
                     f"Could not downloading model from {download_url}: {e}"
-                )
+                ) from e
 
             return model_abs_path
 

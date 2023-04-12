@@ -10,8 +10,14 @@ import imgviz
 import natsort
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import Qt, pyqtSlot
-from PyQt5.QtWidgets import (QDockWidget, QHBoxLayout, QLabel, QPlainTextEdit,
-                             QVBoxLayout, QWhatsThis)
+from PyQt5.QtWidgets import (
+    QDockWidget,
+    QHBoxLayout,
+    QLabel,
+    QPlainTextEdit,
+    QVBoxLayout,
+    QWhatsThis,
+)
 
 from anylabeling.services.auto_labeling.types import AutoLabelingMode
 
@@ -21,10 +27,18 @@ from .config import get_config
 from .label_file import LabelFile, LabelFileError
 from .logger import logger
 from .shape import Shape
-from .widgets import (AutoLabelingWidget, BrightnessContrastDialog, Canvas,
-                      FileDialogPreview, LabelDialog, LabelListWidget,
-                      LabelListWidgetItem, ToolBar, UniqueLabelQListWidget,
-                      ZoomWidget)
+from .widgets import (
+    AutoLabelingWidget,
+    BrightnessContrastDialog,
+    Canvas,
+    FileDialogPreview,
+    LabelDialog,
+    LabelListWidget,
+    LabelListWidgetItem,
+    ToolBar,
+    UniqueLabelQListWidget,
+    ZoomWidget,
+)
 
 LABEL_COLORMAP = imgviz.label_colormap()
 
@@ -637,7 +651,7 @@ class LabelmeWidget(LabelDialog):
             self.tr("Auto Labeling"),
         )
 
-        # Lavel list context menu.
+        # Label list context menu.
         label_menu = QtWidgets.QMenu()
         utils.add_actions(label_menu, (edit, delete))
         self.label_list.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -1198,7 +1212,7 @@ class LabelmeWidget(LabelDialog):
         self.actions.edit_mode.setEnabled(not edit)
 
     def set_edit_mode(self):
-        # Diable auto labeling
+        # Disable auto labeling
         self.clear_auto_labeling_marks()
         self.auto_labeling_widget.set_auto_labeling_mode(None)
 
@@ -1471,14 +1485,14 @@ class LabelmeWidget(LabelDialog):
         def format_shape(s):
             data = s.other_data.copy()
             data.update(
-                dict(
-                    label=s.label,
-                    text=s.text,
-                    points=[(p.x(), p.y()) for p in s.points],
-                    group_id=s.group_id,
-                    shape_type=s.shape_type,
-                    flags=s.flags,
-                )
+                {
+                    "label": s.label,
+                    "text": s.text,
+                    "points": [(p.x(), p.y()) for p in s.points],
+                    "group_id": s.group_id,
+                    "shape_type": s.shape_type,
+                    "flags": s.flags,
+                }
             )
             return data
 
@@ -1722,7 +1736,7 @@ class LabelmeWidget(LabelDialog):
         for item in self.label_list:
             item.setCheckState(Qt.Checked if value else Qt.Unchecked)
 
-    def load_file(self, filename=None):
+    def load_file(self, filename=None):  # noqa: C901
         """Load the specified file, or the last opened file if None."""
 
         self.clear_auto_labeling_marks()
@@ -2176,7 +2190,9 @@ class LabelmeWidget(LabelDialog):
         if not self.dirty:
             return True
         mb = QtWidgets.QMessageBox
-        msg = self.tr(f'Save annotations to "{self.filename}" before closing?')
+        msg = self.tr(
+            f'Save annotations to "{self.filename!r}" before closing?'
+        )
         answer = mb.question(
             self,
             self.tr("Save annotations?"),

@@ -267,7 +267,7 @@ class SegmentAnything(Model):
                 self.last_image_embedding = image_embedding
             masks = self.run_decoder(image_embedding)
             shapes = self.post_process(masks)
-        except Exception as e:
+        except Exception as e:  # noqa
             logging.warning("Could not inference model")
             logging.warning(e)
             return AutoLabelingResult([], replace=False)

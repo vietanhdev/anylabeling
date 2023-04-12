@@ -91,7 +91,7 @@ class LabelListWidgetItem(QtGui.QStandardItem):
         return id(self)
 
     def __repr__(self):
-        return f'{self.__class__.__name__}("{self.text()}")'
+        return f'{self.__class__.__name__}("{self.text()!r}")'
 
 
 class StandardItemModel(QtGui.QStandardItemModel):

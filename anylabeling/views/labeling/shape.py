@@ -1,5 +1,3 @@
-"""This module defines "shape" data type, which can be a polygon, rectangle, circles, ..."""
-
 import copy
 import math
 
@@ -31,7 +29,7 @@ class Shape:
     # Flag for the handles we would move if dragging
     MOVE_VERTEX = 0
 
-    # Flag for all other handles on the curent shape
+    # Flag for all other handles on the current shape
     NEAR_VERTEX = 1
 
     # The following class variables influence the drawing of all shape objects.
@@ -221,7 +219,7 @@ class Shape:
         elif shape == self.P_ROUND:
             path.addEllipse(point, d / 2.0, d / 2.0)
         else:
-            assert False, "unsupported vertex shape"
+            print("Unsupported vertex shape")
 
     def nearest_vertex(self, point, epsilon):
         """Find the index of the nearest vertex to a point

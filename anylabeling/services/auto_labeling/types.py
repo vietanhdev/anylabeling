@@ -4,7 +4,8 @@ class AutoLabelingResult:
 
         Args:
             shapes (List[Shape]): List of shapes to add to the canvas.
-            replace (bool, optional): Replaces all current shapes with new shapes. Defaults to True.
+            replace (bool, optional): Replaces all current shapes with
+            new shapes. Defaults to True.
         """
 
         self.shapes = shapes
