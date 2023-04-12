@@ -38,6 +38,8 @@ class YOLOv5(Model):
             raise Exception(f"Model not found: {model_abs_path}")
 
         self.net = cv2.dnn.readNet(model_abs_path)
+        self.net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
+        self.net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
         self.classes = self.config["classes"]
 
     def pre_process(self, input_image, net):
