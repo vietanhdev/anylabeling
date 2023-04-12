@@ -54,11 +54,13 @@ class SegmentAnything(Model):
             raise Exception(f"Decoder not found: {decoder_model_abs_path}")
 
         # Load models
+        cuda = True if onnxruntime.get_device() == 'GPU' else False
+        providers = ['CUDAExecutionProvider', 'CPUExecutionProvider'] if cuda else ['CPUExecutionProvider']
         self.encoder_session = onnxruntime.InferenceSession(
-            encoder_model_abs_path
+            encoder_model_abs_path, providers=providers
         )
         self.decoder_session = onnxruntime.InferenceSession(
-            decoder_model_abs_path
+            decoder_model_abs_path, providers=providers
         )
 
         # Mark for auto labeling
