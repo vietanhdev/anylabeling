@@ -32,11 +32,12 @@ def get_default_config():
     with pkg_resources.open_text(anylabeling_configs, config_file) as f:
         config = yaml.safe_load(f)
 
-    # save default config to ~/.labelmerc
-    user_config_file = osp.join(osp.expanduser("~"), ".labelmerc")
+    # save default config to ~/.anylabelingrc
+    user_config_file = osp.join(osp.expanduser("~"), ".anylabelingrc")
     if not osp.exists(user_config_file):
         try:
-            shutil.copy(config_file, user_config_file)
+            with open(user_config_file, "w") as f:
+                yaml.safe_dump(config, f)
         except Exception:
             logger.warning("Failed to save config: %s", user_config_file)
 

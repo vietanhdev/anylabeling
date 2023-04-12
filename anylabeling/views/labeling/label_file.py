@@ -6,7 +6,7 @@ import os.path as osp
 
 import PIL.Image
 
-from . import __version__, utils
+from . import utils
 from .logger import logger
 
 PIL.Image.MAX_IMAGE_PIXELS = None
@@ -81,19 +81,6 @@ class LabelFile:
             if version is None:
                 logger.warning(
                     "Loading JSON file (%s) of unknown version", filename
-                )
-            elif (
-                version.split(".")[0] != __version__.split(".", maxsplit=1)[0]
-            ):
-                logger.warning(
-                    (
-                        "This JSON file (%s) may be incompatible with "
-                        "current labelme. version in file: %s, "
-                        "current version: %s"
-                    ),
-                    filename,
-                    version,
-                    __version__,
                 )
 
             if data["imageData"] is not None:

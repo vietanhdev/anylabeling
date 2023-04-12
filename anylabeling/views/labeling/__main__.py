@@ -1,3 +1,5 @@
+__appname__ = "AnyLabeling"
+
 import argparse
 import codecs
 import logging
@@ -8,7 +10,6 @@ import sys
 import yaml
 from PyQt5 import QtCore, QtWidgets
 
-from . import __appname__, __version__
 from .config import get_config
 from .label_widget import MainWindow
 from .logger import logger
@@ -17,9 +18,6 @@ from .utils import new_icon
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--version", "-V", action="store_true", help="show version"
-    )
     parser.add_argument(
         "--reset-config", action="store_true", help="reset qt config"
     )
@@ -39,7 +37,7 @@ def main():
             "recognized as file, else as directory)"
         ),
     )
-    default_config_file = os.path.join(os.path.expanduser("~"), ".labelmerc")
+    default_config_file = os.path.join(os.path.expanduser("~"), ".anylabelingrc")
     parser.add_argument(
         "--config",
         dest="config",
@@ -110,10 +108,6 @@ def main():
     )
     args = parser.parse_args()
 
-    if args.version:
-        print(f"{__appname__} {__version__}")
-        sys.exit(0)
-
     logger.setLevel(getattr(logging, args.logger_level.upper()))
 
     if hasattr(args, "flags"):
@@ -149,7 +143,7 @@ def main():
         logger.error(
             "--labels must be specified with --validatelabel or "
             "validate_label: true in the config file "
-            "(ex. ~/.labelmerc)."
+            "(ex. ~/.anylabelingrc)."
         )
         sys.exit(1)
 

@@ -29,9 +29,9 @@ class YOLOv5(Model):
         ]
         buttons = ["button_run"]
 
-    def __init__(self, model_config) -> None:
+    def __init__(self, model_config, on_message) -> None:
         # Run the parent class's init method
-        super().__init__(model_config)
+        super().__init__(model_config, on_message)
 
         model_abs_path = self.get_model_abs_path(self.config["model_path"])
         if not os.path.isfile(model_abs_path):

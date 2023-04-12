@@ -1,4 +1,4 @@
-"""This module defines labelme widget, where all labeling happens"""
+__appname__ = "AnyLabeling"
 
 import functools
 import html
@@ -21,7 +21,7 @@ from PyQt5.QtWidgets import (
     QWhatsThis,
 )
 
-from . import __appname__, utils
+from . import utils
 from .config import get_config
 from .label_file import LabelFile, LabelFileError
 from .logger import logger
@@ -76,7 +76,7 @@ class LabelmeWidget(LabelDialog):
         self.label_file = None
         self.other_data = {}
 
-        # see configs/labelme_config.yaml for valid configuration
+        # see configs/anylabeling_config.yaml for valid configuration
         if config is None:
             config = get_config()
         self._config = config
@@ -974,7 +974,7 @@ class LabelmeWidget(LabelDialog):
 
         # XXX: Could be completely declarative.
         # Restore application settings.
-        self.settings = QtCore.QSettings("labelme", "labelme")
+        self.settings = QtCore.QSettings("anylabeling", "anylabeling")
         self.recent_files = self.settings.value("recent_files", []) or []
         size = self.settings.value("window/size", QtCore.QSize(600, 500))
         position = self.settings.value("window/position", QtCore.QPoint(0, 0))

@@ -4,3 +4,4 @@ __pycache__
 *.egg-info
 anylabeling/data
 /data
+/dist

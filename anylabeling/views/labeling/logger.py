@@ -9,8 +9,6 @@ if os.name == "nt":  # Windows
 
     colorama.init()
 
-from . import __appname__
-
 COLORS = {
     "WARNING": "yellow",
     "INFO": "white",
@@ -64,5 +62,5 @@ class ColoredLogger(logging.Logger):
         self.addHandler(console)
 
 
-logger = logging.getLogger(__appname__)
+logger = logging.getLogger("AnyLabeling")
 logger.__class__ = ColoredLogger

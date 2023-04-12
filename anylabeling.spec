@@ -12,8 +12,8 @@ a = Analysis(
     pathex=['anylabeling'],
     binaries=[],
     datas=[
-       ('anylabeling/configs/anylabeling_config.yaml', 'anylabeling/views/labeling/labelme/config'),
-       ('anylabeling/views/labeling/labelme/icons/*', 'anylabeling/views/labeling/labelme/icons'),
+       ('anylabeling/configs/*', 'anylabeling/views/labeling/config'),
+       ('anylabeling/views/labeling/icons/*', 'anylabeling/views/labeling/icons'),
     ],
     hiddenimports=[],
     hookspath=[],

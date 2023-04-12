@@ -11,8 +11,11 @@
 [![open issues](https://isitmaintained.com/badge/open/vietanhdev/anylabeling.svg)](https://github.com/vietanhdev/anylabeling/issues)
 [![Pypi Downloads](https://pepy.tech/badge/anylabeling)](https://pypi.org/project/anylabeling/)
 
-[![AnyLabeling 0.0.2](https://img.youtube.com/vi/5iQSGL7ebXE/0.jpg)](https://www.youtube.com/watch?v=5iQSGL7ebXE)
+<a href="https://www.youtube.com/watch?v=5iQSGL7ebXE">
+  <img alt="AnyLabeling" src="https://user-images.githubusercontent.com/18329471/231320488-2f8133bc-6b51-48f8-82a6-dd3b267f5156.png"/>
+</a>
 
+**Youtube Demo:** [https://www.youtube.com/watch?v=5iQSGL7ebXE](https://www.youtube.com/watch?v=5iQSGL7ebXE)
 
 ## I. Install and run
 

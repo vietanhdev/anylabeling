@@ -17,7 +17,8 @@ class Model:
         required_config_names = []
         buttons = ["button_run"]
 
-    def __init__(self, model_config) -> None:
+    def __init__(self, model_config, on_message) -> None:
+        self.on_message = on_message
         # Load and check config
         if isinstance(model_config, str):
             if not os.path.isfile(model_config):
@@ -50,6 +51,9 @@ class Model:
 
         # Try download model from url
         if model_path.startswith("anylabeling_assets/"):
+            self.on_message(
+                "Downloading model from model registry. This may take a while..."
+            )
             relative_path = model_path.replace("anylabeling_assets/", "")
             download_url = self.BASE_DOWNLOAD_URL + relative_path
             model_abs_path = os.path.join(
@@ -65,9 +69,18 @@ class Model:
             logging.info(
                 f"Downloading model from {download_url} to {model_abs_path}"
             )
-            data = urllib.request.urlopen(download_url).read()
-            with open(model_abs_path, "wb") as f:
-                f.write(data)
+
+            try:
+                data = urllib.request.urlopen(download_url).read()
+                with open(model_abs_path, "wb") as f:
+                    f.write(data)
+            except Exception as e:
+                self.on_message(
+                    f"Could not downloading model from {download_url}"
+                )
+                raise Exception(
+                    f"Could not downloading model from {download_url}: {e}"
+                )
 
             return model_abs_path
 

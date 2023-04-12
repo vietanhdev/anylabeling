@@ -33,9 +33,9 @@ class SegmentAnything(Model):
             "button_finish_object",
         ]
 
-    def __init__(self, config_path) -> None:
+    def __init__(self, config_path, on_message) -> None:
         # Run the parent class's init method
-        super().__init__(config_path)
+        super().__init__(config_path, on_message)
         self.input_size = self.config["input_size"]
         self.max_width = self.config["max_width"]
         self.max_height = self.config["max_height"]
