@@ -168,7 +168,7 @@ class LabelFile:
         if flags is None:
             flags = {}
         data = dict(
-            version=__version__,
+            #version=__version__,
             flags=flags,
             shapes=shapes,
             imagePath=image_path,
