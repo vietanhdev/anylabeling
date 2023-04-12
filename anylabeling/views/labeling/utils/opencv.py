@@ -1,5 +1,5 @@
-from PyQt5 import QtGui
 import qimage2ndarray
+from PyQt5 import QtGui
 
 
 def qt_img_to_cv_img(in_image):

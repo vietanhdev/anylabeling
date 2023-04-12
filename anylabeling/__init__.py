@@ -1,2 +1,1 @@
-__appname__ = "AnyLabeling"
-__version__ = "0.0.9"
+from .app_info import *

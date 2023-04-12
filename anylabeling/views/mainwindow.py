@@ -1,15 +1,8 @@
 """This module defines the main application window"""
 
-from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import (
-    QHBoxLayout,
-    QLabel,
-    QMainWindow,
-    QStatusBar,
-    QVBoxLayout,
-    QWidget,
-)
+from PyQt5.QtWidgets import QMainWindow, QStatusBar, QVBoxLayout, QWidget
 
+from ..app_info import __appdescription__, __appname__
 from .labeling.label_wrapper import LabelingWrapper
 
 
@@ -21,7 +14,7 @@ class MainWindow(QMainWindow):
         self.app = app
 
         self.setContentsMargins(0, 0, 0, 0)
-        self.setWindowTitle("AnyLabeling")
+        self.setWindowTitle(__appname__)
 
         main_layout = QVBoxLayout()
         main_layout.setContentsMargins(10, 10, 10, 10)
@@ -32,7 +25,5 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(widget)
 
         status_bar = QStatusBar()
-        status_bar.showMessage(
-            "AnyLabeling - Effortless data labeling with AI support"
-        )
+        status_bar.showMessage(f"{__appname__} - {__appdescription__}")
         self.setStatusBar(status_bar)

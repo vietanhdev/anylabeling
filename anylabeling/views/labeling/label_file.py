@@ -6,6 +6,7 @@ import os.path as osp
 
 import PIL.Image
 
+from ...app_info import __version__
 from . import utils
 from .logger import logger
 

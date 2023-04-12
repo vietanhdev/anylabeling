@@ -1,9 +1,8 @@
 import os
 
-from PyQt5 import uic
-from PyQt5.QtWidgets import QWidget
+from PyQt5 import QtGui, uic
 from PyQt5.QtCore import pyqtSignal, pyqtSlot
-from PyQt5 import QtGui
+from PyQt5.QtWidgets import QWidget
 
 from anylabeling.services.auto_labeling.model_manager import ModelManager
 from anylabeling.services.auto_labeling.types import AutoLabelingMode
@@ -95,8 +94,12 @@ class AutoLabelingWidget(QWidget):
             self.on_model_select_combobox_changed
         )
 
+        self.auto_labeling_mode_changed.connect(self.update_button_colors)
+        self.auto_labeling_mode = AutoLabelingMode.NONE
+        self.auto_labeling_mode_changed.emit(self.auto_labeling_mode)
+
     @pyqtSlot()
-    def update_button_colors(self, auto_labeling_mode):
+    def update_button_colors(self):
         """Update button colors"""
         style_sheet = """
             text-align: center;
@@ -114,26 +117,33 @@ class AutoLabelingWidget(QWidget):
             self.button_finish_object,
         ]:
             button.setStyleSheet(style_sheet + "background-color: #ffffff;")
-        if auto_labeling_mode.edit_mode == AutoLabelingMode.ADD:
-            if auto_labeling_mode.shape_type == AutoLabelingMode.POINT:
+        if self.auto_labeling_mode == AutoLabelingMode.NONE:
+            return
+        if self.auto_labeling_mode.edit_mode == AutoLabelingMode.ADD:
+            if self.auto_labeling_mode.shape_type == AutoLabelingMode.POINT:
                 self.button_add_point.setStyleSheet(
                     style_sheet + "background-color: #00ff00;"
                 )
-            elif auto_labeling_mode.shape_type == AutoLabelingMode.RECTANGLE:
+            elif (
+                self.auto_labeling_mode.shape_type
+                == AutoLabelingMode.RECTANGLE
+            ):
                 self.button_add_rect.setStyleSheet(
                     style_sheet + "background-color: #00ff00;"
                 )
-        elif auto_labeling_mode.edit_mode == AutoLabelingMode.REMOVE:
-            if auto_labeling_mode.shape_type == AutoLabelingMode.POINT:
+        elif self.auto_labeling_mode.edit_mode == AutoLabelingMode.REMOVE:
+            if self.auto_labeling_mode.shape_type == AutoLabelingMode.POINT:
                 self.button_remove_point.setStyleSheet(
                     style_sheet + "background-color: #ff0000;"
                 )
 
-    def set_auto_labeling_mode(self, edit_mode, shape_type):
+    def set_auto_labeling_mode(self, edit_mode, shape_type=None):
         """Set auto labeling mode"""
-        self.auto_labeling_mode_changed.emit(
-            AutoLabelingMode(edit_mode, shape_type)
-        )
+        if edit_mode is None:
+            self.auto_labeling_mode = AutoLabelingMode.NONE
+        else:
+            self.auto_labeling_mode = AutoLabelingMode(edit_mode, shape_type)
+        self.auto_labeling_mode_changed.emit(self.auto_labeling_mode)
 
     def run_prediction(self):
         """Run prediction"""

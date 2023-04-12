@@ -4,10 +4,10 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QWheelEvent
 
+from anylabeling.services.auto_labeling.types import AutoLabelingMode
+
 from .. import utils
 from ..shape import Shape
-
-from anylabeling.services.auto_labeling.types import AutoLabelingMode
 
 CURSOR_DEFAULT = QtCore.Qt.ArrowCursor
 CURSOR_POINT = QtCore.Qt.PointingHandCursor
@@ -33,7 +33,6 @@ class Canvas(
     drawing_polygon = QtCore.pyqtSignal(bool)
     vertex_selected = QtCore.pyqtSignal(bool)
     auto_labeling_marks_updated = QtCore.pyqtSignal(list)
-    auto_labeling_mode_changed = QtCore.pyqtSignal(AutoLabelingMode)
 
     CREATE, EDIT = 0, 1
 
@@ -99,11 +98,14 @@ class Canvas(
 
     def set_auto_labeling_mode(self, mode: AutoLabelingMode):
         """Set auto labeling mode"""
-        self.is_auto_labeling = True
-        self.auto_labeling_mode = mode
-        self.create_mode = mode.shape_type
-        self.parent.toggle_draw_mode(False, mode.shape_type)
-        self.auto_labeling_mode_changed.emit(mode)
+        if mode == AutoLabelingMode.NONE:
+            self.is_auto_labeling = False
+            self.auto_labeling_mode = mode
+        else:
+            self.is_auto_labeling = True
+            self.auto_labeling_mode = mode
+            self.create_mode = mode.shape_type
+            self.parent.toggle_draw_mode(False, mode.shape_type)
 
     def fill_drawing(self):
         """Get option to fill shapes by color"""
@@ -198,14 +200,8 @@ class Canvas(
         """Set auto labeling mode"""
         self.is_auto_labeling = value
         if self.auto_labeling_mode is None:
-            self.auto_labeling_mode = AutoLabelingMode.get_default_mode()
-            self.parent.toggle_draw_mode(
-                False, self.auto_labeling_mode.shape_type
-            )
-        if not self.auto_labeling_mode:
-            self.auto_labeling_mode_changed.emit(None)
-        else:
-            self.auto_labeling_mode_changed.emit(self.auto_labeling_mode)
+            self.auto_labeling_mode = AutoLabelingMode.NONE
+            self.parent.toggle_draw_mode(False, "rectangle")
 
     def get_mode(self):
         """Get current mode"""
@@ -869,6 +865,16 @@ class Canvas(
         if self.is_auto_labeling:
             self.current.label = self.auto_labeling_mode.edit_mode
         self.current.close()
+        # Sort tl -> br for rectangle
+        if self.current.shape_type == "rectangle":
+            x_min = min(self.current.points[0].x(), self.current.points[1].x())
+            y_min = min(self.current.points[0].y(), self.current.points[1].y())
+            x_max = max(self.current.points[0].x(), self.current.points[1].x())
+            y_max = max(self.current.points[0].y(), self.current.points[1].y())
+            self.current.points = [
+                QtCore.QPointF(x_min, y_min),
+                QtCore.QPointF(x_max, y_max),
+            ]
         self.shapes.append(self.current)
         self.store_shapes()
         self.current = None

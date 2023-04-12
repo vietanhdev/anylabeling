@@ -12,7 +12,6 @@ class AutoLabelingResult:
 
 
 class AutoLabelingMode:
-    NONE = None
     OBJECT = "AUTOLABEL_OBJECT"
     ADD = "AUTOLABEL_ADD"
     REMOVE = "AUTOLABEL_REMOVE"
@@ -43,3 +42,6 @@ class AutoLabelingMode:
             self.edit_mode == other.edit_mode
             and self.shape_type == other.shape_type
         )
+
+
+AutoLabelingMode.NONE = AutoLabelingMode(None, None)

@@ -1,8 +1,9 @@
-from abc import abstractmethod
 import logging
 import os
 import pathlib
 import urllib.request
+from abc import abstractmethod
+
 import yaml
 
 from .types import AutoLabelingResult
@@ -52,12 +53,14 @@ class Model:
         # Try download model from url
         if model_path.startswith("anylabeling_assets/"):
             self.on_message(
-                "Downloading model from model registry. This may take a while..."
+                "Downloading model from model registry. This may take a"
+                " while..."
             )
             relative_path = model_path.replace("anylabeling_assets/", "")
             download_url = self.BASE_DOWNLOAD_URL + relative_path
-            model_abs_path = os.path.join(
-                os.path.abspath("data"), relative_path
+            home_dir = os.path.expanduser("~")
+            model_abs_path = os.path.abspath(
+                os.path.join(home_dir, "data", relative_path)
             )
             if os.path.exists(model_abs_path):
                 return model_abs_path

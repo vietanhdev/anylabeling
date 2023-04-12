@@ -7,6 +7,7 @@ from PyQt5 import QtCore
 
 from anylabeling.views.labeling.shape import Shape
 from anylabeling.views.labeling.utils.opencv import qt_img_to_cv_img
+
 from .model import Model
 from .types import AutoLabelingResult
 

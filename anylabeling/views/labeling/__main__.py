@@ -1,5 +1,3 @@
-__appname__ = "AnyLabeling"
-
 import argparse
 import codecs
 import logging
@@ -10,6 +8,7 @@ import sys
 import yaml
 from PyQt5 import QtCore, QtWidgets
 
+from ...app_info import __appname__
 from .config import get_config
 from .label_widget import MainWindow
 from .logger import logger
@@ -37,7 +36,9 @@ def main():
             "recognized as file, else as directory)"
         ),
     )
-    default_config_file = os.path.join(os.path.expanduser("~"), ".anylabelingrc")
+    default_config_file = os.path.join(
+        os.path.expanduser("~"), ".anylabelingrc"
+    )
     parser.add_argument(
         "--config",
         dest="config",
