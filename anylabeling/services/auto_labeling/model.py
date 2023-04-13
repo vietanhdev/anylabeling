@@ -60,11 +60,11 @@ class Model:
             download_url = self.BASE_DOWNLOAD_URL + relative_path
             home_dir = os.path.expanduser("~")
             model_abs_path = os.path.abspath(
-                os.path.join(home_dir, "data", relative_path)
+                os.path.join(home_dir, "anylabeling_data", relative_path)
             )
             if os.path.exists(model_abs_path):
                 return model_abs_path
-            pathlib.Path(os.path.dirname(model_abs_path)).mkdir(
+            pathlib.Path(model_abs_path).parent.mkdir(
                 parents=True, exist_ok=True
             )
 
