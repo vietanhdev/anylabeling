@@ -21,17 +21,12 @@ def get_install_requires():
     """Get python requirements based on context"""
     install_requires = [
         "imgviz>=0.11",
-        "matplotlib<3.3",  # for PyInstaller
         "natsort>=7.1.0",
         "numpy",
         "Pillow>=2.8",
         "PyYAML",
         "termcolor",
-        "pyqtgraph",
-        "pandas",
-        "psutil",
         "opencv-python-headless",
-        "imutils",
         'PyQt5>=5.15.7; platform_system != "Darwin"',
         "onnx==1.13.1",
         "onnxruntime==1.14.1",
