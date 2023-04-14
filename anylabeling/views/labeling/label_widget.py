@@ -1154,7 +1154,18 @@ class LabelmeWidget(LabelDialog):
         self.actions.undo.setEnabled(not drawing)
         self.actions.delete.setEnabled(not drawing)
 
-    def toggle_draw_mode(self, edit=True, create_mode="rectangle"):
+    def toggle_draw_mode(
+        self, edit=True, create_mode="rectangle", disable_auto_labeling=True
+    ):
+        # Disable auto labeling if needed
+        if (
+            disable_auto_labeling
+            and self.auto_labeling_widget.auto_labeling_mode
+            != AutoLabelingMode.NONE
+        ):
+            self.clear_auto_labeling_marks()
+            self.auto_labeling_widget.set_auto_labeling_mode(None)
+
         self.canvas.set_editing(edit)
         self.canvas.create_mode = create_mode
         if edit:
@@ -1370,7 +1381,15 @@ class LabelmeWidget(LabelDialog):
             self.unique_label_list.addItem(item)
             rgb = self._get_rgb_by_label(shape.label)
             self.unique_label_list.set_item_label(item, shape.label, rgb)
-        self.label_dialog.add_label_history(shape.label)
+
+        # Add label to history if it is not a special label
+        if shape.label not in [
+            AutoLabelingMode.OBJECT,
+            AutoLabelingMode.ADD,
+            AutoLabelingMode.REMOVE,
+        ]:
+            self.label_dialog.add_label_history(shape.label)
+
         for action in self.actions.on_shapes_present:
             action.setEnabled(True)
 
@@ -1602,7 +1621,11 @@ class LabelmeWidget(LabelDialog):
             AutoLabelingMode.REMOVE,
         ]:
             text = self.canvas.shapes[-1].label
-        elif self._config["display_label_popup"] or not text:
+        elif (
+            self._config["display_label_popup"]
+            or not text
+            or self.canvas.shapes[-1].label == AutoLabelingMode.OBJECT
+        ):
             previous_text = self.label_dialog.edit.text()
             text, flags, group_id = self.label_dialog.pop_up(text)
             if not text:
@@ -1616,10 +1639,13 @@ class LabelmeWidget(LabelDialog):
                 ),
             )
             text = ""
+            return
+
         if text:
             self.label_list.clearSelection()
             shape = self.canvas.set_last_label(text, flags)
             shape.group_id = group_id
+            shape.label = text
             self.add_label(shape)
             self.actions.edit_mode.setEnabled(True)
             self.actions.undo_last_point.setEnabled(False)
@@ -2429,6 +2455,15 @@ class LabelmeWidget(LabelDialog):
         ]
         self.canvas.update()
 
+    def find_last_label(self):
+        """
+        Find the last label in the label list.
+        Exclude labels for auto labeling.
+        """
+
+        # TODO(vietanhdev): Implement this
+        return ""
+
     def finish_auto_labeling_object(self):
         """Finish auto labeling object."""
         has_object = False
@@ -2442,13 +2477,15 @@ class LabelmeWidget(LabelDialog):
             return
 
         # Ask a label for the object
+        previous_text = self.label_dialog.edit.text()
         text, flags, group_id = self.label_dialog.pop_up(
-            text="",
+            text=self.find_last_label(),
             flags={},
             group_id=None,
         )
-        if text is None:
-            return
+        if not text:
+            self.label_dialog.edit.setText(previous_text)
+
         if not self.validate_label(text):
             self.error_message(
                 self.tr("Invalid label"),

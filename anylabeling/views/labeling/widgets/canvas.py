@@ -105,7 +105,9 @@ class Canvas(
             self.is_auto_labeling = True
             self.auto_labeling_mode = mode
             self.create_mode = mode.shape_type
-            self.parent.toggle_draw_mode(False, mode.shape_type)
+            self.parent.toggle_draw_mode(
+                False, mode.shape_type, disable_auto_labeling=False
+            )
 
     def fill_drawing(self):
         """Get option to fill shapes by color"""
@@ -201,7 +203,9 @@ class Canvas(
         self.is_auto_labeling = value
         if self.auto_labeling_mode is None:
             self.auto_labeling_mode = AutoLabelingMode.NONE
-            self.parent.toggle_draw_mode(False, "rectangle")
+            self.parent.toggle_draw_mode(
+                False, "rectangle", disable_auto_labeling=True
+            )
 
     def get_mode(self):
         """Get current mode"""
@@ -865,8 +869,14 @@ class Canvas(
     def finalise(self):
         """Finish drawing for a shape"""
         assert self.current
-        if self.is_auto_labeling:
+        if (
+            self.is_auto_labeling
+            and self.auto_labeling_mode != AutoLabelingMode.NONE
+        ):
             self.current.label = self.auto_labeling_mode.edit_mode
+        # TODO(vietanhdev): Temporrally fix. Need to refactor
+        if self.current.label is None:
+            self.current.label = ""
         self.current.close()
         # Sort tl -> br for rectangle
         if self.current.shape_type == "rectangle":
