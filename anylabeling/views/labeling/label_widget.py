@@ -2460,8 +2460,14 @@ class LabelmeWidget(LabelDialog):
         Find the last label in the label list.
         Exclude labels for auto labeling.
         """
-
-        # TODO(vietanhdev): Implement this
+        for item in reversed(self.label_list):
+            shape = item.data(Qt.UserRole)
+            if shape.label not in [
+                AutoLabelingMode.OBJECT,
+                AutoLabelingMode.ADD,
+                AutoLabelingMode.REMOVE,
+            ]:
+                return shape.label
         return ""
 
     def finish_auto_labeling_object(self):
