@@ -57,7 +57,14 @@ class Model:
                 " while..."
             )
             relative_path = model_path.replace("anylabeling_assets/", "")
-            download_url = self.BASE_DOWNLOAD_URL + relative_path.replace("models/yolov5/","").replace("models/segment_anything/","")
+            
+            if relative_path.startswith("models/segment_anything/"):
+                download_url = self.BASE_DOWNLOAD_URL + relative_path.replace("models/segment_anything/","")
+            elif relative_path.startswith("models/yolov5/"):
+                download_url = self.BASE_DOWNLOAD_URL + relative_path.replace("models/yolov5/","")
+            else:
+                download_url = self.BASE_DOWNLOAD_URL + relative_path.replace("models/yolov8/","")
+            
             home_dir = os.path.expanduser("~")
             model_abs_path = os.path.abspath(
                 os.path.join(home_dir, "anylabeling_data", relative_path)
