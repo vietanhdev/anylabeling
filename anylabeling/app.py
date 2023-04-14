@@ -1,7 +1,6 @@
 import os
 import sys
 
-import pyqtgraph as pg
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtWidgets import QApplication
 
@@ -21,10 +20,6 @@ def main():
     QtWidgets.QApplication.setAttribute(
         QtCore.Qt.AA_UseHighDpiPixmaps, True
     )  # use highdpi icons
-
-    # Setup pyqtgraph default bg/fg colors
-    pg.setConfigOption("background", "w")
-    pg.setConfigOption("foreground", "k")
 
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_ShareOpenGLContexts)
     app = QApplication(sys.argv)
