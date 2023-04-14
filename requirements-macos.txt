@@ -1,4 +1,4 @@
-opencv-contrib-python-headless==4.5.5.62
+opencv-contrib-python-headless==4.7.0.68
 # PyQt5==5.15.6 # Use Miniconda/Anaconda: conda install -c conda-forge pyqt
 imgviz==1.5.0
 natsort==8.1.0
@@ -8,4 +8,5 @@ PyYAML==6.0
 colorama==0.4.5
 onnx==1.13.1
 onnxruntime==1.14.1
+onnxruntime-gpu==1.14.1
 qimage2ndarray==1.10.0

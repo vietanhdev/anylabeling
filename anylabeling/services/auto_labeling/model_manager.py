@@ -33,7 +33,6 @@ class ModelManager(QObject):
         "yolov8x": "autolabel_yolov8x.yaml",
     }
 
-
     def __init__(self):
         super().__init__()
         self.model_infos = {}
@@ -113,7 +112,6 @@ class ModelManager(QObject):
             self.auto_segmentation_model_unselected.emit()
 
         model_info = copy.deepcopy(self.model_infos[model_name])
-
         if model_info["type"] == "yolov5":
             from .yolov5 import YOLOv5
         

@@ -14,3 +14,8 @@ exclude = '''
   | dist
 )/
 '''
+
+[build-system]
+requires = ["setuptools", "wheel", "onnxruntime-gpu"]
+build-backend = "setuptools.build_meta"
+
