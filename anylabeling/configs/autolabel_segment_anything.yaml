@@ -1,8 +1,8 @@
 type: segment_anything
-name: segment_anything_vit_b
+name: segment_anything_vit_b-r20230415
 display_name: Segment Anything (ViT-B)
-encoder_model_path: anylabeling_assets/models/segment_anything/vit_b-encoder-quant.onnx
-decoder_model_path: anylabeling_assets/models/segment_anything/vit_b-decoder-quant.onnx
+encoder_model_path: https://github.com/vietanhdev/anylabeling-assets/releases/download/v0.0.1/vit_b-encoder-quant.onnx
+decoder_model_path: https://github.com/vietanhdev/anylabeling-assets/releases/download/v0.0.1/vit_b-decoder-quant.onnx
 input_size: 1024
 max_width: 1024
 max_height: 682

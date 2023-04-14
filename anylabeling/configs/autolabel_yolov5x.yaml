@@ -1,7 +1,7 @@
 type: yolov5
-name: yolov5x
+name: yolov5x-r20230415
 display_name: YOLOv5x Ultralytics
-model_path: anylabeling_assets/models/yolov5/yolov5x.onnx
+model_path: https://github.com/vietanhdev/anylabeling-assets/releases/download/v0.0.1/yolov5x.onnx
 input_width: 640
 input_height: 640
 score_threshold: 0.5

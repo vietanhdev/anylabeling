@@ -1,7 +1,7 @@
 type: yolov8
-name: yolov8s
+name: yolov8s-r20230415
 display_name: YOLOv8s Ultralytics
-model_path: anylabeling_assets/models/yolov8/yolov8s.onnx
+model_path: https://github.com/vietanhdev/anylabeling-assets/releases/download/v0.0.1/yolov8s.onnx
 input_width: 640
 input_height: 640
 score_threshold: 0.5

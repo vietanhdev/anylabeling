@@ -11,7 +11,7 @@ from .types import AutoLabelingResult
 
 class Model:
     BASE_DOWNLOAD_URL = (
-        "https://github.com/vietanhdev/anylabeling-assets/releases/download/v0.0.1/"
+        "https://github.com/vietanhdev/anylabeling-assets/raw/main/"
     )
 
     class Meta:
@@ -41,7 +41,7 @@ class Model:
         """
         return self.Meta.buttons
 
-    def get_model_abs_path(self, model_path):
+    def get_model_abs_path(self, model_path, model_folder_name):
         """
         Get model absolute path from config path or download from url
         """
@@ -50,51 +50,68 @@ class Model:
         if os.path.exists(model_abs_path):
             return model_abs_path
 
-        # Try download model from url
+        self.on_message(
+            "Downloading model from model registry. This may take a while..."
+        )
+
+        # Build download url
+        filename = os.path.basename(model_path)
         if model_path.startswith("anylabeling_assets/"):
-            self.on_message(
-                "Downloading model from model registry. This may take a"
-                " while..."
+            download_url = (
+                self.BASE_DOWNLOAD_URL
+                + model_path[len("anylabeling_assets/") :]
             )
-            relative_path = model_path.replace("anylabeling_assets/", "")
-            
-            if relative_path.startswith("models/segment_anything/"):
-                download_url = self.BASE_DOWNLOAD_URL + relative_path.replace("models/segment_anything/","")
-            elif relative_path.startswith("models/yolov5/"):
-                download_url = self.BASE_DOWNLOAD_URL + relative_path.replace("models/yolov5/","")
-            else:
-                download_url = self.BASE_DOWNLOAD_URL + relative_path.replace("models/yolov8/","")
-            
-            home_dir = os.path.expanduser("~")
-            model_abs_path = os.path.abspath(
-                os.path.join(home_dir, "anylabeling_data", relative_path)
-            )
-            if os.path.exists(model_abs_path):
-                return model_abs_path
-            pathlib.Path(model_abs_path).parent.mkdir(
-                parents=True, exist_ok=True
+        elif model_path.startswith(("http://", "https://")):
+            download_url = model_path
+        else:
+            raise Exception(
+                f"Unknown model path: {model_path}. "
+                "Model path must start with anylabeling_assets/ or "
+                "http:// or https://"
             )
 
-            # Download model from url
-            logging.info(
-                f"Downloading model from {download_url} to {model_abs_path}"
+        # Create model folder
+        home_dir = os.path.expanduser("~")
+        model_abs_path = os.path.abspath(
+            os.path.join(
+                home_dir,
+                "anylabeling_data",
+                "models",
+                model_folder_name,
+                filename,
             )
-
-            try:
-                data = urllib.request.urlopen(download_url).read()
-                with open(model_abs_path, "wb") as f:
-                    f.write(data)
-            except Exception as e:  # noqa
-                self.on_message(
-                    f"Could not downloading model from {download_url}"
-                )
-                raise Exception(
-                    f"Could not downloading model from {download_url}: {e}"
-                ) from e
-
+        )
+        if os.path.exists(model_abs_path):
             return model_abs_path
+        pathlib.Path(model_abs_path).parent.mkdir(parents=True, exist_ok=True)
 
-        return None
+        # Download model from url
+        ellipsis_download_url = download_url
+        if len(download_url) > 40:
+            ellipsis_download_url = (
+                download_url[:20] + "..." + download_url[-20:]
+            )
+        logging.info(
+            f"Downloading model from {ellipsis_download_url} to {model_abs_path}"
+        )
+        try:
+            # Download and show progress
+            def _progress(count, block_size, total_size):
+                percent = int(count * block_size * 100 / total_size)
+                self.on_message(
+                    f"Downloading model from {ellipsis_download_url}: {percent}%"
+                )
+
+            urllib.request.urlretrieve(
+                download_url, model_abs_path, reporthook=_progress
+            )
+        except Exception as e:  # noqa
+            self.on_message(f"Could not download model from {download_url}")
+            raise Exception(
+                f"Could not download model from {download_url}: {e}"
+            ) from e
+
+        return model_abs_path
 
     def check_missing_config(self, config_names, config):
         """

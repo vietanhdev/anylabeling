@@ -34,7 +34,9 @@ class YOLOv8(Model):
         # Run the parent class's init method
         super().__init__(model_config, on_message)
 
-        model_abs_path = self.get_model_abs_path(self.config["model_path"])
+        model_abs_path = self.get_model_abs_path(
+            self.config["model_path"], self.config["name"]
+        )
         if not os.path.isfile(model_abs_path):
             raise Exception(f"Model not found: {model_abs_path}")
 
@@ -89,22 +91,22 @@ class YOLOv8(Model):
         for r in range(rows):
             row = outputs[0][r]
             classes_scores = row[4:]
-            
+
             # Get the index of max class score and confidence.
             _, confidence, _, (_, class_id) = cv2.minMaxLoc(classes_scores)
-        
+
             # Discard confidence lower than threshold
-            if  confidence >= self.config["confidence_threshold"]:
+            if confidence >= self.config["confidence_threshold"]:
                 confidences.append(confidence)
                 class_ids.append(class_id)
-        
+
                 cx, cy, w, h = row[0], row[1], row[2], row[3]
-        
+
                 left = int((cx - w / 2) * x_factor)
                 top = int((cy - h / 2) * y_factor)
                 width = int(w * x_factor)
                 height = int(h * y_factor)
-                
+
                 box = np.array([left, top, width, height])
                 boxes.append(box)
 

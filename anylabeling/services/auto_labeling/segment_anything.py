@@ -43,19 +43,23 @@ class SegmentAnything(Model):
 
         # Get encoder and decoder model paths
         encoder_model_abs_path = self.get_model_abs_path(
-            self.config["encoder_model_path"]
+            self.config["encoder_model_path"], self.config["name"]
         )
         if not os.path.isfile(encoder_model_abs_path):
             raise Exception(f"Encoder not found: {encoder_model_abs_path}")
         decoder_model_abs_path = self.get_model_abs_path(
-            self.config["decoder_model_path"]
+            self.config["decoder_model_path"], self.config["name"]
         )
         if not os.path.isfile(decoder_model_abs_path):
             raise Exception(f"Decoder not found: {decoder_model_abs_path}")
 
         # Load models
-        cuda = True if onnxruntime.get_device() == 'GPU' else False
-        providers = ['CUDAExecutionProvider', 'CPUExecutionProvider'] if cuda else ['CPUExecutionProvider']
+        cuda = True if onnxruntime.get_device() == "GPU" else False
+        providers = (
+            ["CUDAExecutionProvider", "CPUExecutionProvider"]
+            if cuda
+            else ["CPUExecutionProvider"]
+        )
         self.encoder_session = onnxruntime.InferenceSession(
             encoder_model_abs_path, providers=providers
         )
