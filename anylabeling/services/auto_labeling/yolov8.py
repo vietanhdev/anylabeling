@@ -12,8 +12,8 @@ from .model import Model
 from .types import AutoLabelingResult
 
 
-class YOLOv5(Model):
-    """Object detection model using YOLOv5"""
+class YOLOv8(Model):
+    """Object detection model using YOLOv8"""
 
     class Meta:
         required_config_names = [
@@ -60,9 +60,9 @@ class YOLOv5(Model):
         # Sets the input to the network.
         net.setInput(blob)
 
-        # Runs the forward pass to get output of the output layers.
-        output_layers = net.getUnconnectedOutLayersNames()
-        outputs = net.forward(output_layers)
+        # Runs the forward with blob.
+        outputs = net.forward()
+        outputs = np.array([cv2.transpose(outputs[0])])
 
         return outputs
 
@@ -77,7 +77,7 @@ class YOLOv5(Model):
         boxes = []
 
         # Rows.
-        rows = outputs[0].shape[1]
+        rows = outputs.shape[1]
 
         image_height, image_width = input_image.shape[:2]
 
@@ -85,32 +85,28 @@ class YOLOv5(Model):
         x_factor = image_width / self.config["input_width"]
         y_factor = image_height / self.config["input_height"]
 
-        # Iterate through 25200 detections.
+        # Iterate through 8400 rows.
         for r in range(rows):
-            row = outputs[0][0][r]
-            confidence = row[4]
-
-            # Discard bad detections and continue.
-            if confidence >= self.config["confidence_threshold"]:
-                classes_scores = row[5:]
-
-                # Get the index of max class score.
-                class_id = np.argmax(classes_scores)
-
-                #  Continue if the class score is above threshold.
-                if classes_scores[class_id] > self.config["score_threshold"]:
-                    confidences.append(confidence)
-                    class_ids.append(class_id)
-
-                    cx, cy, w, h = row[0], row[1], row[2], row[3]
-
-                    left = int((cx - w / 2) * x_factor)
-                    top = int((cy - h / 2) * y_factor)
-                    width = int(w * x_factor)
-                    height = int(h * y_factor)
-
-                    box = np.array([left, top, width, height])
-                    boxes.append(box)
+            row = outputs[0][r]
+            classes_scores = row[4:]
+            
+            # Get the index of max class score and confidence.
+            _, confidence, _, (_, class_id) = cv2.minMaxLoc(classes_scores)
+        
+            # Discard confidence lower than threshold
+            if  confidence >= self.config["confidence_threshold"]:
+                confidences.append(confidence)
+                class_ids.append(class_id)
+        
+                cx, cy, w, h = row[0], row[1], row[2], row[3]
+        
+                left = int((cx - w / 2) * x_factor)
+                top = int((cy - h / 2) * y_factor)
+                width = int(w * x_factor)
+                height = int(h * y_factor)
+                
+                box = np.array([left, top, width, height])
+                boxes.append(box)
 
         # Perform non maximum suppression to eliminate redundant
         # overlapping boxes with lower confidences.

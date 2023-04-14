@@ -1,6 +1,6 @@
 type: yolov8
 name: yolov8n
-display_name: yolov8n Ultralytics
+display_name: YOLOv8n Ultralytics
 model_path: anylabeling_assets/models/yolov8/yolov8n.onnx
 input_width: 640
 input_height: 640

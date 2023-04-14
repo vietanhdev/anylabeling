@@ -116,14 +116,21 @@ class ModelManager(QObject):
 
         if model_info["type"] == "yolov5":
             from .yolov5 import YOLOv5
-
+        
             model_info["model"] = YOLOv5(
+                model_info, on_message=self.new_model_status.emit
+            )
+            self.auto_segmentation_model_unselected.emit()
+        elif model_info["type"] == "yolov8":
+            from .yolov8 import YOLOv8
+        
+            model_info["model"] = YOLOv8(
                 model_info, on_message=self.new_model_status.emit
             )
             self.auto_segmentation_model_unselected.emit()
         elif model_info["type"] == "segment_anything":
             from .segment_anything import SegmentAnything
-
+        
             model_info["model"] = SegmentAnything(
                 model_info, on_message=self.new_model_status.emit
             )

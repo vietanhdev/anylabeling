@@ -10,30 +10,44 @@ import cv2
 from PIL import Image
 import numpy as np
 from tqdm import tqdm
-net = cv2.dnn.readNetFromONNX("/home/henry/anylabeling_data/models/yolov5/yolov8x.onnx")
+net = cv2.dnn.readNet("/home/henry/anylabeling_data/models/yolov8/yolov8x.onnx")
 #net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
 #net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
 
 
 
 
-config = {'type': 'yolov8', 'name': 'yolov8x', 'display_name': 'YOLOv5n Ultralytics', 'model_path': 'anylabeling_assets/models/yolov5/yolov8x.onnx', 'input_width': 640, 'input_height': 640, 'score_threshold': 0.5, 'nms_threshold': 0.45, 'confidence_threshold': 0.45, 'classes': ['person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus', 'train', 'truck', 'boat', 'traffic light', 'fire hydrant', 'stop sign', 'parking meter', 'bench', 'bird', 'cat', 'dog', 'horse', 'sheep', 'cow', 'elephant', 'bear', 'zebra', 'giraffe', 'backpack', 'umbrella', 'handbag', 'tie', 'suitcase', 'frisbee', 'skis', 'snowboard', 'sports ball', 'kite', 'baseball bat', 'baseball glove', 'skateboard', 'surfboard', 'tennis racket', 'bottle', 'wine glass', 'cup', 'fork', 'knife', 'spoon', 'bowl', 'banana', 'apple', 'sandwich', 'orange', 'broccoli', 'carrot', 'hot dog', 'pizza', 'donut', 'cake', 'chair', 'couch', 'potted plant', 'bed', 'dining table', 'toilet', 'tv', 'laptop', 'mouse', 'remote', 'keyboard', 'cell phone', 'microwave', 'oven', 'toaster', 'sink', 'refrigerator', 'book', 'clock', 'vase', 'scissors', 'teddy bear', 'hair drier', 'toothbrush']}
+config = {'type': 'yolov8',
+          'name': 'yolov8x',
+          'display_name':'YOLOv5n Ultralytics',
+          'model_path': 'anylabeling_assets/models/yolov5/yolov8x.onnx',
+          'input_width': 640,
+          'input_height': 640,
+          'score_threshold': 0.5,
+          'nms_threshold': 0.45,
+          'confidence_threshold': 0.45,
+          'classes': ['person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus', 'train', 'truck', 'boat', 'traffic light', 'fire hydrant', 'stop sign', 'parking meter', 'bench', 'bird', 'cat', 'dog', 'horse', 'sheep', 'cow', 'elephant', 'bear', 'zebra', 'giraffe', 'backpack', 'umbrella', 'handbag', 'tie', 'suitcase', 'frisbee', 'skis', 'snowboard', 'sports ball', 'kite', 'baseball bat', 'baseball glove', 'skateboard', 'surfboard', 'tennis racket', 'bottle', 'wine glass', 'cup', 'fork', 'knife', 'spoon', 'bowl', 'banana', 'apple', 'sandwich', 'orange', 'broccoli', 'carrot', 'hot dog', 'pizza', 'donut', 'cake', 'chair', 'couch', 'potted plant', 'bed', 'dining table', 'toilet', 'tv', 'laptop', 'mouse', 'remote', 'keyboard', 'cell phone', 'microwave', 'oven', 'toaster', 'sink', 'refrigerator', 'book', 'clock', 'vase', 'scissors', 'teddy bear', 'hair drier', 'toothbrush']}
 classes = config["classes"]
 
 
 
 input_image = cv2.imread('bus.jpg')
-#input_image = cv2.imread('coco_sample/000000000009.jpg')
+input_image = cv2.imread('coco_sample/000000000009.jpg')
 [height, width, _] = input_image.shape
-length = max((height, width))
-image = np.zeros((length, length, 3), np.uint8)
-image[0:height, 0:width] = input_image
-scale = length / 640
 
-blob = cv2.dnn.blobFromImage(input_image, scalefactor=1 / 255, size=(640, 640), swapRB=True)
+
+# Create a 4D blob from a frame.
+blob = cv2.dnn.blobFromImage(
+    input_image,
+    1 / 255,
+    (config["input_width"], config["input_height"]),
+    [0, 0, 0],
+    1,
+    crop=False,
+)
 net.setInput(blob)
 outputs = net.forward()
-
+print(outputs)
 outputs = np.array([cv2.transpose(outputs[0])])
 
 
@@ -71,18 +85,12 @@ for r in tqdm(range(rows)):
         class_ids.append(class_id)
 
         cx, cy, w, h = row[0], row[1], row[2], row[3]
-        #cx, cy, w, h = row[0] - (0.5*row[2]), row[1] - (0.5*row[3]), row[2], row[3]
 
         left = int((cx - w / 2) * x_factor)
         top = int((cy - h / 2) * y_factor)
         width = int(w * x_factor)
         height = int(h * y_factor)
         
-        # left = (cx - w / 2)
-        # top = (cy - h / 2)
-        # width = w
-        # height = h
-
         box = np.array([left, top, width, height])
         boxes.append(box)
 
@@ -92,8 +100,7 @@ indices = cv2.dnn.NMSBoxes(
     boxes,
     confidences,
     config["confidence_threshold"],
-    config["nms_threshold"],
-    0.5
+    config["nms_threshold"]
 )
 
 output_boxes = []
@@ -116,7 +123,7 @@ for i in indices:
     }
 
     output_boxes.append(output_box)
-    cv2.rectangle(input_image, (round(left), round(top)), (round((left + width)),round( (top + height))), (0,255,0), 3)
+    cv2.rectangle(input_image, (left, top), ((left + width), (top + height)), (0,255,0), 3)
 
 cv2.imwrite("test.jpg", input_image)
 #Image.fromarray(cv2.cvtColor(input_image, cv2.COLOR_BGR2RGB))
