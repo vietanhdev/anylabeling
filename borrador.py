@@ -9,6 +9,7 @@ Created on Thu Apr 13 10:16:59 2023
 import cv2
 from PIL import Image
 import numpy as np
+from tqdm import tqdm
 net = cv2.dnn.readNetFromONNX("/home/henry/anylabeling_data/models/yolov5/yolov8x.onnx")
 #net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
 #net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
@@ -27,11 +28,12 @@ input_image = cv2.imread('bus.jpg')
 length = max((height, width))
 image = np.zeros((length, length, 3), np.uint8)
 image[0:height, 0:width] = input_image
+scale = length / 640
 
-blob = cv2.dnn.blobFromImage(image, scalefactor=1 / 255, size=(640, 640), swapRB=True)
-
+blob = cv2.dnn.blobFromImage(input_image, scalefactor=1 / 255, size=(640, 640), swapRB=True)
 net.setInput(blob)
 outputs = net.forward()
+
 outputs = np.array([cv2.transpose(outputs[0])])
 
 
@@ -47,7 +49,7 @@ confidences = []
 boxes = []
 
 # Rows.
-rows = outputs[0].shape[1]
+rows = outputs.shape[1]
 
 image_height, image_width = input_image.shape[:2]
 
@@ -56,40 +58,42 @@ x_factor = image_width / config["input_width"]
 y_factor = image_height / config["input_height"]
 
 # Iterate through 25200 detections.
-for r in range(rows):
+for r in tqdm(range(rows)):
     row = outputs[0][r]
-    confidence = row[4]
+    classes_scores = row[4:]
+    
+    # Get the index of max class score and confidence.
+    _, confidence, _, (_, class_id) = cv2.minMaxLoc(classes_scores)
 
-    # Discard bad detections and continue.
-    if confidence >= self.config["confidence_threshold"]:
-        classes_scores = row[4:]
+    # Discard confidence lower than threshold
+    if  confidence >= config["confidence_threshold"]:
+        confidences.append(confidence)
+        class_ids.append(class_id)
 
-        # Get the index of max class score.
-        class_id = np.argmax(classes_scores)
+        cx, cy, w, h = row[0], row[1], row[2], row[3]
+        #cx, cy, w, h = row[0] - (0.5*row[2]), row[1] - (0.5*row[3]), row[2], row[3]
 
-        #  Continue if the class score is above threshold.
-        if classes_scores[class_id] > config["score_threshold"]:
-            confidences.append(confidence)
-            class_ids.append(class_id)
+        left = int((cx - w / 2) * x_factor)
+        top = int((cy - h / 2) * y_factor)
+        width = int(w * x_factor)
+        height = int(h * y_factor)
+        
+        # left = (cx - w / 2)
+        # top = (cy - h / 2)
+        # width = w
+        # height = h
 
-            cx, cy, w, h = row[0], row[1], row[2], row[3]
-
-            left = int((cx - w / 2) * x_factor)
-            top = int((cy - h / 2) * y_factor)
-            width = int(w * x_factor)
-            height = int(h * y_factor)
-
-            box = np.array([left, top, width, height])
-            boxes.append(box)
+        box = np.array([left, top, width, height])
+        boxes.append(box)
 
 # Perform non maximum suppression to eliminate redundant
 # overlapping boxes with lower confidences.
 indices = cv2.dnn.NMSBoxes(
     boxes,
     confidences,
-    0.001,
-    #config["confidence_threshold"],
+    config["confidence_threshold"],
     config["nms_threshold"],
+    0.5
 )
 
 output_boxes = []
@@ -112,7 +116,7 @@ for i in indices:
     }
 
     output_boxes.append(output_box)
-    cv2.rectangle(input_image, (left, top), (left + width, top + height), (0,255,0), 3)
+    cv2.rectangle(input_image, (round(left), round(top)), (round((left + width)),round( (top + height))), (0,255,0), 3)
 
 cv2.imwrite("test.jpg", input_image)
 #Image.fromarray(cv2.cvtColor(input_image, cv2.COLOR_BGR2RGB))
