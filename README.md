@@ -24,32 +24,32 @@
 
 - Create environment:
 
-```
+```bash
 conda create -n anylabeling python=3.8
 conda activate anylabeling
 ```
 
 - **(For macOS only)** Install PyQt5 using Conda:
 
-```
+```bash
 conda install -c conda-forge pyqt==5.15.7
 ```
 
 - Install anylabeling:
 
-```
+```bash
 pip install anylabeling
 ```
 
 - Run app:
 
-```
+```bash
 anylabeling
 ```
 
 Or
 
-```
+```bash
 python -m anylabeling.app
 ```
 
@@ -57,17 +57,33 @@ python -m anylabeling.app
 
 - Generate resources:
 
-```
+```bash
 pyrcc5 -o anylabeling/resources/resources.py anylabeling/resources/resources.qrc
 ```
 
 - Run app:
 
-```
+```bash
 python anylabeling/app.py
 ```
 
-## III. References
+## III. Build executable
+
+- Install PyInstaller:
+
+```bash
+pip install -r requirements-dev.txt
+```
+
+- Build:
+
+```bash
+bash build_executable.sh
+```
+
+- Check the outputs in: `dist/`.
+
+## IV. References
 
 - Labeling UI built with ideas and components from [LabelImg](https://github.com/heartexlabs/labelImg), [labelme](https://github.com/wkentaro/labelme).
 - Icons: Flat Icons

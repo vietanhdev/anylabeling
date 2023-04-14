@@ -3,7 +3,6 @@ opencv-contrib-python-headless==4.5.5.62
 imgviz==1.5.0
 natsort==8.1.0
 termcolor==1.1.0
-pyinstaller==4.8
 PyYAML==6.0
 colorama==0.4.5
 onnx==1.13.1

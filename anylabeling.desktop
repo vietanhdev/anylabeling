@@ -1,8 +1,8 @@
 [Desktop Entry]
-Name=anylabeling
-Comment=No-code labeling and training toolkit for computer vision
-Exec=anylabeling
-Icon=anylabeling
+Name=AnyLabeling
+Comment=Effortless data labeling with AI support
+Exec=AnyLabeling
+Icon=anylabeling/resources/images/logo.png
 Terminal=false
 Type=Application
 Categories=Graphics;RasterGraphics;MachineLearning
