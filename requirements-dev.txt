@@ -5,6 +5,7 @@ github2pypi==1.0.0
 pre-commit==2.20.0
 onnx==1.13.1
 onnxruntime==1.14.1
+onnxruntime-gpu==1.14.1
 qimage2ndarray==1.10.0
 pyinstaller==5.10.0
 build
