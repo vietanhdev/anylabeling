@@ -26,6 +26,11 @@ class ModelManager(QObject):
         "yolov5m": "autolabel_yolov5m.yaml",
         "yolov5l": "autolabel_yolov5l.yaml",
         "yolov5x": "autolabel_yolov5x.yaml",
+        "yolov8n": "autolabel_yolov8n.yaml",
+        "yolov8s": "autolabel_yolov8s.yaml",
+        "yolov8m": "autolabel_yolov8m.yaml",
+        "yolov8l": "autolabel_yolov8l.yaml",
+        "yolov8x": "autolabel_yolov8x.yaml",
     }
 
 
@@ -111,14 +116,21 @@ class ModelManager(QObject):
 
         if model_info["type"] == "yolov5":
             from .yolov5 import YOLOv5
-
+        
             model_info["model"] = YOLOv5(
+                model_info, on_message=self.new_model_status.emit
+            )
+            self.auto_segmentation_model_unselected.emit()
+        elif model_info["type"] == "yolov8":
+            from .yolov8 import YOLOv8
+        
+            model_info["model"] = YOLOv8(
                 model_info, on_message=self.new_model_status.emit
             )
             self.auto_segmentation_model_unselected.emit()
         elif model_info["type"] == "segment_anything":
             from .segment_anything import SegmentAnything
-
+        
             model_info["model"] = SegmentAnything(
                 model_info, on_message=self.new_model_status.emit
             )
