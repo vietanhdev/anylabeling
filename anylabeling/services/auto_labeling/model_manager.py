@@ -160,7 +160,7 @@ class ModelManager(QObject):
             self.loaded_model_info["model"].unload()
             self.loaded_model_info = None
 
-    def predict_shapes(self, image):
+    def predict_shapes(self, image, image_path=None):
         """Predict shapes.
         NOTE: This function is blocking. The model can take a long time to
         predict. So it is recommended to use predict_shapes_threading instead.
@@ -174,7 +174,7 @@ class ModelManager(QObject):
         try:
             auto_labeling_result = self.loaded_model_info[
                 "model"
-            ].predict_shapes(image)
+            ].predict_shapes(image, image_path)
             self.new_auto_labeling_result.emit(auto_labeling_result)
         except Exception as e:  # noqa
             print(f"Error in predict_shapes: {e}")
@@ -187,7 +187,7 @@ class ModelManager(QObject):
         self.prediction_finished.emit()
 
     @pyqtSlot()
-    def predict_shapes_threading(self, image):
+    def predict_shapes_threading(self, image, image_path=None):
         """Predict shapes.
         This function starts a thread to run the prediction.
         """
@@ -212,7 +212,7 @@ class ModelManager(QObject):
 
             self.model_execution_thread = QThread()
             self.model_execution_worker = GenericWorker(
-                self.predict_shapes, image
+                self.predict_shapes, image, image_path
             )
             self.model_execution_worker.finished.connect(
                 self.model_execution_thread.quit

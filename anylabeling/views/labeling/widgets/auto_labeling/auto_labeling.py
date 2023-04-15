@@ -10,7 +10,6 @@ from anylabeling.services.auto_labeling.types import AutoLabelingMode
 
 class AutoLabelingWidget(QWidget):
     new_model_selected = pyqtSignal(str)
-    prediction_requested = pyqtSignal(QtGui.QImage)
     auto_segmentation_requested = pyqtSignal()
     auto_segmentation_disabled = pyqtSignal()
     auto_labeling_mode_changed = pyqtSignal(AutoLabelingMode)
@@ -35,9 +34,6 @@ class AutoLabelingWidget(QWidget):
             lambda auto_labeling_result: self.parent.new_shapes_from_auto_labeling(
                 auto_labeling_result
             )
-        )
-        self.prediction_requested.connect(
-            lambda image: self.model_manager.predict_shapes_threading(image)
         )
         self.model_manager.auto_segmentation_model_selected.connect(
             self.auto_segmentation_requested
@@ -148,7 +144,9 @@ class AutoLabelingWidget(QWidget):
     def run_prediction(self):
         """Run prediction"""
         if self.parent.image_path:
-            self.prediction_requested.emit(self.parent.image)
+            self.model_manager.predict_shapes_threading(
+                self.parent.image, self.parent.image_path
+            )
 
     def unload_and_hide(self):
         """Unload model and hide widget"""

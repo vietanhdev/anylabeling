@@ -12,6 +12,7 @@ from anylabeling.views.labeling.utils.opencv import qt_img_to_cv_img
 
 from .model import Model
 from .types import AutoLabelingResult
+from .lru_cache import LRUCache
 
 
 class SegmentAnything(Model):
@@ -71,8 +72,8 @@ class SegmentAnything(Model):
         # points, rectangles
         self.marks = []
 
-        self.last_image = None
-        self.last_image_embedding = None
+        # Cache for image embedding
+        self.image_embedding_cache = LRUCache(5)
         self.resized_ratio = [1, 1]
 
     def set_auto_labeling_marks(self, marks):
@@ -253,7 +254,7 @@ class SegmentAnything(Model):
 
         return shapes
 
-    def predict_shapes(self, image) -> AutoLabelingResult:
+    def predict_shapes(self, image, image_path=None) -> AutoLabelingResult:
         """
         Predict shapes from image
         """
@@ -262,15 +263,22 @@ class SegmentAnything(Model):
 
         shapes = []
         try:
-            # Prevent re-running the encoder if the image is the same
-            if image == self.last_image:
-                image_embedding = self.last_image_embedding
+            # Use cached image embedding if possible
+            cached_data = self.image_embedding_cache.get(image_path)
+            if cached_data is not None:
+                (
+                    self.original_size,
+                    self.resized_ratio,
+                    image_embedding,
+                ) = cached_data
             else:
                 cv_image = qt_img_to_cv_img(image)
                 encoder_inputs = self.pre_process(cv_image)
                 image_embedding = self.run_encoder(encoder_inputs)
-                self.last_image = image
-                self.last_image_embedding = image_embedding
+                self.image_embedding_cache.put(
+                    image_path,
+                    (self.original_size, self.resized_ratio, image_embedding),
+                )
             masks = self.run_decoder(image_embedding)
             shapes = self.post_process(masks)
         except Exception as e:  # noqa

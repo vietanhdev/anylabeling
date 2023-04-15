@@ -122,7 +122,7 @@ class Model:
                 raise Exception(f"Missing config: {name}")
 
     @abstractmethod
-    def predict_shapes(self, image) -> AutoLabelingResult:
+    def predict_shapes(self, image, image_path=None) -> AutoLabelingResult:
         """
         Predict image and return AnyLabeling shapes
         """
