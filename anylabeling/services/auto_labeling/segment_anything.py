@@ -6,12 +6,15 @@ import cv2
 import numpy as np
 import onnxruntime
 from PyQt5 import QtCore
+from PyQt5.QtCore import QThread
 
+from anylabeling.utils import GenericWorker
 from anylabeling.views.labeling.shape import Shape
 from anylabeling.views.labeling.utils.opencv import qt_img_to_cv_img
 
 from .model import Model
 from .types import AutoLabelingResult
+from .lru_cache import LRUCache
 
 
 class SegmentAnything(Model):
@@ -71,15 +74,19 @@ class SegmentAnything(Model):
         # points, rectangles
         self.marks = []
 
-        self.last_image = None
-        self.last_image_embedding = None
-        self.resized_ratio = [1, 1]
+        # Cache for image embedding
+        self.cache_size = 10
+        self.preloaded_size = self.cache_size - 3
+        self.image_embedding_cache = LRUCache(self.cache_size)
+
+        # Pre-inference worker
+        self.pre_inference_thread = None
 
     def set_auto_labeling_marks(self, marks):
         """Set auto labeling marks"""
         self.marks = marks
 
-    def get_input_points(self):
+    def get_input_points(self, resized_ratio):
         """Get input points"""
         points = []
         labels = []
@@ -95,8 +102,8 @@ class SegmentAnything(Model):
         points, labels = np.array(points), np.array(labels)
 
         # Resize points based on scales
-        points[:, 0] = points[:, 0] * self.resized_ratio[0]
-        points[:, 1] = points[:, 1] * self.resized_ratio[1]
+        points[:, 0] = points[:, 0] * resized_ratio[0]
+        points[:, 1] = points[:, 1] * resized_ratio[1]
         return points, labels
 
     def pre_process(self, image):
@@ -107,7 +114,7 @@ class SegmentAnything(Model):
         # => Resize by max width and max height
         max_width = self.max_width
         max_height = self.max_height
-        self.original_size = image.shape[:2]
+        original_size = image.shape[:2]
         h, w = image.shape[:2]
         if w > max_width:
             h = int(h * max_width / w)
@@ -116,9 +123,9 @@ class SegmentAnything(Model):
             w = int(w * max_height / h)
             h = max_height
         image = cv2.resize(image, (w, h))
-        self.resized_ratio = (
-            w / self.original_size[1],
-            h / self.original_size[0],
+        resized_ratio = (
+            w / original_size[1],
+            h / original_size[0],
         )
 
         # Pad to have size at least max_width x max_height
@@ -146,7 +153,7 @@ class SegmentAnything(Model):
         encoder_inputs = {
             "x": x,
         }
-        return encoder_inputs
+        return encoder_inputs, resized_ratio
 
     def run_encoder(self, encoder_inputs):
         output = self.encoder_session.run(None, encoder_inputs)
@@ -180,8 +187,8 @@ class SegmentAnything(Model):
         coords[..., 1] = coords[..., 1] * (new_h / old_h)
         return coords
 
-    def run_decoder(self, image_embedding):
-        input_points, input_labels = self.get_input_points()
+    def run_decoder(self, image_embedding, resized_ratio):
+        input_points, input_labels = self.get_input_points(resized_ratio)
 
         # Add a batch index, concatenate a padding point, and transform.
         onnx_coord = np.concatenate(
@@ -213,7 +220,7 @@ class SegmentAnything(Model):
         masks = masks.reshape(self.size_after_apply_max_width_height)
         return masks
 
-    def post_process(self, masks):
+    def post_process(self, masks, resized_ratio):
         """
         Post process masks
         """
@@ -229,8 +236,8 @@ class SegmentAnything(Model):
             points = approx.reshape(-1, 2)
 
             # Scale points
-            points[:, 0] = points[:, 0] / self.resized_ratio[0]
-            points[:, 1] = points[:, 1] / self.resized_ratio[1]
+            points[:, 0] = points[:, 0] / resized_ratio[0]
+            points[:, 1] = points[:, 1] / resized_ratio[1]
             points = points.tolist()
             if len(points) < 3:
                 continue
@@ -253,7 +260,7 @@ class SegmentAnything(Model):
 
         return shapes
 
-    def predict_shapes(self, image) -> AutoLabelingResult:
+    def predict_shapes(self, image, filename=None) -> AutoLabelingResult:
         """
         Predict shapes from image
         """
@@ -262,17 +269,23 @@ class SegmentAnything(Model):
 
         shapes = []
         try:
-            # Prevent re-running the encoder if the image is the same
-            if image == self.last_image:
-                image_embedding = self.last_image_embedding
+            # Use cached image embedding if possible
+            cached_data = self.image_embedding_cache.get(filename)
+            if cached_data is not None:
+                (
+                    resized_ratio,
+                    image_embedding,
+                ) = cached_data
             else:
                 cv_image = qt_img_to_cv_img(image)
-                encoder_inputs = self.pre_process(cv_image)
+                encoder_inputs, resized_ratio = self.pre_process(cv_image)
                 image_embedding = self.run_encoder(encoder_inputs)
-                self.last_image = image
-                self.last_image_embedding = image_embedding
-            masks = self.run_decoder(image_embedding)
-            shapes = self.post_process(masks)
+                self.image_embedding_cache.put(
+                    filename,
+                    (resized_ratio, image_embedding),
+                )
+            masks = self.run_decoder(image_embedding, resized_ratio)
+            shapes = self.post_process(masks, resized_ratio)
         except Exception as e:  # noqa
             logging.warning("Could not inference model")
             logging.warning(e)
@@ -286,3 +299,44 @@ class SegmentAnything(Model):
             self.encoder_session = None
         if self.decoder_session:
             self.decoder_session = None
+
+    def preload_worker(self, files):
+        """
+        Preload next files, run inference and cache results
+        """
+        files = files[: self.preloaded_size]
+        for filename in files:
+            if self.image_embedding_cache.find(filename):
+                continue
+            image = self.load_image_from_filename(filename)
+            if image is None:
+                continue
+            cv_image = qt_img_to_cv_img(image)
+            encoder_inputs, resized_ratio = self.pre_process(cv_image)
+            image_embedding = self.run_encoder(encoder_inputs)
+            self.image_embedding_cache.put(
+                filename,
+                (resized_ratio, image_embedding),
+            )
+
+    def on_next_files_changed(self, next_files):
+        """
+        Handle next files changed. This function can preload next files
+        and run inference to save time for user.
+        """
+        if (
+            self.pre_inference_thread is None
+            or not self.pre_inference_thread.isRunning()
+        ):
+            self.pre_inference_thread = QThread()
+            self.pre_inference_worker = GenericWorker(
+                self.preload_worker, next_files
+            )
+            self.pre_inference_worker.finished.connect(
+                self.pre_inference_thread.quit
+            )
+            self.pre_inference_worker.moveToThread(self.pre_inference_thread)
+            self.pre_inference_thread.started.connect(
+                self.pre_inference_worker.run
+            )
+            self.pre_inference_thread.start()

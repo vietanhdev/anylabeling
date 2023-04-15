@@ -51,6 +51,7 @@ class LabelmeWidget(LabelDialog):
     """Labelme widget"""
 
     FIT_WINDOW, FIT_WIDTH, MANUAL_ZOOM = 0, 1, 2
+    next_files_changed = QtCore.pyqtSignal(list)
 
     def __init__(
         self,
@@ -877,6 +878,18 @@ class LabelmeWidget(LabelDialog):
         )
         self.auto_labeling_widget.finish_auto_labeling_object_action_requested.connect(
             self.finish_auto_labeling_object
+        )
+        self.auto_labeling_widget.model_manager.prediction_started.connect(
+            lambda: self.canvas.set_loading(True, "Please wait...")
+        )
+        self.auto_labeling_widget.model_manager.prediction_finished.connect(
+            lambda: self.canvas.set_loading(False)
+        )
+        self.next_files_changed.connect(
+            self.auto_labeling_widget.model_manager.on_next_files_changed
+        )
+        self.auto_labeling_widget.model_manager.request_next_files_requested.connect(
+            lambda: self.inform_next_files(self.filename)
         )
         self.auto_labeling_widget.hide()  # Hide by default
         central_layout.addWidget(self.label_instruction)
@@ -1762,10 +1775,39 @@ class LabelmeWidget(LabelDialog):
         for item in self.label_list:
             item.setCheckState(Qt.Checked if value else Qt.Unchecked)
 
+    def get_next_files(self, filename, num_files):
+        """Get the next files in the list."""
+        if not self.image_list:
+            return []
+        filenames = []
+        current_index = 0
+        if filename is not None:
+            current_index = self.image_list.index(filename)
+        for _ in range(num_files):
+            if current_index + 1 < len(self.image_list):
+                filenames.append(self.image_list[current_index + 1])
+                current_index += 1
+            else:
+                filenames.append(self.image_list[-1])
+                break
+        return filenames
+
+    def inform_next_files(self, filename):
+        """Inform the next files to be annotated.
+        This list can be used by the user to preload the next files
+        or running a background process to process them
+        """
+        next_files = self.get_next_files(filename, 5)
+        if next_files:
+            self.next_files_changed.emit(next_files)
+
     def load_file(self, filename=None):  # noqa: C901
         """Load the specified file, or the last opened file if None."""
 
+        # For auto labeling, clear the previous marks
+        # and inform the next files to be annotated
         self.clear_auto_labeling_marks()
+        self.inform_next_files(filename)
 
         # Changing file_list_widget loads file
         if filename in self.image_list and (

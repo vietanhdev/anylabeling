@@ -142,7 +142,7 @@ class YOLOv8(Model):
 
         return output_boxes
 
-    def predict_shapes(self, image):
+    def predict_shapes(self, image, image_path=None):
         """
         Predict shapes from image
         """

@@ -18,6 +18,9 @@ class ModelManager(QObject):
     new_auto_labeling_result = pyqtSignal(AutoLabelingResult)
     auto_segmentation_model_selected = pyqtSignal()
     auto_segmentation_model_unselected = pyqtSignal()
+    prediction_started = pyqtSignal()
+    prediction_finished = pyqtSignal()
+    request_next_files_requested = pyqtSignal()
 
     model_configs = {
         "segment_anything_vit_b-r20230415": "autolabel_segment_anything.yaml",
@@ -48,6 +51,8 @@ class ModelManager(QObject):
         self.loaded_model_info_lock = Lock()
 
         self.model_download_thread = None
+        self.model_execution_thread = None
+        self.model_execution_thread_lock = Lock()
 
     def get_model_infos(self):
         """Return model infos"""
@@ -133,6 +138,9 @@ class ModelManager(QObject):
                 model_info, on_message=self.new_model_status.emit
             )
             self.auto_segmentation_model_selected.emit()
+
+            # Request next files for prediction
+            self.request_next_files_requested.emit()
         else:
             raise Exception(f"Unknown model type: {model_info['type']}")
 
@@ -156,12 +164,78 @@ class ModelManager(QObject):
             self.loaded_model_info["model"].unload()
             self.loaded_model_info = None
 
-    @pyqtSlot()
-    def predict_shapes(self, image):
-        """Predict shapes"""
+    def predict_shapes(self, image, filename=None):
+        """Predict shapes.
+        NOTE: This function is blocking. The model can take a long time to
+        predict. So it is recommended to use predict_shapes_threading instead.
+        """
         if self.loaded_model_info is None:
-            raise Exception("Model is not loaded")
-        auto_labeling_result = self.loaded_model_info["model"].predict_shapes(
-            image
+            self.new_model_status.emit(
+                "Model is not loaded. Choose a mode to continue."
+            )
+            self.prediction_finished.emit()
+            return
+        try:
+            auto_labeling_result = self.loaded_model_info[
+                "model"
+            ].predict_shapes(image, filename)
+            self.new_auto_labeling_result.emit(auto_labeling_result)
+        except Exception as e:  # noqa
+            print(f"Error in predict_shapes: {e}")
+            self.new_model_status.emit(
+                "Error in model prediction. Please check the model."
+            )
+        self.new_model_status.emit(
+            "Finished inferencing AI model. Check the result."
         )
-        self.new_auto_labeling_result.emit(auto_labeling_result)
+        self.prediction_finished.emit()
+
+    @pyqtSlot()
+    def predict_shapes_threading(self, image, filename=None):
+        """Predict shapes.
+        This function starts a thread to run the prediction.
+        """
+        if self.loaded_model_info is None:
+            self.new_model_status.emit(
+                "Model is not loaded. Choose a mode to continue."
+            )
+            return
+        self.new_model_status.emit("Inferencing AI model. Please wait...")
+        self.prediction_started.emit()
+
+        with self.model_execution_thread_lock:
+            if (
+                self.model_execution_thread is not None
+                and self.model_execution_thread.isRunning()
+            ):
+                self.new_model_status.emit(
+                    "Another model is being executed. Please wait for it to finish."
+                )
+                self.prediction_finished.emit()
+                return
+
+            self.model_execution_thread = QThread()
+            self.model_execution_worker = GenericWorker(
+                self.predict_shapes, image, filename
+            )
+            self.model_execution_worker.finished.connect(
+                self.model_execution_thread.quit
+            )
+            self.model_execution_worker.moveToThread(
+                self.model_execution_thread
+            )
+            self.model_execution_thread.started.connect(
+                self.model_execution_worker.run
+            )
+            self.model_execution_thread.start()
+
+    def on_next_files_changed(self, next_files):
+        """Run prediction on next files in advance to save inference time later"""
+        if self.loaded_model_info is None:
+            return
+
+        # Currently only segment_anything model supports this feature
+        if self.loaded_model_info["type"] != "segment_anything":
+            return
+
+        self.loaded_model_info["model"].on_next_files_changed(next_files)
