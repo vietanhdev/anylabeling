@@ -68,7 +68,7 @@ class Canvas(
         self.line = Shape()
         self.prev_point = QtCore.QPoint()
         self.prev_move_point = QtCore.QPoint()
-        self.offsets = QtCore.QPoint(), QtCore.QPoint()
+        self.offsets = QtCore.QPointF(), QtCore.QPointF()
         self.scale = 1.0
         self.pixmap = QtGui.QPixmap()
         self.visible = {}
@@ -617,7 +617,7 @@ class Canvas(
         y1 = top - point.y()
         x2 = right - point.x()
         y2 = bottom - point.y()
-        self.offsets = QtCore.QPoint(x1, y1), QtCore.QPoint(x2, y2)
+        self.offsets = QtCore.QPointF(x1, y1), QtCore.QPointF(x2, y2)
 
     def bounded_move_vertex(self, pos):
         """Move a vertex. Adjust position to be bounded by pixmap border"""
@@ -700,8 +700,8 @@ class Canvas(
         # Try to move in one direction, and if it fails in another.
         # Give up if both fail.
         point = shapes[0][0]
-        offset = QtCore.QPoint(2.0, 2.0)
-        self.offsets = QtCore.QPoint(), QtCore.QPoint()
+        offset = QtCore.QPointF(2.0, 2.0)
+        self.offsets = QtCore.QPointF(), QtCore.QPointF()
         self.prev_point = point
         if not self.bounded_move_shapes(shapes, point - offset):
             self.bounded_move_shapes(shapes, point + offset)
@@ -884,12 +884,12 @@ class Canvas(
             p.setPen(pen)
             p.setOpacity(0.5)
             p.drawLine(
-                QtCore.QPoint(self.prev_move_point.x(), 0),
-                QtCore.QPoint(self.prev_move_point.x(), self.pixmap.height()),
+                QtCore.QPointF(self.prev_move_point.x(), 0),
+                QtCore.QPointF(self.prev_move_point.x(), self.pixmap.height()),
             )
             p.drawLine(
-                QtCore.QPoint(0, self.prev_move_point.y()),
-                QtCore.QPoint(self.pixmap.width(), self.prev_move_point.y()),
+                QtCore.QPointF(0, self.prev_move_point.y()),
+                QtCore.QPointF(self.pixmap.width(), self.prev_move_point.y()),
             )
 
         p.end()
@@ -901,14 +901,14 @@ class Canvas(
     def offset_to_center(self):
         """Calculate offset to the center"""
         if self.pixmap is None:
-            return QtCore.QPoint()
+            return QtCore.QPointF()
         s = self.scale
         area = super().size()
         w, h = self.pixmap.width() * s, self.pixmap.height() * s
         area_width, area_height = area.width(), area.height()
         x = (area_width - w) / (2 * s) if area_width > w else 0
         y = (area_height - h) / (2 * s) if area_height > h else 0
-        return QtCore.QPoint(x, y)
+        return QtCore.QPointF(x, y)
 
     def out_off_pixmap(self, p):
         """Check if a position is out of pixmap"""
@@ -1064,8 +1064,8 @@ class Canvas(
             if 0 <= ua <= 1 and 0 <= ub <= 1:
                 x = x1 + ua * (x2 - x1)
                 y = y1 + ua * (y2 - y1)
-                m = QtCore.QPoint((x3 + x4) / 2, (y3 + y4) / 2)
-                d = utils.distance(m - QtCore.QPoint(x2, y2))
+                m = QtCore.QPointF((x3 + x4) / 2, (y3 + y4) / 2)
+                d = utils.distance(m - QtCore.QPointF(x2, y2))
                 yield d, i, (x, y)
 
     # These two, along with a call to adjustSize are required for the
@@ -1122,13 +1122,13 @@ class Canvas(
                 self.snapping = False
         elif self.editing():
             if key == QtCore.Qt.Key_Up:
-                self.move_by_keyboard(QtCore.QPoint(0.0, -MOVE_SPEED))
+                self.move_by_keyboard(QtCore.QPointF(0.0, -MOVE_SPEED))
             elif key == QtCore.Qt.Key_Down:
-                self.move_by_keyboard(QtCore.QPoint(0.0, MOVE_SPEED))
+                self.move_by_keyboard(QtCore.QPointF(0.0, MOVE_SPEED))
             elif key == QtCore.Qt.Key_Left:
-                self.move_by_keyboard(QtCore.QPoint(-MOVE_SPEED, 0.0))
+                self.move_by_keyboard(QtCore.QPointF(-MOVE_SPEED, 0.0))
             elif key == QtCore.Qt.Key_Right:
-                self.move_by_keyboard(QtCore.QPoint(MOVE_SPEED, 0.0))
+                self.move_by_keyboard(QtCore.QPointF(MOVE_SPEED, 0.0))
 
     # QT Overload
     def keyReleaseEvent(self, ev):
