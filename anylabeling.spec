@@ -10,6 +10,7 @@ a = Analysis(
     pathex=['anylabeling'],
     binaries=[],
     datas=[
+       ('anylabeling/configs/auto_labeling/*.yaml', 'anylabeling/configs/auto_labeling'),
        ('anylabeling/configs/*.yaml', 'anylabeling/configs'),
        ('anylabeling/views/labeling/icons/*', 'anylabeling/views/labeling/icons'),
        ('anylabeling/resources/images/*', 'anylabeling/resources/images'),

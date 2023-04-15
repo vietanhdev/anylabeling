@@ -5,6 +5,7 @@ import urllib.request
 from abc import abstractmethod
 
 import yaml
+import onnx
 
 from PyQt5.QtCore import QFile
 from PyQt5.QtGui import QImage
@@ -86,7 +87,17 @@ class Model:
             )
         )
         if os.path.exists(model_abs_path):
-            return model_abs_path
+            if model_abs_path.lower().endswith(".onnx"):
+                try:
+                    onnx.checker.check_model(model_abs_path)
+                except onnx.checker.ValidationError as e:
+                    print("The model is invalid: %s" % e)
+                    print("Action: Delete and redownload...")
+                    os.remove(model_abs_path)
+                else:
+                    return model_abs_path
+            else:
+                return model_abs_path
         pathlib.Path(model_abs_path).parent.mkdir(parents=True, exist_ok=True)
 
         # Download model from url
