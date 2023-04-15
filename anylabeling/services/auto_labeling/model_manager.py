@@ -5,7 +5,7 @@ from threading import Lock
 import yaml
 from PyQt5.QtCore import QObject, QThread, pyqtSignal, pyqtSlot
 
-from anylabeling import configs as anylabeling_configs
+from anylabeling.configs import auto_labeling as auto_labeling_configs
 from anylabeling.services.auto_labeling.types import AutoLabelingResult
 from anylabeling.utils import GenericWorker
 
@@ -21,28 +21,28 @@ class ModelManager(QObject):
     prediction_started = pyqtSignal()
     prediction_finished = pyqtSignal()
     request_next_files_requested = pyqtSignal()
-
-    model_configs = {
-        "segment_anything_vit_b-r20230415": "autolabel_segment_anything.yaml",
-        "yolov5n-r20230415": "autolabel_yolov5n.yaml",
-        "yolov5s-r20230415": "autolabel_yolov5s.yaml",
-        "yolov5m-r20230415": "autolabel_yolov5m.yaml",
-        "yolov5l-r20230415": "autolabel_yolov5l.yaml",
-        "yolov5x-r20230415": "autolabel_yolov5x.yaml",
-        "yolov8n-r20230415": "autolabel_yolov8n.yaml",
-        "yolov8s-r20230415": "autolabel_yolov8s.yaml",
-        "yolov8m-r20230415": "autolabel_yolov8m.yaml",
-        "yolov8l-r20230415": "autolabel_yolov8l.yaml",
-        "yolov8x-r20230415": "autolabel_yolov8x.yaml",
-    }
+    model_configs = {}
 
     def __init__(self):
         super().__init__()
         self.model_infos = {}
+        self.model_list_config = {}
+
+        # Load list of models
+        with pkg_resources.open_text(
+            auto_labeling_configs, "models.yaml"
+        ) as f:
+            self.model_list_config = yaml.safe_load(f)
+        for model_config in self.model_list_config:
+            self.model_configs[model_config["model_name"]] = model_config[
+                "config_file"
+            ]
+
+        # Load model configs
         for model_name, config_name in ModelManager.model_configs.items():
             self.model_infos[model_name] = {}
             with pkg_resources.open_text(
-                anylabeling_configs, config_name
+                auto_labeling_configs, config_name
             ) as f:
                 config = yaml.safe_load(f)
             self.model_infos[model_name] = config
