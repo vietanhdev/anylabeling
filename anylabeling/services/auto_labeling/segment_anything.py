@@ -32,7 +32,6 @@ class SegmentAnything(Model):
             "button_add_point",
             "button_remove_point",
             "button_add_rect",
-            # "button_undo", # Dont support undo now
             "button_clear",
             "button_finish_object",
         ]
@@ -81,6 +80,7 @@ class SegmentAnything(Model):
 
         # Pre-inference worker
         self.pre_inference_thread = None
+        self.stop_inference = False
 
     def set_auto_labeling_marks(self, marks):
         """Set auto labeling marks"""
@@ -216,6 +216,7 @@ class SegmentAnything(Model):
             ),
         }
         masks, _, _ = self.decoder_session.run(None, decoder_inputs)
+        masks = masks[0, 0, :, :]  # Only get 1 mask
         masks = masks > 0.0
         masks = masks.reshape(self.size_after_apply_max_width_height)
         return masks
@@ -279,11 +280,15 @@ class SegmentAnything(Model):
             else:
                 cv_image = qt_img_to_cv_img(image)
                 encoder_inputs, resized_ratio = self.pre_process(cv_image)
+                if self.stop_inference:
+                    return AutoLabelingResult([], replace=False)
                 image_embedding = self.run_encoder(encoder_inputs)
                 self.image_embedding_cache.put(
                     filename,
                     (resized_ratio, image_embedding),
                 )
+            if self.stop_inference:
+                return AutoLabelingResult([], replace=False)
             masks = self.run_decoder(image_embedding, resized_ratio)
             shapes = self.post_process(masks, resized_ratio)
         except Exception as e:  # noqa
@@ -295,6 +300,9 @@ class SegmentAnything(Model):
         return result
 
     def unload(self):
+        self.stop_inference = True
+        self.pre_inference_thread.quit()
+        self.pre_inference_thread.wait()
         if self.encoder_session:
             self.encoder_session = None
         if self.decoder_session:
@@ -311,6 +319,8 @@ class SegmentAnything(Model):
             image = self.load_image_from_filename(filename)
             if image is None:
                 continue
+            if self.stop_inference:
+                return
             cv_image = qt_img_to_cv_img(image)
             encoder_inputs, resized_ratio = self.pre_process(cv_image)
             image_embedding = self.run_encoder(encoder_inputs)
