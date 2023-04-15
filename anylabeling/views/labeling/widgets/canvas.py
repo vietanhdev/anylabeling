@@ -96,6 +96,17 @@ class Canvas(
         self.show_shape_groups = True
         self.show_texts = True
 
+        self.is_loading = False
+        self.loading_text = "Loading..."
+        self.loading_angle = 0
+
+    def set_loading(self, is_loading: bool, loading_text: str = None):
+        """Set loading state"""
+        self.is_loading = is_loading
+        if loading_text:
+            self.loading_text = loading_text
+        self.update()
+
     def set_auto_labeling_mode(self, mode: AutoLabelingMode):
         """Set auto labeling mode"""
         if mode == AutoLabelingMode.NONE:
@@ -246,6 +257,8 @@ class Canvas(
     # QT Overload
     def mouseMoveEvent(self, ev):  # noqa: C901
         """Update line with last point and current coordinates"""
+        if self.is_loading:
+            return
         try:
             pos = self.transform_pos(ev.localPos())
         except AttributeError:
@@ -406,6 +419,8 @@ class Canvas(
     # QT Overload
     def mousePressEvent(self, ev):
         """Mouse press event"""
+        if self.is_loading:
+            return
         pos = self.transform_pos(ev.localPos())
         if ev.button() == QtCore.Qt.LeftButton:
             if self.drawing():
@@ -469,6 +484,8 @@ class Canvas(
     # QT Overload
     def mouseReleaseEvent(self, ev):
         """Mouse release event"""
+        if self.is_loading:
+            return
         if ev.button() == QtCore.Qt.RightButton:
             menu = self.menus[len(self.selected_shapes_copy) > 0]
             self.restore_cursor()
@@ -538,6 +555,8 @@ class Canvas(
     # QT Overload
     def mouseDoubleClickEvent(self, _):
         """Mouse double click event"""
+        if self.is_loading:
+            return
         # We need at least 4 points here, since the mousePress handler
         # adds an extra one before this handler is called.
         if (
@@ -708,6 +727,38 @@ class Canvas(
 
         p.drawPixmap(0, 0, self.pixmap)
         Shape.scale = self.scale
+
+        # Draw loading/waiting screen
+        if self.is_loading:
+            # Draw a semi-transparent rectangle
+            p.setPen(Qt.NoPen)
+            p.setBrush(QtGui.QColor(0, 0, 0, 100))
+            p.drawRect(self.pixmap.rect())
+
+            # Draw a spinning wheel
+            p.setPen(QtGui.QColor(255, 255, 255))
+            p.setBrush(Qt.NoBrush)
+            p.save()
+            p.translate(self.pixmap.width() / 2, self.pixmap.height() / 2 - 50)
+            p.rotate(self.loading_angle)
+            p.drawEllipse(-20, -20, 40, 40)
+            p.drawLine(0, 0, 0, -20)
+            p.restore()
+            self.loading_angle += 30
+            if self.loading_angle >= 360:
+                self.loading_angle = 0
+
+            # Draw the loading text
+            p.setPen(QtGui.QColor(255, 255, 255))
+            p.setFont(QtGui.QFont("Arial", 20))
+            p.drawText(
+                self.pixmap.rect(),
+                Qt.AlignCenter,
+                self.loading_text,
+            )
+            p.end()
+            self.update()
+            return
 
         # Draw groups
         if self.show_shape_groups:

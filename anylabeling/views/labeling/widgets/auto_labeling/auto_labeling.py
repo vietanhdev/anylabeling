@@ -37,7 +37,7 @@ class AutoLabelingWidget(QWidget):
             )
         )
         self.prediction_requested.connect(
-            lambda image: self.model_manager.predict_shapes(image)
+            lambda image: self.model_manager.predict_shapes_threading(image)
         )
         self.model_manager.auto_segmentation_model_selected.connect(
             self.auto_segmentation_requested

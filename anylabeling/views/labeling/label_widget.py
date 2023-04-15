@@ -878,6 +878,12 @@ class LabelmeWidget(LabelDialog):
         self.auto_labeling_widget.finish_auto_labeling_object_action_requested.connect(
             self.finish_auto_labeling_object
         )
+        self.auto_labeling_widget.model_manager.prediction_started.connect(
+            lambda: self.canvas.set_loading(True, "Please wait...")
+        )
+        self.auto_labeling_widget.model_manager.prediction_finished.connect(
+            lambda: self.canvas.set_loading(False)
+        )
         self.auto_labeling_widget.hide()  # Hide by default
         central_layout.addWidget(self.label_instruction)
         central_layout.addWidget(self.auto_labeling_widget)
