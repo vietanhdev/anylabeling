@@ -1306,6 +1306,9 @@ class LabelmeWidget(LabelDialog):
         shape.flags = flags
         shape.group_id = group_id
 
+        # Add to label history
+        self.label_dialog.add_label_history(shape.label)
+
         # Update unique label list
         if not self.unique_label_list.find_items_by_label(shape.label):
             unique_label_item = self.unique_label_list.create_item_from_label(
@@ -2542,6 +2545,9 @@ class LabelmeWidget(LabelDialog):
                 ),
             )
             return
+
+        # Add to label history
+        self.label_dialog.add_label_history(text)
 
         # Update label for the object
         updated_shapes = False
