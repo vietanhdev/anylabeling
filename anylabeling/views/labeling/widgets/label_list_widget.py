@@ -62,8 +62,8 @@ class HTMLDelegate(QtWidgets.QStyledItemDelegate):
     def sizeHint(self, _, _2):
         margin_constant = 4
         return QtCore.QSize(
-            self.doc.idealWidth(),
-            self.doc.size().height() - margin_constant,
+            int(self.doc.idealWidth()),
+            int(self.doc.size().height() - margin_constant),
         )
 
 
