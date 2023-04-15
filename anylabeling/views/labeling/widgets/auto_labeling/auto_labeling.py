@@ -143,9 +143,9 @@ class AutoLabelingWidget(QWidget):
 
     def run_prediction(self):
         """Run prediction"""
-        if self.parent.image_path:
+        if self.parent.filename is not None:
             self.model_manager.predict_shapes_threading(
-                self.parent.image, self.parent.image_path
+                self.parent.image, self.parent.filename
             )
 
     def unload_and_hide(self):

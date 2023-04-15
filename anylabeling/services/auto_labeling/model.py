@@ -6,7 +6,11 @@ from abc import abstractmethod
 
 import yaml
 
+from PyQt5.QtCore import QFile
+from PyQt5.QtGui import QImage
+
 from .types import AutoLabelingResult
+from anylabeling.views.labeling.label_file import LabelFile, LabelFileError
 
 
 class Model:
@@ -134,3 +138,28 @@ class Model:
         Unload model from memory
         """
         raise NotImplementedError
+
+    @staticmethod
+    def load_image_from_filename(filename):
+        """Load image from labeling file and return image data and image path."""
+        label_file = os.path.splitext(filename)[0] + ".json"
+        if QFile.exists(label_file) and LabelFile.is_label_file(label_file):
+            try:
+                label_file = LabelFile(label_file)
+            except LabelFileError as e:
+                print("Error reading {}: {}".format(label_file, e))
+                return None, None
+            image_data = label_file.image_data
+        else:
+            image_data = LabelFile.load_image_file(filename)
+        image = QImage.fromData(image_data)
+        if image.isNull():
+            print("Error reading {}".format(filename))
+        return image
+
+    def on_next_files_changed(self, next_files):
+        """
+        Handle next files changed. This function can preload next files
+        and run inference to save time for user.
+        """
+        pass

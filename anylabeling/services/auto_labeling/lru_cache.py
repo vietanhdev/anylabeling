@@ -26,3 +26,8 @@ class LRUCache:
             self._cache.move_to_end(key)
             if len(self._cache) > self.maxsize:
                 self._cache.popitem(last=False)
+
+    def find(self, key):
+        """Returns True if key is in cache, False otherwise."""
+        with self.lock:
+            return key in self._cache
