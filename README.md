@@ -16,7 +16,8 @@
   <img alt="AnyLabeling" src="https://user-images.githubusercontent.com/18329471/232266520-1f52cd45-0776-479e-8a3c-4fef144c6b73.png"/>
 </a>
 
-**Youtube Demo:** [https://www.youtube.com/watch?v=5iQSGL7ebXE](https://www.youtube.com/watch?v=5iQSGL7ebXE)
+- **Youtube Demo:** [https://www.youtube.com/watch?v=5iQSGL7ebXE](https://www.youtube.com/watch?v=5iQSGL7ebXE)
+- **Documentation:** [https://anylabeling.com](https://anylabeling.com)
 
 ## I. Install and run
 
