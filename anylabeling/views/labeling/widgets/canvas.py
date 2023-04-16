@@ -220,7 +220,10 @@ class Canvas(
 
     def get_mode(self):
         """Get current mode"""
-        if self.is_auto_labeling:
+        if (
+            self.is_auto_labeling
+            and self.auto_labeling_mode != AutoLabelingMode.NONE
+        ):
             return "Auto Labeling"
         if self.mode == self.CREATE:
             return "Drawing"

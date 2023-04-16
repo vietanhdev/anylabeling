@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1055</width>
+    <width>1205</width>
     <height>42</height>
    </rect>
   </property>
@@ -44,9 +44,9 @@
       <number>0</number>
      </property>
      <item>
-      <widget class="QLabel" name="model">
+      <widget class="QLabel" name="model_label">
        <property name="text">
-        <string>Auto Labeling</string>
+        <string>Auto</string>
        </property>
       </widget>
      </item>
@@ -64,6 +64,27 @@
        <item>
         <property name="text">
          <string>No Model</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="output_label">
+       <property name="text">
+        <string>Output</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="output_select_combobox">
+       <item>
+        <property name="text">
+         <string>polygon</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>rectangle</string>
         </property>
        </item>
       </widget>
@@ -100,13 +121,6 @@
       <widget class="QPushButton" name="button_add_rect">
        <property name="text">
         <string>+Rect</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="button_undo">
-       <property name="text">
-        <string>Undo</string>
        </property>
       </widget>
      </item>
@@ -149,8 +163,24 @@
      </item>
      <item>
       <widget class="QPushButton" name="button_close">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
        <property name="text">
-        <string>Close</string>
+        <string/>
+       </property>
+       <property name="icon">
+        <iconset resource="../../../../resources/resources.qrc">
+         <normaloff>:/images/images/cancel.png</normaloff>:/images/images/cancel.png</iconset>
+       </property>
+       <property name="iconSize">
+        <size>
+         <width>12</width>
+         <height>12</height>
+        </size>
        </property>
       </widget>
      </item>

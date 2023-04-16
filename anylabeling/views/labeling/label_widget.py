@@ -1179,6 +1179,8 @@ class LabelmeWidget(LabelDialog):
             self.clear_auto_labeling_marks()
             self.auto_labeling_widget.set_auto_labeling_mode(None)
 
+        self.set_text_editing(False)
+
         self.canvas.set_editing(edit)
         self.canvas.create_mode = create_mode
         if edit:
@@ -1234,6 +1236,7 @@ class LabelmeWidget(LabelDialog):
             else:
                 raise ValueError(f"Unsupported create_mode: {create_mode}")
         self.actions.edit_mode.setEnabled(not edit)
+        self.label_instruction.setText(self.get_labeling_instruction())
 
     def set_edit_mode(self):
         # Disable auto labeling
@@ -1241,6 +1244,8 @@ class LabelmeWidget(LabelDialog):
         self.auto_labeling_widget.set_auto_labeling_mode(None)
 
         self.toggle_draw_mode(True)
+        self.set_text_editing(True)
+        self.label_instruction.setText(self.get_labeling_instruction())
 
     def update_file_menu(self):
         current = self.filename
@@ -1372,18 +1377,7 @@ class LabelmeWidget(LabelDialog):
         self.actions.duplicate.setEnabled(n_selected)
         self.actions.copy.setEnabled(n_selected)
         self.actions.edit.setEnabled(n_selected == 1)
-        if len(selected_shapes) == 1:
-            self.shape_text_label.setText("Object Text")
-            self.shape_text_edit.textChanged.disconnect()
-            self.shape_text_edit.setPlainText(selected_shapes[0].text)
-            self.shape_text_edit.textChanged.connect(self.shape_text_changed)
-        else:
-            self.shape_text_label.setText("Image Text")
-            self.shape_text_edit.textChanged.disconnect()
-            self.shape_text_edit.setPlainText(
-                self.other_data.get("image_text", "")
-            )
-            self.shape_text_edit.textChanged.connect(self.shape_text_changed)
+        self.set_text_editing(True)
 
     def add_label(self, shape):
         if shape.group_id is None:
@@ -1786,6 +1780,7 @@ class LabelmeWidget(LabelDialog):
         current_index = 0
         if filename is not None:
             current_index = self.image_list.index(filename)
+            filenames.append(filename)
         for _ in range(num_files):
             if current_index + 1 < len(self.image_list):
                 filenames.append(self.image_list[current_index + 1])
@@ -2591,3 +2586,32 @@ class LabelmeWidget(LabelDialog):
 
         if updated_shapes:
             self.set_dirty()
+
+    def set_text_editing(self, enable):
+        """Set text editing."""
+        if enable:
+            # Enable text editing and set shape text from selected shape
+            if len(self.canvas.selected_shapes) == 1:
+                self.shape_text_label.setText("Object Text")
+                self.shape_text_edit.textChanged.disconnect()
+                self.shape_text_edit.setPlainText(
+                    self.canvas.selected_shapes[0].text
+                )
+                self.shape_text_edit.textChanged.connect(
+                    self.shape_text_changed
+                )
+            else:
+                self.shape_text_label.setText("Image Text")
+                self.shape_text_edit.textChanged.disconnect()
+                self.shape_text_edit.setPlainText(
+                    self.other_data.get("image_text", "")
+                )
+                self.shape_text_edit.textChanged.connect(
+                    self.shape_text_changed
+                )
+        else:
+            self.shape_text_edit.setDisabled(True)
+            self.shape_text_label.setText("Switch to Edit mode to edit text")
+            self.shape_text_edit.textChanged.disconnect()
+            self.shape_text_edit.setPlainText("")
+            self.shape_text_edit.textChanged.connect(self.shape_text_changed)
