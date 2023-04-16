@@ -12,7 +12,7 @@
 [![open issues](https://isitmaintained.com/badge/open/vietanhdev/anylabeling.svg)](https://github.com/vietanhdev/anylabeling/issues)
 [![Pypi Downloads](https://pepy.tech/badge/anylabeling)](https://pypi.org/project/anylabeling/)
 
-<a href="https://www.youtube.com/watch?v=5iQSGL7ebXE">
+<a href="https://www.youtube.com/watch?v=xLVz-f6OeUY">
   <img alt="AnyLabeling" src="https://user-images.githubusercontent.com/18329471/232266520-1f52cd45-0776-479e-8a3c-4fef144c6b73.png"/>
 </a>
 
