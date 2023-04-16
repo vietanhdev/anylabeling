@@ -28,7 +28,9 @@ class YOLOv5(Model):
             "confidence_threshold",
             "classes",
         ]
-        buttons = ["button_run"]
+        widgets = ["button_run"]
+        output_modes = ["rectangle"]
+        default_output_mode = "rectangle"
 
     def __init__(self, model_config, on_message) -> None:
         # Run the parent class's init method

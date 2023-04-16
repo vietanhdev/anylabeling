@@ -1,5 +1,6 @@
 import logging
 import os
+import sys
 from copy import deepcopy
 
 import cv2
@@ -28,13 +29,17 @@ class SegmentAnything(Model):
             "encoder_model_path",
             "decoder_model_path",
         ]
-        buttons = [
+        widgets = [
+            "output_label",
+            "output_select_combobox",
             "button_add_point",
             "button_remove_point",
             "button_add_rect",
             "button_clear",
             "button_finish_object",
         ]
+        output_modes = ["polygon", "rectangle"]
+        default_output_mode = "polygon"
 
     def __init__(self, config_path, on_message) -> None:
         # Run the parent class's init method
@@ -80,6 +85,7 @@ class SegmentAnything(Model):
 
         # Pre-inference worker
         self.pre_inference_thread = None
+        self.pre_inference_worker = None
         self.stop_inference = False
 
     def set_auto_labeling_marks(self, marks):
@@ -242,31 +248,67 @@ class SegmentAnything(Model):
         if len(approx_contours) > 1:
             areas = [cv2.contourArea(contour) for contour in approx_contours]
             avg_area = np.mean(areas)
-            approx_contours = [
+
+            filtered_approx_contours = [
                 contour
-                for contour, area in zip(approx_contours, areas, strict=False)
+                for contour, area in zip(approx_contours, areas)
                 if area > avg_area * 0.2
             ]
+            approx_contours = filtered_approx_contours
 
         # Contours to shapes
         shapes = []
-        for approx in approx_contours:
-            # Scale points
-            points = approx.reshape(-1, 2)
-            points[:, 0] = points[:, 0] / resized_ratio[0]
-            points[:, 1] = points[:, 1] / resized_ratio[1]
-            points = points.tolist()
-            if len(points) < 3:
-                continue
-            points.append(points[0])
+        if self.output_mode == "polygon":
+            for approx in approx_contours:
+                # Scale points
+                points = approx.reshape(-1, 2)
+                points[:, 0] = points[:, 0] / resized_ratio[0]
+                points[:, 1] = points[:, 1] / resized_ratio[1]
+                points = points.tolist()
+                if len(points) < 3:
+                    continue
+                points.append(points[0])
+
+                # Create shape
+                shape = Shape(flags={})
+                for point in points:
+                    point[0] = int(point[0])
+                    point[1] = int(point[1])
+                    shape.add_point(QtCore.QPointF(point[0], point[1]))
+                shape.shape_type = "polygon"
+                shape.closed = True
+                shape.fill_color = "#000000"
+                shape.line_color = "#000000"
+                shape.line_width = 1
+                shape.label = "AUTOLABEL_OBJECT"
+                shape.selected = False
+                shapes.append(shape)
+        elif self.output_mode == "rectangle":
+            x_min = 100000000
+            y_min = 100000000
+            x_max = 0
+            y_max = 0
+            for approx in approx_contours:
+                # Scale points
+                points = approx.reshape(-1, 2)
+                points[:, 0] = points[:, 0] / resized_ratio[0]
+                points[:, 1] = points[:, 1] / resized_ratio[1]
+                points = points.tolist()
+                if len(points) < 3:
+                    continue
+
+                # Get min/max
+                for point in points:
+                    x_min = min(x_min, point[0])
+                    y_min = min(y_min, point[1])
+                    x_max = max(x_max, point[0])
+                    y_max = max(y_max, point[1])
 
             # Create shape
             shape = Shape(flags={})
-            for point in points:
-                point[0] = int(point[0])
-                point[1] = int(point[1])
-                shape.add_point(QtCore.QPointF(point[0], point[1]))
-            shape.type = "polygon"
+            shape.add_point(QtCore.QPointF(x_min, y_min))
+            shape.add_point(QtCore.QPointF(x_max, y_max))
+            shape.shape_type = "rectangle"
             shape.closed = True
             shape.fill_color = "#000000"
             shape.line_color = "#000000"
@@ -317,8 +359,9 @@ class SegmentAnything(Model):
 
     def unload(self):
         self.stop_inference = True
-        self.pre_inference_thread.quit()
-        self.pre_inference_thread.wait()
+        if self.pre_inference_thread:
+            self.pre_inference_thread.quit()
+            self.pre_inference_thread.wait()
         if self.encoder_session:
             self.encoder_session = None
         if self.decoder_session:

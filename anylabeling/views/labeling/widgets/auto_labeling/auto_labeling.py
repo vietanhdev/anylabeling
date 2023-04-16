@@ -13,7 +13,6 @@ class AutoLabelingWidget(QWidget):
     auto_segmentation_requested = pyqtSignal()
     auto_segmentation_disabled = pyqtSignal()
     auto_labeling_mode_changed = pyqtSignal(AutoLabelingMode)
-    undo_auto_labeling_action_requested = pyqtSignal()
     clear_auto_labeling_action_requested = pyqtSignal()
     finish_auto_labeling_object_action_requested = pyqtSignal()
 
@@ -26,7 +25,7 @@ class AutoLabelingWidget(QWidget):
         self.model_manager = ModelManager()
         self.model_manager.new_model_status.connect(self.on_new_model_status)
         self.new_model_selected.connect(self.model_manager.load_model)
-        self.model_manager.model_loaded.connect(self.update_visible_buttons)
+        self.model_manager.model_loaded.connect(self.update_visible_widgets)
         self.model_manager.model_loaded.connect(
             self.enable_model_select_combobox
         )
@@ -40,6 +39,14 @@ class AutoLabelingWidget(QWidget):
         )
         self.model_manager.auto_segmentation_model_unselected.connect(
             self.auto_segmentation_disabled
+        )
+        self.model_manager.output_modes_changed.connect(
+            self.on_output_modes_changed
+        )
+        self.output_select_combobox.currentIndexChanged.connect(
+            lambda: self.model_manager.set_output_mode(
+                self.output_select_combobox.currentText()
+            )
         )
 
         # Add models to combobox
@@ -68,9 +75,6 @@ class AutoLabelingWidget(QWidget):
                 AutoLabelingMode.ADD, AutoLabelingMode.RECTANGLE
             )
         )
-        self.button_undo.clicked.connect(
-            self.undo_auto_labeling_action_requested
-        )
         self.button_clear.clicked.connect(
             self.clear_auto_labeling_action_requested
         )
@@ -79,8 +83,8 @@ class AutoLabelingWidget(QWidget):
         )
         self.button_finish_object.setShortcut("F")
 
-        # Hide labeling buttons by default
-        self.hide_labeling_buttons()
+        # Hide labeling widgets by default
+        self.hide_labeling_widgets()
 
         # Handle close button
         self.button_close.clicked.connect(self.unload_and_hide)
@@ -109,7 +113,6 @@ class AutoLabelingWidget(QWidget):
             self.button_remove_point,
             self.button_add_rect,
             self.button_clear,
-            self.button_undo,
             self.button_finish_object,
         ]:
             button.setStyleSheet(style_sheet + "background-color: #ffffff;")
@@ -160,32 +163,52 @@ class AutoLabelingWidget(QWidget):
     def enable_model_select_combobox(self):
         self.model_select_combobox.setEnabled(True)
 
+    def on_output_modes_changed(self, output_modes, default_output_mode):
+        """Handle output modes changed"""
+        # Disconnect onIndexChanged signal to prevent triggering
+        # on model select combobox change
+        self.output_select_combobox.currentIndexChanged.disconnect()
+
+        self.output_select_combobox.clear()
+        for output_mode in output_modes:
+            self.output_select_combobox.addItem(output_mode)
+        self.output_select_combobox.setCurrentText(default_output_mode)
+
+        # Reconnect onIndexChanged signal
+        self.output_select_combobox.currentIndexChanged.connect(
+            lambda: self.model_manager.set_output_mode(
+                self.output_select_combobox.currentText()
+            )
+        )
+
     def on_model_select_combobox_changed(self, index):
+        """Handle model select combobox change"""
         model_name = self.model_select_combobox.itemData(index)
         # Disable combobox while loading model
         if model_name:
             self.model_select_combobox.setEnabled(False)
-        self.hide_labeling_buttons()
+        self.hide_labeling_widgets()
         self.new_model_selected.emit(model_name)
 
-    def update_visible_buttons(self, buttons):
-        """Update button status"""
-        for button in buttons:
-            getattr(self, button).show()
+    def update_visible_widgets(self, widgets):
+        """Update widget status"""
+        for widget in widgets:
+            getattr(self, widget).show()
 
-    def hide_labeling_buttons(self):
-        """Hide labeling buttons by default"""
-        buttons = [
+    def hide_labeling_widgets(self):
+        """Hide labeling widgets by default"""
+        widgets = [
+            "output_label",
+            "output_select_combobox",
             "button_run",
             "button_add_point",
             "button_remove_point",
             "button_add_rect",
-            "button_undo",
             "button_clear",
             "button_finish_object",
         ]
-        for button in buttons:
-            getattr(self, button).hide()
+        for widget in widgets:
+            getattr(self, widget).hide()
 
     def on_new_marks(self, marks):
         """Handle new marks"""

@@ -21,7 +21,9 @@ class Model:
 
     class Meta:
         required_config_names = []
-        buttons = ["button_run"]
+        widgets = ["button_run"]
+        output_modes = ["rectangle"]
+        default_output_mode = "rectangle"
 
     def __init__(self, model_config, on_message) -> None:
         self.on_message = on_message
@@ -39,12 +41,13 @@ class Model:
             config_names=self.Meta.required_config_names,
             config=self.config,
         )
+        self.output_mode = self.Meta.default_output_mode
 
-    def get_required_buttons(self):
+    def get_required_widgets(self):
         """
-        Get required buttons for showing in UI
+        Get required widgets for showing in UI
         """
-        return self.Meta.buttons
+        return self.Meta.widgets
 
     def get_model_abs_path(self, model_path, model_folder_name):
         """
@@ -137,7 +140,7 @@ class Model:
                 raise Exception(f"Missing config: {name}")
 
     @abstractmethod
-    def predict_shapes(self, image, image_path=None) -> AutoLabelingResult:
+    def predict_shapes(self, image, filename=None) -> AutoLabelingResult:
         """
         Predict image and return AnyLabeling shapes
         """
@@ -174,3 +177,9 @@ class Model:
         and run inference to save time for user.
         """
         pass
+
+    def set_output_mode(self, mode):
+        """
+        Set output mode
+        """
+        self.output_mode = mode

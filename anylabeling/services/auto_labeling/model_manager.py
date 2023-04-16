@@ -21,6 +21,8 @@ class ModelManager(QObject):
     prediction_started = pyqtSignal()
     prediction_finished = pyqtSignal()
     request_next_files_requested = pyqtSignal()
+    output_modes_changed = pyqtSignal(list, str)
+
     model_configs = {}
 
     def __init__(self):
@@ -62,13 +64,22 @@ class ModelManager(QObject):
         """Return model names"""
         return list(self.model_infos.keys())
 
+    def set_output_mode(self, mode):
+        """Set output mode"""
+        if self.loaded_model_info and self.loaded_model_info["model"]:
+            self.loaded_model_info["model"].set_output_mode(mode)
+
     @pyqtSlot()
     def on_model_download_finished(self):
         """Handle model download thread finished"""
         self.new_model_status.emit("Model loaded. Ready for labeling.")
         if self.loaded_model_info and self.loaded_model_info["model"]:
             self.model_loaded.emit(
-                self.loaded_model_info["model"].get_required_buttons()
+                self.loaded_model_info["model"].get_required_widgets()
+            )
+            self.output_modes_changed.emit(
+                self.loaded_model_info["model"].Meta.output_modes,
+                self.loaded_model_info["model"].Meta.default_output_mode,
             )
 
     def load_model(self, model_name):
