@@ -40,8 +40,8 @@ class Shape:
     vertex_fill_color = DEFAULT_VERTEX_FILL_COLOR
     hvertex_fill_color = DEFAULT_HVERTEX_FILL_COLOR
     point_type = P_ROUND
-    point_size = 8
-    scale = 1.0
+    point_size = 4
+    scale = 1.5
 
     def __init__(
         self,
@@ -145,7 +145,7 @@ class Shape:
         x2, y2 = pt2.x(), pt2.y()
         return QtCore.QRectF(x1, y1, x2 - x1, y2 - y1)
 
-    def paint(self, painter: QtGui.QPainter):
+    def paint(self, painter: QtGui.QPainter):  # noqa: max-complexity: 18
         """Paint shape using QPainter"""
         if self.points:
             color = (
@@ -164,36 +164,44 @@ class Shape:
                 if len(self.points) == 2:
                     rectangle = self.get_rect_from_line(*self.points)
                     line_path.addRect(rectangle)
-                for i in range(len(self.points)):
-                    self.draw_vertex(vrtx_path, i)
+                if self.selected:
+                    for i in range(len(self.points)):
+                        self.draw_vertex(vrtx_path, i)
             elif self.shape_type == "circle":
                 assert len(self.points) in [1, 2]
                 if len(self.points) == 2:
                     rectangle = self.get_circle_rect_from_line(self.points)
                     line_path.addEllipse(rectangle)
-                for i in range(len(self.points)):
-                    self.draw_vertex(vrtx_path, i)
+                if self.selected:
+                    for i in range(len(self.points)):
+                        self.draw_vertex(vrtx_path, i)
             elif self.shape_type == "linestrip":
                 line_path.moveTo(self.points[0])
                 for i, p in enumerate(self.points):
                     line_path.lineTo(p)
-                    self.draw_vertex(vrtx_path, i)
+                    if self.selected:
+                        self.draw_vertex(vrtx_path, i)
+            elif self.shape_type == "point":
+                assert len(self.points) == 1
+                self.draw_vertex(vrtx_path, 0)
             else:
                 line_path.moveTo(self.points[0])
                 # Uncommenting the following line will draw 2 paths
                 # for the 1st vertex, and make it non-filled, which
                 # may be desirable.
-                # self.draw_vertex(vrtx_path, 0)
+                self.draw_vertex(vrtx_path, 0)
 
                 for i, p in enumerate(self.points):
                     line_path.lineTo(p)
-                    self.draw_vertex(vrtx_path, i)
+                    if self.selected:
+                        self.draw_vertex(vrtx_path, i)
                 if self.is_closed():
                     line_path.lineTo(self.points[0])
 
             painter.drawPath(line_path)
             painter.drawPath(vrtx_path)
-            painter.fillPath(vrtx_path, self._vertex_fill_color)
+            if self._vertex_fill_color is not None:
+                painter.fillPath(vrtx_path, self._vertex_fill_color)
             if self.fill:
                 color = (
                     self.select_fill_color

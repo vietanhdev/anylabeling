@@ -225,18 +225,34 @@ class SegmentAnything(Model):
         """
         Post process masks
         """
-        shapes = []
         # Find contours
         contours, _ = cv2.findContours(
             masks.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE
         )
+
+        # Refine contours
+        approx_contours = []
         for contour in contours:
             # Approximate contour
             epsilon = 0.001 * cv2.arcLength(contour, True)
             approx = cv2.approxPolyDP(contour, epsilon, True)
-            points = approx.reshape(-1, 2)
+            approx_contours.append(approx)
 
+        # Remove small contours (area < 20% of average area)
+        if len(approx_contours) > 1:
+            areas = [cv2.contourArea(contour) for contour in approx_contours]
+            avg_area = np.mean(areas)
+            approx_contours = [
+                contour
+                for contour, area in zip(approx_contours, areas, strict=False)
+                if area > avg_area * 0.2
+            ]
+
+        # Contours to shapes
+        shapes = []
+        for approx in approx_contours:
             # Scale points
+            points = approx.reshape(-1, 2)
             points[:, 0] = points[:, 0] / resized_ratio[0]
             points[:, 1] = points[:, 1] / resized_ratio[1]
             points = points.tolist()
