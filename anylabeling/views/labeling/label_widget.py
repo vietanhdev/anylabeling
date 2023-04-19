@@ -1010,6 +1010,8 @@ class LabelmeWidget(LabelDialog):
         if self.first_start:
             QWhatsThis.enterWhatsThisMode()
 
+        self.set_text_editing(False)
+
     def get_labeling_instruction(self):
         return (
             f"<b>Mode:</b> {self.canvas.get_mode()} - <b>Shortcuts:</b>"
@@ -2609,9 +2611,12 @@ class LabelmeWidget(LabelDialog):
                 self.shape_text_edit.textChanged.connect(
                     self.shape_text_changed
                 )
+            self.shape_text_edit.setDisabled(False)
         else:
             self.shape_text_edit.setDisabled(True)
-            self.shape_text_label.setText("Switch to Edit mode to edit text")
+            self.shape_text_label.setText(
+                "Switch to Edit mode for text editing"
+            )
             self.shape_text_edit.textChanged.disconnect()
             self.shape_text_edit.setPlainText("")
             self.shape_text_edit.textChanged.connect(self.shape_text_changed)
