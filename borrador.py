@@ -105,7 +105,7 @@ for i in selected:  # loop through selected
         protos = np.expand_dims(masks[i], 0) @ protos  # matmul
         protos = 1 / (1 + np.exp(-protos))  # sigmoid
         protos = protos.reshape(h, w)  # reshape
-        mask = cv2.resize(protos, (w_source, h_source))  # resize mask
+        mask = cv2.resize(protos, (box[2], box[3]))  # resize mask
         mask = mask >= 0.5 #config["score_threshold"] # mask_tresh  # filtering mask by tresh
 
         # add mask to overlay layer
