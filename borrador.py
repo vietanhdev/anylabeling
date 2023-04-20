@@ -1,11 +1,5 @@
 import cv2
 import numpy as np
-import numpy.typing as npt
-from typing import Tuple, Iterable
-
-
-
-
 
 
 # Load YOLOv5 segmentation model
@@ -20,23 +14,89 @@ config = {'type': 'yolov8',
           'score_threshold': 0.4,
           'nms_threshold': 0.45,
           'confidence_threshold': 0.45,
+          'mask_threshold': 0.45,
           'classes': ['person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus', 'train', 'truck', 'boat', 'traffic light', 'fire hydrant', 'stop sign', 'parking meter', 'bench', 'bird', 'cat', 'dog', 'horse', 'sheep', 'cow', 'elephant', 'bear', 'zebra', 'giraffe', 'backpack', 'umbrella', 'handbag', 'tie', 'suitcase', 'frisbee', 'skis', 'snowboard', 'sports ball', 'kite', 'baseball bat', 'baseball glove', 'skateboard', 'surfboard', 'tennis racket', 'bottle', 'wine glass', 'cup', 'fork', 'knife', 'spoon', 'bowl', 'banana', 'apple', 'sandwich', 'orange', 'broccoli', 'carrot', 'hot dog', 'pizza', 'donut', 'cake', 'chair', 'couch', 'potted plant', 'bed', 'dining table', 'toilet', 'tv', 'laptop', 'mouse', 'remote', 'keyboard', 'cell phone', 'microwave', 'oven', 'toaster', 'sink', 'refrigerator', 'book', 'clock', 'vase', 'scissors', 'teddy bear', 'hair drier', 'toothbrush']}
 classes = config["classes"]
 
 # Load input image
-image = cv2.imread('bus.jpg')
-source_padded = image.copy()
-overlay = image.copy()  # make overlay mat
+input_image = cv2.imread('bus.jpg')
+source_height, source_width, _ = input_image.shape
 
 # Preprocess image
-blob = cv2.dnn.blobFromImage(image, 1/255.0, (640, 640), (0, 0, 0), True, crop=False)
+blob = cv2.dnn.blobFromImage(
+    input_image,
+    1 / 255,
+    (config["input_width"], config["input_height"]),
+    [0, 0, 0],
+    1,
+    crop=False,
+)
 
-# Set the input to the network
+
+# Sets the input to the network.
 net.setInput(blob)
 
-# Forward pass through the network
+# Runs the forward pass to get output of the output layers.
 output_layers = net.getUnconnectedOutLayersNames()
 outputs = net.forward(output_layers)
+
+_, seg_channels, seg_width, seg_height = outputs[1].shape
+
+# Lists to hold respective values while unwrapping.
+class_ids = []
+confidences = []
+boxes = []
+
+# Rows.
+rows = outputs[0].shape[1]
+
+image_height, image_width = input_image.shape[:2]
+
+# Resizing factor.
+x_factor = image_width / config["input_width"]
+y_factor = image_height / config["input_height"]
+
+# Iterate through 25200 detections.
+for r in range(rows):
+    row = outputs[0][0][r]
+    confidence = row[4]
+
+    # Discard bad detections and continue.
+    if confidence >= config["confidence_threshold"]:
+        classes_scores = row[5:]
+
+        # Get the index of max class score.
+        class_id = np.argmax(classes_scores)
+
+        #  Continue if the class score is above threshold.
+        if classes_scores[class_id] > config["score_threshold"]:
+            confidences.append(confidence)
+            class_ids.append(class_id)
+            row = row.round().astype(np.int32)
+
+            cx, cy, w, h = row[0], row[1], row[2], row[3]
+
+            left = int(round(cx * seg_width / source_width))
+            top = int(round(cy * seg_height / source_height))
+            width = int(round(w * seg_width / source_width))
+            height = int(round(h * seg_height / source_height))
+            
+            mask = outputs[0][0, :, len(classes) + 5 :][r]
+            protos = outputs[1][0, :, top : top + height, left : left + width].reshape(seg_channels, -1)
+            protos = np.expand_dims(mask, 0) @ protos  # matmul
+            protos = 1 / (1 + np.exp(-protos))  # sigmoid
+            protos = protos.reshape(height, width)  # reshape
+            mask = cv2.resize(protos, (row[2], row[3]))  # resize mask
+            mask = mask >= config["mask_threshold"] # filtering mask by tresh
+
+            box = np.array([left, top, width, height])
+            boxes.append(box)
+
+
+
+
+"""
+
 rows = outputs[0].shape[1]
 
 
@@ -147,3 +207,4 @@ for box in selected_boxes:
 cv2.imwrite("test.jpg", image)
 
 
+"""
