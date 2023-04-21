@@ -57,7 +57,7 @@ class YOLOv8(Model):
             1 / 255,
             (self.config["input_width"], self.config["input_height"]),
             [0, 0, 0],
-            1,
+            swapRB=False, # Image is already in BGR
             crop=False,
         )
 

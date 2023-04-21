@@ -152,6 +152,15 @@ class ModelManager(QObject):
 
             # Request next files for prediction
             self.request_next_files_requested.emit()
+        
+        elif model_info["type"] == "yolov5-seg":
+            from .yolov5_seg import YOLOv5_seg
+
+            model_info["model"] = YOLOv5_seg(
+                model_info, on_message=self.new_model_status.emit
+            )
+            self.auto_segmentation_model_unselected.emit()
+        
         else:
             raise Exception(f"Unknown model type: {model_info['type']}")
 
