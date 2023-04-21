@@ -2533,6 +2533,7 @@ class LabelmeWidget(LabelDialog):
         )
         if not text:
             self.label_dialog.edit.setText(previous_text)
+            return
 
         if not self.validate_label(text):
             self.error_message(
