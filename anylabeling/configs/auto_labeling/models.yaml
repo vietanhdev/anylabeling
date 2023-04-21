@@ -32,7 +32,7 @@
   config_file: "yolov5n-seg.yaml"
 - model_name: "yolov5s-seg-r20230415"
   config_file: "yolov5s-seg.yaml"
-- model_name: "yolovm-seg-r20230415"
+- model_name: "yolov5m-seg-r20230415"
   config_file: "yolov5m-seg.yaml"
 - model_name: "yolov5l-seg-r20230415"
   config_file: "yolov5l-seg.yaml"
