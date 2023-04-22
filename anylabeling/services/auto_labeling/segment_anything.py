@@ -1,6 +1,5 @@
 import logging
 import os
-import sys
 from copy import deepcopy
 
 import cv2
@@ -11,11 +10,10 @@ from PyQt5.QtCore import QThread
 
 from anylabeling.utils import GenericWorker
 from anylabeling.views.labeling.shape import Shape
-from anylabeling.views.labeling.utils.opencv import qt_img_to_cv_img
-
+from anylabeling.views.labeling.utils.opencv import qt_img_to_cv_img, qt_img_to_rgb_cv_img
+from .lru_cache import LRUCache
 from .model import Model
 from .types import AutoLabelingResult
-from .lru_cache import LRUCache
 
 
 class SegmentAnything(Model):
@@ -178,7 +176,7 @@ class SegmentAnything(Model):
         return (newh, neww)
 
     def apply_coords(
-        self, coords: np.ndarray, original_size, target_length
+            self, coords: np.ndarray, original_size, target_length
     ) -> np.ndarray:
         """
         Expects a numpy array of length 2 in the final dimension. Requires the
@@ -201,8 +199,8 @@ class SegmentAnything(Model):
             [input_points, np.array([[0.0, 0.0]])], axis=0
         )[None, :, :]
         onnx_label = np.concatenate([input_labels, np.array([-1])], axis=0)[
-            None, :
-        ].astype(np.float32)
+                     None, :
+                     ].astype(np.float32)
         onnx_coord = self.apply_coords(
             onnx_coord, self.size_after_apply_max_width_height, self.input_size
         ).astype(np.float32)
@@ -336,7 +334,7 @@ class SegmentAnything(Model):
                     image_embedding,
                 ) = cached_data
             else:
-                cv_image = qt_img_to_cv_img(image)
+                cv_image = qt_img_to_rgb_cv_img(image, filename)
                 encoder_inputs, resized_ratio = self.pre_process(cv_image)
                 if self.stop_inference:
                     return AutoLabelingResult([], replace=False)
@@ -394,8 +392,8 @@ class SegmentAnything(Model):
         and run inference to save time for user.
         """
         if (
-            self.pre_inference_thread is None
-            or not self.pre_inference_thread.isRunning()
+                self.pre_inference_thread is None
+                or not self.pre_inference_thread.isRunning()
         ):
             self.pre_inference_thread = QThread()
             self.pre_inference_worker = GenericWorker(
