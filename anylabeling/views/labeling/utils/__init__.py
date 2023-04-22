@@ -22,7 +22,6 @@ from .qt import (
     new_icon,
 )
 from .shape import (
-    labelme_shapes_to_label,
     masks_to_bboxes,
     polygons_to_mask,
     shape_to_mask,

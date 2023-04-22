@@ -2,7 +2,7 @@
 
 from PyQt5.QtWidgets import QVBoxLayout, QWidget
 
-from .label_widget import LabelmeWidget
+from .label_widget import LabelingWidget
 
 
 class LabelingWrapper(QWidget):
@@ -13,7 +13,7 @@ class LabelingWrapper(QWidget):
         self.parent = parent
 
         # Create a labeling widget
-        view = LabelmeWidget(self)
+        view = LabelingWidget(self)
 
         # Create the main layout and put labeling into
         main_layout = QVBoxLayout()

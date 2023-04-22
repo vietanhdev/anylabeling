@@ -47,8 +47,8 @@ LABEL_COLORMAP[2] = LABEL_COLORMAP[1]
 LABEL_COLORMAP[1] = [0, 180, 33]
 
 
-class LabelmeWidget(LabelDialog):
-    """Labelme widget"""
+class LabelingWidget(LabelDialog):
+    """The main widget for labeling images"""
 
     FIT_WINDOW, FIT_WIDTH, MANUAL_ZOOM = 0, 1, 2
     next_files_changed = QtCore.pyqtSignal(list)

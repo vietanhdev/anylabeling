@@ -75,24 +75,6 @@ def shapes_to_label(img_shape, shapes, label_name_to_value):
     return cls, ins
 
 
-def labelme_shapes_to_label(img_shape, shapes):
-    logger.warning(
-        "labelme_shapes_to_label is deprecated, so please use shapes_to_label."
-    )
-
-    label_name_to_value = {"_background_": 0}
-    for shape in shapes:
-        label_name = shape["label"]
-        if label_name in label_name_to_value:
-            label_value = label_name_to_value[label_name]
-        else:
-            label_value = len(label_name_to_value)
-            label_name_to_value[label_name] = label_value
-
-    lbl, _ = shapes_to_label(img_shape, shapes, label_name_to_value)
-    return lbl, label_name_to_value
-
-
 def masks_to_bboxes(masks):
     if masks.ndim != 3:
         raise ValueError(f"masks.ndim must be 3, but it is {masks.ndim}")
