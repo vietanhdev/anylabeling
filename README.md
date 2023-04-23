@@ -21,6 +21,16 @@
 
 ## I. Install and run
 
+### 1. Download and run executable
+
+- Download and run newest version from [Releases](https://github.com/vietanhdev/anylabeling/releases).
+- For MacOS:
+  - After installing, go to Applications folder
+  - Right click on the app and select Open
+  - From the second time, you can open the app normally using Launchpad
+
+### 2. Install from Pypi
+
 - Requirements: Python >= 3.8
 - Recommended: Miniconda/Anaconda <https://docs.conda.io/en/latest/miniconda.html>
 
