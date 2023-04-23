@@ -19,6 +19,7 @@ def qt_img_to_rgb_cv_img(qt_img, img_path=None):
         if (
             qt_img.format() == QImage.Format_RGB32
             or qt_img.format() == QImage.Format_ARGB32
+            or qt_img.format() == QImage.Format_ARGB32_Premultiplied
         ):
             cv_image = qimage2ndarray.rgb_view(qt_img)
         else:
