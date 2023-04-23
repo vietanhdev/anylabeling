@@ -2569,6 +2569,7 @@ class LabelingWidget(LabelDialog):
                     )
 
                 # Update label list
+                self._update_shape_color(shape)
                 item = self.label_list.find_item_by_shape(shape)
                 if shape.group_id is None:
                     color = shape.fill_color.getRgb()[:3]
