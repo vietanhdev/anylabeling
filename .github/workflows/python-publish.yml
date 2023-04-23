@@ -1,9 +1,17 @@
 name: Publish Python 🐍 distributions 📦 to PyPI and TestPyPI
-on: push
+
+on:
+  push:
+    tags:
+      - 'v*'
+
 permissions:
   id-token: write
+
 jobs:
   build-n-publish:
+    if: startsWith(github.ref, 'refs/tags/')
+
     name: Build and publish Python 🐍 distributions 📦 to PyPI and TestPyPI
     runs-on: ubuntu-latest
     steps:
