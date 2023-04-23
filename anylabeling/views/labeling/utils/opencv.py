@@ -16,7 +16,10 @@ def qt_img_to_rgb_cv_img(qt_img, img_path=None):
         cv_image = cv2.imdecode(np.fromfile(img_path, dtype=np.uint8), -1)
         cv_image = cv2.cvtColor(cv_image, cv2.COLOR_BGR2RGB)
     else:
-        if qt_img.format() == QImage.Format_RGB32 or qt_img.format() == QImage.Format_ARGB32:
+        if (
+            qt_img.format() == QImage.Format_RGB32
+            or qt_img.format() == QImage.Format_ARGB32
+        ):
             cv_image = qimage2ndarray.rgb_view(qt_img)
         else:
             cv_image = qimage2ndarray.raw_view(qt_img)
