@@ -69,8 +69,6 @@ class YOLOv5Segmentation(Model):
         # Runs the forward pass to get output of the output layers.
         output_layers = net.getUnconnectedOutLayersNames()
         outputs = net.forward(output_layers)
-        np.save("outputs0.npy", outputs[0])
-        np.save("outputs1.npy", outputs[1])
 
         return outputs
 
