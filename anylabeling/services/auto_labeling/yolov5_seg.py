@@ -102,9 +102,9 @@ class YOLOv5Segmentation(Model):
         confidences = outputs[0][0, :, 4]
         scores = (
             confidences.reshape(-1, 1)
-            * outputs[0][0, :, 5 : len(self.classes) + 5]
+            * outputs[0][0, :, 5: len(self.classes) + 5]
         )
-        masks = outputs[0][0, :, len(self.classes) + 5 :]
+        masks = outputs[0][0, :, len(self.classes) + 5:]
 
         # Perform non maximum suppression to eliminate redundant
         # overlapping boxes with lower confidences.
@@ -136,7 +136,7 @@ class YOLOv5Segmentation(Model):
 
                     # Process protos
                     protos = outputs[1][
-                        0, :, top : top + height, left : left + width
+                        0, :, top: top + height, left: left + width
                     ].reshape(seg_channels, -1)
                     protos = np.expand_dims(masks[i], 0) @ protos  # matmul
                     protos = 1 / (1 + np.exp(-protos))  # sigmoid
@@ -149,7 +149,7 @@ class YOLOv5Segmentation(Model):
                     # Add mask to overlay layer
                     black = np.zeros((image_height, image_width, 3))
                     to_mask = black[
-                        box[1] : box[1] + box[3], box[0] : box[0] + box[2]
+                        box[1]: box[1] + box[3], box[0]: box[0] + box[2]
                     ]  # get box roi
                     to_mask[mask] = [255, 255, 255]  # apply mask
 
