@@ -11,6 +11,7 @@
 [![license](https://img.shields.io/github/license/vietanhdev/anylabeling.svg)](https://github.com/vietanhdev/anylabeling/blob/master/LICENSE)
 [![open issues](https://isitmaintained.com/badge/open/vietanhdev/anylabeling.svg)](https://github.com/vietanhdev/anylabeling/issues)
 [![Pypi Downloads](https://pepy.tech/badge/anylabeling)](https://pypi.org/project/anylabeling/)
+[![Documentation](https://img.shields.io/badge/Read-Documentation-green)](https://anylabeling.com/)
 
 <a href="https://www.youtube.com/watch?v=xLVz-f6OeUY">
   <img alt="AnyLabeling" src="https://user-images.githubusercontent.com/18329471/232266520-1f52cd45-0776-479e-8a3c-4fef144c6b73.png"/>
@@ -95,7 +96,11 @@ bash build_executable.sh
 
 - Check the outputs in: `dist/`.
 
-## IV. References
+## IV. Contribution
+
+If you want to contribute to **AnyLabeling**, please read [Contribution Guidelines](https://anylabeling.com/docs/contribution).
+
+## V. References
 
 - Labeling UI built with ideas and components from [LabelImg](https://github.com/heartexlabs/labelImg), [labelme](https://github.com/wkentaro/labelme).
 - Icons: Flat Icons
