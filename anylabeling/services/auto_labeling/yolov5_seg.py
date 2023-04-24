@@ -126,7 +126,6 @@ class YOLOv5Segmentation(Model):
             if (
                 score >= self.config["score_threshold"]
             ):  # filtering by score_tresh
-
                 if self.output_mode == "polygon":
                     # Transform coordinates
                     left = int(round(box[0] * seg_width / image_width))
