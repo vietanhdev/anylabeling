@@ -47,8 +47,8 @@ LABEL_COLORMAP[2] = LABEL_COLORMAP[1]
 LABEL_COLORMAP[1] = [0, 180, 33]
 
 
-class LabelmeWidget(LabelDialog):
-    """Labelme widget"""
+class LabelingWidget(LabelDialog):
+    """The main widget for labeling images"""
 
     FIT_WINDOW, FIT_WIDTH, MANUAL_ZOOM = 0, 1, 2
     next_files_changed = QtCore.pyqtSignal(list)
@@ -2533,6 +2533,7 @@ class LabelmeWidget(LabelDialog):
         )
         if not text:
             self.label_dialog.edit.setText(previous_text)
+            return
 
         if not self.validate_label(text):
             self.error_message(
@@ -2568,6 +2569,7 @@ class LabelmeWidget(LabelDialog):
                     )
 
                 # Update label list
+                self._update_shape_color(shape)
                 item = self.label_list.find_item_by_shape(shape)
                 if shape.group_id is None:
                     color = shape.fill_color.getRgb()[:3]

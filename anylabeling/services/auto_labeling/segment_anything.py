@@ -1,6 +1,5 @@
 import logging
 import os
-import sys
 from copy import deepcopy
 
 import cv2
@@ -11,11 +10,11 @@ from PyQt5.QtCore import QThread
 
 from anylabeling.utils import GenericWorker
 from anylabeling.views.labeling.shape import Shape
-from anylabeling.views.labeling.utils.opencv import qt_img_to_cv_img
+from anylabeling.views.labeling.utils.opencv import qt_img_to_rgb_cv_img
 
+from .lru_cache import LRUCache
 from .model import Model
 from .types import AutoLabelingResult
-from .lru_cache import LRUCache
 
 
 class SegmentAnything(Model):
@@ -139,7 +138,7 @@ class SegmentAnything(Model):
         padh = max_height - h
         padw = max_width - w
         image = np.pad(image, ((0, padh), (0, padw), (0, 0)), mode="constant")
-        self.size_after_apply_max_width_height = image.shape[:2]
+        size_after_apply_max_width_height = image.shape[:2]
 
         # Normalize
         pixel_mean = np.array([123.675, 116.28, 103.53]).reshape(1, 1, -1)
@@ -159,7 +158,7 @@ class SegmentAnything(Model):
         encoder_inputs = {
             "x": x,
         }
-        return encoder_inputs, resized_ratio
+        return encoder_inputs, resized_ratio, size_after_apply_max_width_height
 
     def run_encoder(self, encoder_inputs):
         output = self.encoder_session.run(None, encoder_inputs)
@@ -193,7 +192,9 @@ class SegmentAnything(Model):
         coords[..., 1] = coords[..., 1] * (new_h / old_h)
         return coords
 
-    def run_decoder(self, image_embedding, resized_ratio):
+    def run_decoder(
+        self, image_embedding, resized_ratio, size_after_apply_max_width_height
+    ):
         input_points, input_labels = self.get_input_points(resized_ratio)
 
         # Add a batch index, concatenate a padding point, and transform.
@@ -204,7 +205,7 @@ class SegmentAnything(Model):
             None, :
         ].astype(np.float32)
         onnx_coord = self.apply_coords(
-            onnx_coord, self.size_after_apply_max_width_height, self.input_size
+            onnx_coord, size_after_apply_max_width_height, self.input_size
         ).astype(np.float32)
 
         # Create an empty mask input and an indicator for no mask.
@@ -218,13 +219,13 @@ class SegmentAnything(Model):
             "mask_input": onnx_mask_input,
             "has_mask_input": onnx_has_mask_input,
             "orig_im_size": np.array(
-                self.size_after_apply_max_width_height, dtype=np.float32
+                size_after_apply_max_width_height, dtype=np.float32
             ),
         }
         masks, _, _ = self.decoder_session.run(None, decoder_inputs)
         masks = masks[0, 0, :, :]  # Only get 1 mask
         masks = masks > 0.0
-        masks = masks.reshape(self.size_after_apply_max_width_height)
+        masks = masks.reshape(size_after_apply_max_width_height)
         return masks
 
     def post_process(self, masks, resized_ratio):
@@ -333,21 +334,34 @@ class SegmentAnything(Model):
             if cached_data is not None:
                 (
                     resized_ratio,
+                    size_after_apply_max_width_height,
                     image_embedding,
                 ) = cached_data
             else:
-                cv_image = qt_img_to_cv_img(image)
-                encoder_inputs, resized_ratio = self.pre_process(cv_image)
+                cv_image = qt_img_to_rgb_cv_img(image, filename)
+                (
+                    encoder_inputs,
+                    resized_ratio,
+                    size_after_apply_max_width_height,
+                ) = self.pre_process(cv_image)
                 if self.stop_inference:
                     return AutoLabelingResult([], replace=False)
                 image_embedding = self.run_encoder(encoder_inputs)
                 self.image_embedding_cache.put(
                     filename,
-                    (resized_ratio, image_embedding),
+                    (
+                        resized_ratio,
+                        size_after_apply_max_width_height,
+                        image_embedding,
+                    ),
                 )
             if self.stop_inference:
                 return AutoLabelingResult([], replace=False)
-            masks = self.run_decoder(image_embedding, resized_ratio)
+            masks = self.run_decoder(
+                image_embedding,
+                resized_ratio,
+                size_after_apply_max_width_height,
+            )
             shapes = self.post_process(masks, resized_ratio)
         except Exception as e:  # noqa
             logging.warning("Could not inference model")
@@ -380,12 +394,20 @@ class SegmentAnything(Model):
                 continue
             if self.stop_inference:
                 return
-            cv_image = qt_img_to_cv_img(image)
-            encoder_inputs, resized_ratio = self.pre_process(cv_image)
+            cv_image = qt_img_to_rgb_cv_img(image)
+            (
+                encoder_inputs,
+                resized_ratio,
+                size_after_apply_max_width_height,
+            ) = self.pre_process(cv_image)
             image_embedding = self.run_encoder(encoder_inputs)
             self.image_embedding_cache.put(
                 filename,
-                (resized_ratio, image_embedding),
+                (
+                    resized_ratio,
+                    size_after_apply_max_width_height,
+                    image_embedding,
+                ),
             )
 
     def on_next_files_changed(self, next_files):

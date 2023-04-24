@@ -28,7 +28,7 @@ exe = EXE(
     a.binaries,
     a.zipfiles,
     a.datas,
-    name='run_anylabeling',
+    name='anylabeling',
     debug=False,
     strip=False,
     upx=False,
