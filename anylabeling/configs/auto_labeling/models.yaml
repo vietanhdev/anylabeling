@@ -38,5 +38,3 @@
   config_file: "yolov5l-seg.yaml"
 - model_name: "yolov5x-seg-r20230415"
   config_file: "yolov5x-seg.yaml"
-- model_name: "yolov8x-seg-r20230415"
-  config_file: "yolov8x-seg.yaml"

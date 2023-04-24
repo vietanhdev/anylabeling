@@ -1,7 +1,7 @@
 type: yolov5-seg
 name: yolov5x-seg-r20230415
 display_name: YOLOv5x-seg Ultralytics
-model_path: https://github.com/vietanhdev/anylabeling-assets/releases/download/v0.0.1/yolov5x-seg.onnx
+model_path: https://github.com/vietanhdev/anylabeling-assets/releases/download/v0.3.0/yolov5x-seg.onnx
 input_width: 640
 input_height: 640
 score_threshold: 0.5
