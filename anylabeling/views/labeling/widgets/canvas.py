@@ -4,7 +4,10 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QWheelEvent
 
-from anylabeling.services.auto_labeling.types import AutoLabelingMode
+from anylabeling.services.auto_labeling.types import (
+    AutoLabelingMode,
+    AutoLabelingResult,
+)
 
 from .. import utils
 from ..shape import Shape
@@ -78,6 +81,8 @@ class Canvas(
         self.prev_h_shape = None
         self.h_vertex = None
         self.prev_h_vertex = None
+        self.prev_select_vertex = None
+        self.select_vertex = None
         self.h_edge = None
         self.prev_h_edge = None
         self.moving_shape = False
@@ -419,6 +424,59 @@ class Canvas(
         self.prev_h_vertex = None
         self.moving_shape = True  # Save changes
 
+    def split_list(self, lst, i1, i2):
+        """Split the list into two parts"""
+        if i1 == i2:
+            return []
+        if i1 > i2:
+            i1, i2 = i2, i1
+        list1 = lst[i1:i2]
+        list2 = lst[: i1 + 1] + lst[i2 + 1 :]
+        return [list1, list2]
+
+    def split_selected_shape(self, pos):
+        """Select two points to split the polygon into two independent parts"""
+        index = None
+        for shape in reversed([s for s in self.shapes if self.is_visible(s)]):
+            index = shape.nearest_vertex(pos, self.epsilon / self.scale)
+            if index:
+                if self.select_vertex is None:
+                    self.select_vertex = index
+                    return
+                else:
+                    self.prev_select_vertex = self.select_vertex
+                    self.select_vertex = index
+
+        shape = self.prev_h_shape
+
+        index1 = self.prev_select_vertex
+        index2 = self.select_vertex
+
+        if shape is None or index1 is None or index2 is None:
+            return
+
+        points_list = shape.get_points()
+        split_lists = self.split_list(points_list, index1, index2)
+        if len(split_lists) < 2:
+            return
+        shape.replace_points(split_lists[1])
+
+        shape_new = Shape(
+            shape.label,
+            shape.text,
+            shape.line_color,
+            shape.shape_type,
+            shape.flags,
+            shape.group_id,
+        )
+        shape_new.replace_points(split_lists[0])
+        shape_new.close()
+
+        split_result = AutoLabelingResult([shape_new], False)
+        self.parent.new_shapes_from_auto_labeling(split_result)
+
+        self.prev_select_vertex = self.select_vertex = None
+
     # QT Overload
     def mousePressEvent(self, ev):
         """Mouse press event"""
@@ -459,13 +517,18 @@ class Canvas(
             elif self.editing():
                 if self.selected_edge():
                     self.add_point_to_edge()
+                    self.prev_select_vertex = self.select_vertex = None
                 elif (
                     self.selected_vertex()
                     and int(ev.modifiers()) == QtCore.Qt.ShiftModifier
                 ):
                     # Delete point if: left-click + SHIFT on a point
                     self.remove_selected_point()
-
+                    self.prev_select_vertex = self.select_vertex = None
+                elif self.selected_vertex() and int(
+                    ev.modifiers() == QtCore.Qt.AltModifier
+                ):
+                    self.split_selected_shape(pos)
                 group_mode = int(ev.modifiers()) == QtCore.Qt.ControlModifier
                 self.select_shape_point(
                     pos, multiple_selection_mode=group_mode

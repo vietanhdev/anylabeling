@@ -131,6 +131,12 @@ class Shape:
         """Remove point from a specific index"""
         self.points.pop(i)
 
+    def get_points(self):
+        return self.points
+
+    def replace_points(self, lst):
+        self.points = lst
+
     def is_closed(self):
         """Check if the shape is closed"""
         return self._closed
