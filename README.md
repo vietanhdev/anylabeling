@@ -103,4 +103,3 @@ If you want to contribute to **AnyLabeling**, please read [Contribution Guidelin
 ## V. References
 
 - Labeling UI built with ideas and components from [LabelImg](https://github.com/heartexlabs/labelImg), [labelme](https://github.com/wkentaro/labelme).
-- Icons: Flat Icons
