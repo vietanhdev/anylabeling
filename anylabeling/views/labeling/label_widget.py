@@ -840,12 +840,8 @@ class LabelingWidget(LabelDialog):
             self.actions.create_point_mode,
             self.actions.create_line_strip_mode,
             edit_mode,
-            # duplicate,
-            # copy,
-            # paste,
             delete,
             undo,
-            # brightness_contrast,
             None,
             zoom,
             fit_width,
@@ -1043,7 +1039,7 @@ class LabelingWidget(LabelDialog):
         toolbar.setObjectName(f"{title}ToolBar")
         toolbar.setOrientation(Qt.Vertical)
         toolbar.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
-        toolbar.setIconSize(QtCore.QSize(20, 20))
+        toolbar.setIconSize(QtCore.QSize(24, 24))
         toolbar.setMaximumWidth(40)
         if actions:
             utils.add_actions(toolbar, actions)
@@ -1781,7 +1777,10 @@ class LabelingWidget(LabelDialog):
         filenames = []
         current_index = 0
         if filename is not None:
-            current_index = self.image_list.index(filename)
+            try:
+                current_index = self.image_list.index(filename)
+            except ValueError:
+                return []
             filenames.append(filename)
         for _ in range(num_files):
             if current_index + 1 < len(self.image_list):

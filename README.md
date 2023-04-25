@@ -14,7 +14,7 @@
 [![Documentation](https://img.shields.io/badge/Read-Documentation-green)](https://anylabeling.com/)
 
 <a href="https://www.youtube.com/watch?v=xLVz-f6OeUY">
-  <img alt="AnyLabeling" src="https://user-images.githubusercontent.com/18329471/232266520-1f52cd45-0776-479e-8a3c-4fef144c6b73.png"/>
+  <img alt="AnyLabeling" src="assets/screenshot.png"/>
 </a>
 
 - **Youtube Demo:** [https://www.youtube.com/watch?v=xLVz-f6OeUY](https://www.youtube.com/watch?v=xLVz-f6OeUY)
@@ -103,4 +103,3 @@ If you want to contribute to **AnyLabeling**, please read [Contribution Guidelin
 ## V. References
 
 - Labeling UI built with ideas and components from [LabelImg](https://github.com/heartexlabs/labelImg), [labelme](https://github.com/wkentaro/labelme).
-- Icons: Flat Icons
