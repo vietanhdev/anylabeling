@@ -397,17 +397,6 @@ class LabelingWidget(LabelDialog):
             self.tr("Start drawing linestrip. Ctrl+LeftClick ends creation."),
             enabled=False,
         )
-        split_shapes = action(
-            self.tr("Split Object"),
-            lambda: self.toggle_draw_mode(False, create_mode="split_shapes"),
-            shortcuts["split_shapes"],
-            "scissors",
-            self.tr(
-                "Start drawing a polyline to split shapes. "
-                "Ctrl+LeftClick ends creation."
-            ),
-            enabled=False,
-        )
         edit_mode = action(
             self.tr("Edit Object"),
             self.set_edit_mode,
@@ -697,7 +686,6 @@ class LabelingWidget(LabelDialog):
             create_line_mode=create_line_mode,
             create_point_mode=create_point_mode,
             create_line_strip_mode=create_line_strip_mode,
-            split_shapes=split_shapes,
             zoom=zoom,
             zoom_in=zoom_in,
             zoom_out=zoom_out,
@@ -735,7 +723,6 @@ class LabelingWidget(LabelDialog):
                 create_line_mode,
                 create_point_mode,
                 create_line_strip_mode,
-                split_shapes,
                 edit_mode,
                 edit,
                 duplicate,
@@ -754,7 +741,6 @@ class LabelingWidget(LabelDialog):
                 create_line_mode,
                 create_point_mode,
                 create_line_strip_mode,
-                split_shapes,
                 edit_mode,
                 brightness_contrast,
             ),
@@ -853,7 +839,6 @@ class LabelingWidget(LabelDialog):
             self.actions.create_line_mode,
             self.actions.create_point_mode,
             self.actions.create_line_strip_mode,
-            self.actions.split_shapes,
             edit_mode,
             delete,
             undo,
@@ -1054,7 +1039,7 @@ class LabelingWidget(LabelDialog):
         toolbar.setObjectName(f"{title}ToolBar")
         toolbar.setOrientation(Qt.Vertical)
         toolbar.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
-        toolbar.setIconSize(QtCore.QSize(20, 20))
+        toolbar.setIconSize(QtCore.QSize(24, 24))
         toolbar.setMaximumWidth(40)
         if actions:
             utils.add_actions(toolbar, actions)
@@ -1113,7 +1098,6 @@ class LabelingWidget(LabelDialog):
         self.actions.create_line_mode.setEnabled(True)
         self.actions.create_point_mode.setEnabled(True)
         self.actions.create_line_strip_mode.setEnabled(True)
-        self.actions.split_shapes.setEnabled(True)
         title = __appname__
         if self.filename is not None:
             title = f"{title} - {self.filename}"
@@ -1204,7 +1188,6 @@ class LabelingWidget(LabelDialog):
             self.actions.create_line_mode.setEnabled(True)
             self.actions.create_point_mode.setEnabled(True)
             self.actions.create_line_strip_mode.setEnabled(True)
-            self.actions.split_shapes.setEnabled(False)
         else:
             if create_mode == "polygon":
                 self.actions.create_mode.setEnabled(False)
@@ -1248,13 +1231,6 @@ class LabelingWidget(LabelDialog):
                 self.actions.create_line_mode.setEnabled(True)
                 self.actions.create_point_mode.setEnabled(True)
                 self.actions.create_line_strip_mode.setEnabled(False)
-            elif create_mode == "scissor":
-                self.actions.create_mode.setEnabled(True)
-                self.actions.create_rectangle_mode.setEnabled(True)
-                self.actions.create_cirle_mode.setEnabled(True)
-                self.actions.create_line_mode.setEnabled(True)
-                self.actions.create_point_mode.setEnabled(True)
-                self.actions.create_line_strip_mode.setEnabled(True)
             else:
                 raise ValueError(f"Unsupported create_mode: {create_mode}")
         self.actions.edit_mode.setEnabled(not edit)
@@ -1801,7 +1777,10 @@ class LabelingWidget(LabelDialog):
         filenames = []
         current_index = 0
         if filename is not None:
-            current_index = self.image_list.index(filename)
+            try:
+                current_index = self.image_list.index(filename)
+            except ValueError:
+                return []
             filenames.append(filename)
         for _ in range(num_files):
             if current_index + 1 < len(self.image_list):

@@ -96,7 +96,6 @@ shortcuts:
   create_line: null
   create_point: null
   create_linestrip: null
-  split_shapes: Ctrl+Y
   edit_polygon: Ctrl+J
   delete_polygon: Delete
   duplicate_polygon: Ctrl+D
