@@ -100,6 +100,10 @@ bash build_executable.sh
 
 If you want to contribute to **AnyLabeling**, please read [Contribution Guidelines](https://anylabeling.com/docs/contribution).
 
-## V. References
+## V. Star history
+
+[![Star History Chart](https://api.star-history.com/svg?repos=vietanhdev/anylabeling&type=Date)](https://star-history.com/#vietanhdev/anylabeling&Date)
+
+## VI. References
 
 - Labeling UI built with ideas and components from [LabelImg](https://github.com/heartexlabs/labelImg), [labelme](https://github.com/wkentaro/labelme).
