@@ -619,26 +619,26 @@ class LabelingWidget(LabelDialog):
         select_lang_en = action(
             "English",
             functools.partial(self.set_language, "en_US"),
-            icon=None,
+            icon="us",
             checkable=True,
             checked=self._config["language"] == "en_US",
-            enabled=True,
+            enabled=self._config["language"] != "en_US",
         )
         select_lang_vi = action(
             "Tiếng Việt",
             functools.partial(self.set_language, "vi_VN"),
-            icon=None,
+            icon="vn",
             checkable=True,
             checked=self._config["language"] == "vi_VN",
-            enabled=True,
+            enabled=self._config["language"] != "vi_VN",
         )
         select_lang_zh = action(
             "中文",
             functools.partial(self.set_language, "zh_CN"),
-            icon=None,
+            icon="cn",
             checkable=True,
             checked=self._config["language"] == "zh_CN",
-            enabled=True,
+            enabled=self._config["language"] != "zh_CN",
         )
 
         # Group zoom controls into a list for easier toggling.
@@ -1060,6 +1060,8 @@ class LabelingWidget(LabelDialog):
         self.set_text_editing(False)
 
     def set_language(self, language):
+        if self._config["language"] == language:
+            return
         self._config["language"] = language
         save_config(self._config)
 
