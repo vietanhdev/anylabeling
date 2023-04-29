@@ -4,6 +4,7 @@ import math
 import os
 import os.path as osp
 import re
+import sys
 import webbrowser
 
 import imgviz
@@ -17,13 +18,14 @@ from PyQt5.QtWidgets import (
     QPlainTextEdit,
     QVBoxLayout,
     QWhatsThis,
+    QMessageBox,
 )
 
 from anylabeling.services.auto_labeling.types import AutoLabelingMode
 
 from ...app_info import __appname__
 from . import utils
-from .config import get_config
+from .config import get_config, save_config
 from .label_file import LabelFile, LabelFileError
 from .logger import logger
 from .shape import Shape
@@ -613,6 +615,32 @@ class LabelingWidget(LabelDialog):
             enabled=True,
         )
 
+        # Languages
+        select_lang_en = action(
+            "English",
+            functools.partial(self.set_language, "en_US"),
+            icon=None,
+            checkable=True,
+            checked=self._config["language"] == "en_US",
+            enabled=True,
+        )
+        select_lang_vi = action(
+            "Tiếng Việt",
+            functools.partial(self.set_language, "vi_VN"),
+            icon=None,
+            checkable=True,
+            checked=self._config["language"] == "vi_VN",
+            enabled=True,
+        )
+        select_lang_zh = action(
+            "中文",
+            functools.partial(self.set_language, "zh_CN"),
+            icon=None,
+            checkable=True,
+            checked=self._config["language"] == "zh_CN",
+            enabled=True,
+        )
+
         # Group zoom controls into a list for easier toggling.
         zoom_actions = (
             self.zoom_widget,
@@ -765,6 +793,7 @@ class LabelingWidget(LabelDialog):
             file=self.menu(self.tr("&File")),
             edit=self.menu(self.tr("&Edit")),
             view=self.menu(self.tr("&View")),
+            language=self.menu(self.tr("&Language")),
             help=self.menu(self.tr("&Help")),
             recent_files=QtWidgets.QMenu(self.tr("Open &Recent")),
             label_list=label_menu,
@@ -793,6 +822,14 @@ class LabelingWidget(LabelDialog):
             (
                 documentation,
                 contact,
+            ),
+        )
+        utils.add_actions(
+            self.menus.language,
+            (
+                select_lang_en,
+                select_lang_vi,
+                select_lang_zh,
             ),
         )
         utils.add_actions(
@@ -1021,6 +1058,22 @@ class LabelingWidget(LabelDialog):
             QWhatsThis.enterWhatsThisMode()
 
         self.set_text_editing(False)
+
+    def set_language(self, language):
+        self._config["language"] = language
+        save_config(self._config)
+
+        # Show dialog to restart application
+        msg_box = QMessageBox()
+        msg_box.setText(
+            self.tr("The application will be restart to apply the changes.")
+        )
+        msg_box.exec_()
+        self.close()
+
+        # Restart application
+        python = sys.executable
+        os.execl(python, python, *sys.argv)
 
     def get_labeling_instruction(self):
         text_mode = self.tr("Mode:")

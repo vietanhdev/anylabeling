@@ -1,5 +1,4 @@
 import os.path as osp
-import shutil
 
 try:
     import importlib.resources as pkg_resources
@@ -27,19 +26,24 @@ def update_dict(target_dict, new_dict, validate_item=None):
             target_dict[key] = value
 
 
+def save_config(config):
+    # Local config file
+    user_config_file = osp.join(osp.expanduser("~"), ".anylabelingrc")
+    try:
+        with open(user_config_file, "w") as f:
+            yaml.safe_dump(config, f)
+    except Exception:  # noqa
+        logger.warning("Failed to save config: %s", user_config_file)
+
+
 def get_default_config():
     config_file = "anylabeling_config.yaml"
     with pkg_resources.open_text(anylabeling_configs, config_file) as f:
         config = yaml.safe_load(f)
 
-    # save default config to ~/.anylabelingrc
-    user_config_file = osp.join(osp.expanduser("~"), ".anylabelingrc")
-    if not osp.exists(user_config_file):
-        try:
-            with open(user_config_file, "w") as f:
-                yaml.safe_dump(config, f)
-        except Exception:  # noqa
-            logger.warning("Failed to save config: %s", user_config_file)
+    # Save default config to ~/.anylabelingrc
+    if not osp.exists(osp.join(osp.expanduser("~"), ".anylabelingrc")):
+        save_config(config)
 
     return config
 
