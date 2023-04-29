@@ -607,7 +607,7 @@ Polygons</source>
     <message>
         <location filename="../views/labeling/label_widget.py" line="2171"/>
         <source>Image &amp; Label files (%s)</source>
-        <translation>Hình ảnh &amp; Nhãn</translation>
+        <translation>Hình ảnh &amp; Nhãn (%s)</translation>
     </message>
     <message>
         <location filename="../views/labeling/label_widget.py" line="2177"/>
