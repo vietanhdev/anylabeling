@@ -8,11 +8,11 @@ import sys
 import yaml
 from PyQt5 import QtCore, QtWidgets
 
-from ...app_info import __appname__
-from .config import get_config
-from .label_widget import MainWindow
-from .logger import logger
-from .utils import new_icon
+from .app_info import __appname__
+from .views.labeling.config import get_config
+from .views.mainwindow import MainWindow
+from .views.labeling.logger import logger
+from .views.labeling.utils import new_icon
 
 
 def main():
@@ -133,7 +133,6 @@ def main():
             args.label_flags = yaml.safe_load(args.label_flags)
 
     config_from_args = args.__dict__
-    config_from_args.pop("version")
     reset_config = config_from_args.pop("reset_config")
     filename = config_from_args.pop("filename")
     output = config_from_args.pop("output")
@@ -156,16 +155,30 @@ def main():
         else:
             output_dir = output
 
+    language = config.get("language", QtCore.QLocale.system().name())
     translator = QtCore.QTranslator()
-    translator.load(
-        QtCore.QLocale.system().name(),
-        osp.dirname(osp.abspath(__file__)) + "/translate",
+    loaded_language = translator.load(
+        language,
+        osp.dirname(osp.abspath(__file__)) + "/locale",
     )
+
+    # Enable scaling for high dpi screens
+    QtWidgets.QApplication.setAttribute(
+        QtCore.Qt.AA_EnableHighDpiScaling, True
+    )  # enable highdpi scaling
+    QtWidgets.QApplication.setAttribute(
+        QtCore.Qt.AA_UseHighDpiPixmaps, True
+    )  # use highdpi icons
+    QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_ShareOpenGLContexts)
     app = QtWidgets.QApplication(sys.argv)
+    app.processEvents()
+
     app.setApplicationName(__appname__)
     app.setWindowIcon(new_icon("icon"))
-    app.installTranslator(translator)
+    if loaded_language:
+        app.installTranslator(translator)
     win = MainWindow(
+        app,
         config=config,
         filename=filename,
         output_file=output_file,
@@ -177,7 +190,7 @@ def main():
         win.settings.clear()
         sys.exit(0)
 
-    win.show()
+    win.showMaximized()
     win.raise_()
     sys.exit(app.exec())
 

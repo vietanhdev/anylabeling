@@ -268,7 +268,7 @@ class LabelingWidget(LabelDialog):
             self.open_next_image,
             shortcuts["open_next"],
             "next",
-            self.tr("Open next (hold Ctl+Shift to copy labels)"),
+            self.tr("Open next (hold Ctrl+Shift to copy labels)"),
             enabled=False,
         )
         open_prev_image = action(
@@ -276,7 +276,7 @@ class LabelingWidget(LabelDialog):
             self.open_prev_image,
             shortcuts["open_prev"],
             "prev",
-            self.tr("Open prev (hold Ctl+Shift to copy labels)"),
+            self.tr("Open prev (hold Ctrl+Shift to copy labels)"),
             enabled=False,
         )
         save = action(
@@ -324,19 +324,20 @@ class LabelingWidget(LabelDialog):
         save_auto.setChecked(self._config["auto_save"])
 
         save_with_image_data = action(
-            text="Save With Image Data",
+            text=self.tr("Save With Image Data"),
             slot=self.enable_save_image_with_data,
-            tip="Save image data in label file",
+            icon="save",
+            tip=self.tr("Save image data in label file"),
             checkable=True,
             checked=self._config["store_data"],
         )
 
         close = action(
-            "&Close",
+            self.tr("&Close"),
             self.close_file,
             shortcuts["close"],
             "cancel",
-            "Close current file",
+            self.tr("Close current file"),
         )
 
         toggle_keep_prev_mode = action(
@@ -463,11 +464,11 @@ class LabelingWidget(LabelDialog):
             enabled=False,
         )
         remove_point = action(
-            text="Remove Selected Point",
+            text=self.tr("Remove Selected Point"),
             slot=self.remove_selected_point,
             shortcut=shortcuts["remove_selected_point"],
             icon="edit",
-            tip="Remove selected point from polygon",
+            tip=self.tr("Remove selected point from polygon"),
             enabled=False,
         )
 
@@ -493,6 +494,13 @@ class LabelingWidget(LabelDialog):
             icon="eye",
             tip=self.tr("Show all polygons"),
             enabled=False,
+        )
+
+        documentation = action(
+            self.tr("&Documentation"),
+            self.documentation,
+            icon="help",
+            tip=self.tr("Show documentation"),
         )
 
         contact = action(
@@ -780,7 +788,13 @@ class LabelingWidget(LabelDialog):
                 None,
             ),
         )
-        utils.add_actions(self.menus.help, (contact,))
+        utils.add_actions(
+            self.menus.help,
+            (
+                documentation,
+                contact,
+            ),
+        )
         utils.add_actions(
             self.menus.view,
             (
@@ -1009,10 +1023,17 @@ class LabelingWidget(LabelDialog):
         self.set_text_editing(False)
 
     def get_labeling_instruction(self):
+        text_mode = self.tr("Mode:")
+        text_shortcuts = self.tr("Shortcuts:")
+        text_previous = self.tr("Previous:")
+        text_next = self.tr("Next:")
+        text_rectangle = self.tr("Rectangle:")
+        text_polygon = self.tr("Polygon:")
         return (
-            f"<b>Mode:</b> {self.canvas.get_mode()} - <b>Shortcuts:</b>"
-            " Previous: <b>A</b>, Next: <b>D</b>, Rectangle: <b>R</b>,"
-            " Polygon: <b>P</b>"
+            f"<b>{text_mode}</b> {self.canvas.get_mode()} - <b>{text_shortcuts}</b>"
+            f" {text_previous} <b>A</b>, {text_next} <b>D</b>,"
+            f" {text_rectangle} <b>R</b>,"
+            f" {text_polygon}: <b>P</b>"
         )
 
     @pyqtSlot()
@@ -1150,6 +1171,10 @@ class LabelingWidget(LabelDialog):
         self.label_list.clear()
         self.load_shapes(self.canvas.shapes)
         self.actions.undo.setEnabled(self.canvas.is_shape_restorable)
+
+    def documentation(self):
+        url = "https://anylabeling.com/"  # NOQA
+        webbrowser.open(url)
 
     def contact(self):
         url = "https://aicurious.io/contact/"  # NOQA
@@ -2595,7 +2620,7 @@ class LabelingWidget(LabelDialog):
         if enable:
             # Enable text editing and set shape text from selected shape
             if len(self.canvas.selected_shapes) == 1:
-                self.shape_text_label.setText("Object Text")
+                self.shape_text_label.setText(self.tr("Object Text"))
                 self.shape_text_edit.textChanged.disconnect()
                 self.shape_text_edit.setPlainText(
                     self.canvas.selected_shapes[0].text
@@ -2604,7 +2629,7 @@ class LabelingWidget(LabelDialog):
                     self.shape_text_changed
                 )
             else:
-                self.shape_text_label.setText("Image Text")
+                self.shape_text_label.setText(self.tr("Image Text"))
                 self.shape_text_edit.textChanged.disconnect()
                 self.shape_text_edit.setPlainText(
                     self.other_data.get("image_text", "")
@@ -2616,7 +2641,7 @@ class LabelingWidget(LabelDialog):
         else:
             self.shape_text_edit.setDisabled(True)
             self.shape_text_label.setText(
-                "Switch to Edit mode for text editing"
+                self.tr("Switch to Edit mode for text editing")
             )
             self.shape_text_edit.textChanged.disconnect()
             self.shape_text_edit.setPlainText("")

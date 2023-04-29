@@ -8,7 +8,7 @@ here = osp.dirname(osp.abspath(__file__))
 
 
 def new_icon(icon):
-    icons_dir = osp.join(here, "../icons")
+    icons_dir = osp.join(here, "../../../resources/images")
     return QtGui.QIcon(osp.join(":/", icons_dir, f"{icon}.png"))
 
 

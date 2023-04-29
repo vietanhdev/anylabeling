@@ -1,3 +1,4 @@
+language: en_US
 auto_save: true
 display_label_popup: true
 store_data: false

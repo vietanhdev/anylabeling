@@ -182,7 +182,7 @@ class ModelManager(QObject):
         """
         if self.loaded_model_info is None:
             self.new_model_status.emit(
-                "Model is not loaded. Choose a mode to continue."
+                self.tr("Model is not loaded. Choose a mode to continue.")
             )
             self.prediction_finished.emit()
             return
@@ -194,10 +194,10 @@ class ModelManager(QObject):
         except Exception as e:  # noqa
             print(f"Error in predict_shapes: {e}")
             self.new_model_status.emit(
-                "Error in model prediction. Please check the model."
+                self.tr("Error in model prediction. Please check the model.")
             )
         self.new_model_status.emit(
-            "Finished inferencing AI model. Check the result."
+            self.tr("Finished inferencing AI model. Check the result.")
         )
         self.prediction_finished.emit()
 
@@ -208,10 +208,12 @@ class ModelManager(QObject):
         """
         if self.loaded_model_info is None:
             self.new_model_status.emit(
-                "Model is not loaded. Choose a mode to continue."
+                self.tr("Model is not loaded. Choose a mode to continue.")
             )
             return
-        self.new_model_status.emit("Inferencing AI model. Please wait...")
+        self.new_model_status.emit(
+            self.tr("Inferencing AI model. Please wait...")
+        )
         self.prediction_started.emit()
 
         with self.model_execution_thread_lock:
@@ -220,7 +222,10 @@ class ModelManager(QObject):
                 and self.model_execution_thread.isRunning()
             ):
                 self.new_model_status.emit(
-                    "Another model is being executed. Please wait for it to finish."
+                    self.tr(
+                        "Another model is being executed."
+                        " Please wait for it to finish."
+                    )
                 )
                 self.prediction_finished.emit()
                 return

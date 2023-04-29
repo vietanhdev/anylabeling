@@ -58,9 +58,7 @@ class Model:
         if os.path.exists(model_abs_path):
             return model_abs_path
 
-        self.on_message(
-            "Downloading model from model registry. This may take a while..."
-        )
+        self.on_message("Downloading model registry. This may take a while...")
 
         # Build download url
         filename = os.path.basename(model_path)
@@ -103,31 +101,31 @@ class Model:
                 return model_abs_path
         pathlib.Path(model_abs_path).parent.mkdir(parents=True, exist_ok=True)
 
-        # Download model from url
+        # Download url
         ellipsis_download_url = download_url
         if len(download_url) > 40:
             ellipsis_download_url = (
                 download_url[:20] + "..." + download_url[-20:]
             )
         logging.info(
-            f"Downloading model from {ellipsis_download_url} to {model_abs_path}"
+            f"Downloading {ellipsis_download_url} to {model_abs_path}"
         )
         try:
             # Download and show progress
             def _progress(count, block_size, total_size):
                 percent = int(count * block_size * 100 / total_size)
                 self.on_message(
-                    f"Downloading model from {ellipsis_download_url}: {percent}%"
+                    self.tr("Downloading {download_url}: {percent}%").format(
+                        download_url=ellipsis_download_url, percent=percent
+                    )
                 )
 
             urllib.request.urlretrieve(
                 download_url, model_abs_path, reporthook=_progress
             )
         except Exception as e:  # noqa
-            self.on_message(f"Could not download model from {download_url}")
-            raise Exception(
-                f"Could not download model from {download_url}: {e}"
-            ) from e
+            self.on_message(f"Could not download {download_url}")
+            raise Exception(f"Could not download {download_url}: {e}") from e
 
         return model_abs_path
 
@@ -149,7 +147,7 @@ class Model:
     @abstractmethod
     def unload(self):
         """
-        Unload model from memory
+        Unload memory
         """
         raise NotImplementedError
 
