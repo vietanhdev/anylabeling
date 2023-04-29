@@ -9,4 +9,9 @@
     <file>images/prev.png</file>
     <file>images/save.png</file>
   </qresource>
+  <qresource prefix="languages">
+    <file>translations/en_US.qm</file>
+    <file>translations/vi_VN.qm</file>
+    <file>translations/zh_CN.qm</file>
+  </qresource>
 </RCC>

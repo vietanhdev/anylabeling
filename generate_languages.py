@@ -19,11 +19,10 @@ for language in supported_languages:
         os.system(command)
 
     # Extract translations from the .py file
-    command = (
-        f"pylupdate5 {' '.join(py_files)} -ts anylabeling/locale/{language}.ts"
-    )
+    translations_path = "anylabeling/resources/translations"
+    command = f"pylupdate5 {' '.join(py_files)} -ts {translations_path}/{language}.ts"
     os.system(command)
 
     # Compile the .ts file into a .qm file
-    command = f"lrelease anylabeling/locale/{language}.ts"
+    command = f"lrelease {translations_path}/{language}.ts"
     os.system(command)

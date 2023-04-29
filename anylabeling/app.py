@@ -2,17 +2,17 @@ import argparse
 import codecs
 import logging
 import os
-import os.path as osp
 import sys
 
 import yaml
 from PyQt5 import QtCore, QtWidgets
 
-from .app_info import __appname__
-from .views.labeling.config import get_config
-from .views.mainwindow import MainWindow
-from .views.labeling.logger import logger
-from .views.labeling.utils import new_icon
+from anylabeling.app_info import __appname__
+from anylabeling.views.labeling.config import get_config
+from anylabeling.views.mainwindow import MainWindow
+from anylabeling.views.labeling.logger import logger
+from anylabeling.views.labeling.utils import new_icon
+from anylabeling.resources import resources
 
 
 def main():
@@ -158,8 +158,7 @@ def main():
     language = config.get("language", QtCore.QLocale.system().name())
     translator = QtCore.QTranslator()
     loaded_language = translator.load(
-        language,
-        osp.dirname(osp.abspath(__file__)) + "/locale",
+        ":/languages/translations/" + language + ".qm"
     )
 
     # Enable scaling for high dpi screens
@@ -170,6 +169,7 @@ def main():
         QtCore.Qt.AA_UseHighDpiPixmaps, True
     )  # use highdpi icons
     QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_ShareOpenGLContexts)
+
     app = QtWidgets.QApplication(sys.argv)
     app.processEvents()
 
@@ -177,6 +177,11 @@ def main():
     app.setWindowIcon(new_icon("icon"))
     if loaded_language:
         app.installTranslator(translator)
+    else:
+        logger.warning(
+            "Failed to load translation for %s. Using default language.",
+            language,
+        )
     win = MainWindow(
         app,
         config=config,

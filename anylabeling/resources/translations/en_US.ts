@@ -748,7 +748,7 @@ Polygons</source>
     </message>
     <message>
         <location filename="../views/labeling/label_widget.py" line="1068"/>
-        <source>The application will be restart to apply the changes.</source>
+        <source>Please restart the application to apply changes.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

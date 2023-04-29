@@ -73,7 +73,7 @@ setup(
     include_package_data=True,
     entry_points={
         "console_scripts": [
-            "anylabeling=anylabeling.__main__:main",
+            "anylabeling=anylabeling.app:main",
         ],
     },
 )

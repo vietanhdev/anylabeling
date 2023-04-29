@@ -761,8 +761,8 @@ Polygons</source>
     </message>
     <message>
         <location filename="../views/labeling/label_widget.py" line="1068"/>
-        <source>The application will be restart to apply the changes.</source>
-        <translation>Ứng dụng sẽ được khởi động lại để áp dụng các thay đổi.</translation>
+        <source>Please restart the application to apply changes.</source>
+        <translation>Xin hãy khởi động lại để áp dụng các thay đổi.</translation>
     </message>
 </context>
 <context>

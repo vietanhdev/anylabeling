@@ -1066,14 +1066,10 @@ class LabelingWidget(LabelDialog):
         # Show dialog to restart application
         msg_box = QMessageBox()
         msg_box.setText(
-            self.tr("The application will be restart to apply the changes.")
+            self.tr("Please restart the application to apply changes.")
         )
         msg_box.exec_()
-        self.close()
-
-        # Restart application
-        python = sys.executable
-        os.execl(python, python, *sys.argv)
+        self.parent.parent.close()
 
     def get_labeling_instruction(self):
         text_mode = self.tr("Mode:")
