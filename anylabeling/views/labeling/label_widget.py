@@ -927,7 +927,7 @@ class LabelingWidget(LabelDialog):
             self.finish_auto_labeling_object
         )
         self.auto_labeling_widget.model_manager.prediction_started.connect(
-            lambda: self.canvas.set_loading(True, "Please wait...")
+            lambda: self.canvas.set_loading(True, self.tr("Please wait..."))
         )
         self.auto_labeling_widget.model_manager.prediction_finished.connect(
             lambda: self.canvas.set_loading(False)

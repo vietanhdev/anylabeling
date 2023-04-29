@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1205</width>
-    <height>42</height>
+    <width>1118</width>
+    <height>68</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -22,7 +22,10 @@
   <property name="styleSheet">
    <string notr="true"/>
   </property>
-  <layout class="QHBoxLayout" name="horizontalLayout">
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="spacing">
+    <number>0</number>
+   </property>
    <property name="leftMargin">
     <number>2</number>
    </property>
@@ -139,16 +142,6 @@
       </widget>
      </item>
      <item>
-      <widget class="QLabel" name="model_status_label">
-       <property name="styleSheet">
-        <string notr="true">margin-left: 10px;</string>
-       </property>
-       <property name="text">
-        <string>Ready!</string>
-       </property>
-      </widget>
-     </item>
-     <item>
       <spacer name="horizontalSpacer">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
@@ -185,6 +178,24 @@
       </widget>
      </item>
     </layout>
+   </item>
+   <item>
+    <widget class="QLabel" name="model_status_label">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">margin-top: 0;
+margin-bottom: 10px;
+color: #456;</string>
+     </property>
+     <property name="text">
+      <string>Ready!</string>
+     </property>
+    </widget>
    </item>
   </layout>
  </widget>

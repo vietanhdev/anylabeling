@@ -45,13 +45,13 @@ class AutoLabelingWidget(QWidget):
         )
         self.output_select_combobox.currentIndexChanged.connect(
             lambda: self.model_manager.set_output_mode(
-                self.output_select_combobox.currentText()
+                self.output_select_combobox.currentData()
             )
         )
 
         # Add models to combobox
         self.model_select_combobox.clear()
-        self.model_select_combobox.addItem("No Model", userData=None)
+        self.model_select_combobox.addItem(self.tr("No Model"), userData=None)
         for model_info in self.model_manager.get_model_infos().values():
             self.model_select_combobox.addItem(
                 model_info["display_name"], userData=model_info["name"]
@@ -170,14 +170,18 @@ class AutoLabelingWidget(QWidget):
         self.output_select_combobox.currentIndexChanged.disconnect()
 
         self.output_select_combobox.clear()
-        for output_mode in output_modes:
-            self.output_select_combobox.addItem(output_mode)
-        self.output_select_combobox.setCurrentText(default_output_mode)
+        for output_mode, display_name in output_modes.items():
+            self.output_select_combobox.addItem(
+                display_name, userData=output_mode
+            )
+        self.output_select_combobox.setCurrentIndex(
+            self.output_select_combobox.findData(default_output_mode)
+        )
 
         # Reconnect onIndexChanged signal
         self.output_select_combobox.currentIndexChanged.connect(
             lambda: self.model_manager.set_output_mode(
-                self.output_select_combobox.currentText()
+                self.output_select_combobox.currentData()
             )
         )
 

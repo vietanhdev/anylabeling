@@ -7,25 +7,29 @@ from abc import abstractmethod
 import yaml
 import onnx
 
-from PyQt5.QtCore import QFile
+from PyQt5.QtCore import QFile, QObject
 from PyQt5.QtGui import QImage
+from PyQt5.QtCore import QCoreApplication
 
 from .types import AutoLabelingResult
 from anylabeling.views.labeling.label_file import LabelFile, LabelFileError
 
 
-class Model:
+class Model(QObject):
     BASE_DOWNLOAD_URL = (
         "https://github.com/vietanhdev/anylabeling-assets/raw/main/"
     )
 
-    class Meta:
+    class Meta(QObject):
         required_config_names = []
         widgets = ["button_run"]
-        output_modes = ["rectangle"]
+        output_modes = {
+            "rectangle": QCoreApplication.translate("Model", "Rectangle"),
+        }
         default_output_mode = "rectangle"
 
     def __init__(self, model_config, on_message) -> None:
+        super().__init__()
         self.on_message = on_message
         # Load and check config
         if isinstance(model_config, str):
@@ -58,7 +62,12 @@ class Model:
         if os.path.exists(model_abs_path):
             return model_abs_path
 
-        self.on_message("Downloading model registry. This may take a while...")
+        self.on_message(
+            QCoreApplication.translate(
+                "Model",
+                "Downloading model from registry. This may take a while...",
+            )
+        )
 
         # Build download url
         filename = os.path.basename(model_path)
@@ -115,7 +124,9 @@ class Model:
             def _progress(count, block_size, total_size):
                 percent = int(count * block_size * 100 / total_size)
                 self.on_message(
-                    self.tr("Downloading {download_url}: {percent}%").format(
+                    QCoreApplication.translate(
+                        "Model", "Downloading {download_url}: {percent}%"
+                    ).format(
                         download_url=ellipsis_download_url, percent=percent
                     )
                 )
@@ -159,14 +170,14 @@ class Model:
             try:
                 label_file = LabelFile(label_file)
             except LabelFileError as e:
-                print("Error reading {}: {}".format(label_file, e))
+                logging.error("Error reading {}: {}".format(label_file, e))
                 return None, None
             image_data = label_file.image_data
         else:
             image_data = LabelFile.load_image_file(filename)
         image = QImage.fromData(image_data)
         if image.isNull():
-            print("Error reading {}".format(filename))
+            logging.error("Error reading {}".format(filename))
         return image
 
     def on_next_files_changed(self, next_files):

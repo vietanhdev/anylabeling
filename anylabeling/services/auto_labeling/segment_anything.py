@@ -7,6 +7,7 @@ import numpy as np
 import onnxruntime
 from PyQt5 import QtCore
 from PyQt5.QtCore import QThread
+from PyQt5.QtCore import QCoreApplication
 
 from anylabeling.utils import GenericWorker
 from anylabeling.views.labeling.shape import Shape
@@ -37,7 +38,10 @@ class SegmentAnything(Model):
             "button_clear",
             "button_finish_object",
         ]
-        output_modes = ["polygon", "rectangle"]
+        output_modes = {
+            "polygon": QCoreApplication.translate("Model", "Polygon"),
+            "rectangle": QCoreApplication.translate("Model", "Rectangle"),
+        }
         default_output_mode = "polygon"
 
     def __init__(self, config_path, on_message) -> None:
