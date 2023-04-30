@@ -97,7 +97,7 @@ class Canvas(
         self.show_texts = True
 
         self.is_loading = False
-        self.loading_text = "Loading..."
+        self.loading_text = self.tr("Loading...")
         self.loading_angle = 0
 
     def set_loading(self, is_loading: bool, loading_text: str = None):
@@ -224,13 +224,13 @@ class Canvas(
             self.is_auto_labeling
             and self.auto_labeling_mode != AutoLabelingMode.NONE
         ):
-            return "Auto Labeling"
+            return self.tr("Auto Labeling")
         if self.mode == self.CREATE:
-            return "Drawing"
+            return self.tr("Drawing")
         elif self.mode == self.EDIT:
-            return "Editing"
+            return self.tr("Editing")
         else:
-            return "Unknown"
+            return self.tr("Unknown")
 
     def set_editing(self, value=True):
         """Set editing mode. Editing is set to False, user is drawing"""

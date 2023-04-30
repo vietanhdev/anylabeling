@@ -8,7 +8,7 @@ class ZoomWidget(QtWidgets.QSpinBox):
         self.setRange(1, 1000)
         self.setSuffix("%")
         self.setValue(value)
-        self.setToolTip("Zoom Level")
+        self.setToolTip(self.tr("Zoom Level"))
         self.setStatusTip(self.toolTip())
         self.setAlignment(QtCore.Qt.AlignCenter)
         font = self.font()

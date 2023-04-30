@@ -1,6 +1,7 @@
 import re
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtCore import QCoreApplication
 
 from .. import utils
 from ..logger import logger
@@ -28,7 +29,7 @@ class LabelQLineEdit(QtWidgets.QLineEdit):
 class LabelDialog(QtWidgets.QDialog):
     def __init__(
         self,
-        text="Enter object label",
+        text=None,
         parent=None,
         labels=None,
         sort_labels=True,
@@ -37,6 +38,11 @@ class LabelDialog(QtWidgets.QDialog):
         fit_to_content=None,
         flags=None,
     ):
+        if text is None:
+            text = QCoreApplication.translate(
+                "LabelDialog", "Enter object label"
+            )
+
         if fit_to_content is None:
             fit_to_content = {"row": False, "column": True}
         self._fit_to_content = fit_to_content
@@ -49,7 +55,7 @@ class LabelDialog(QtWidgets.QDialog):
         if flags:
             self.edit.textChanged.connect(self.update_flags)
         self.edit_group_id = QtWidgets.QLineEdit()
-        self.edit_group_id.setPlaceholderText("Group ID")
+        self.edit_group_id.setPlaceholderText(self.tr("Group ID"))
         self.edit_group_id.setValidator(
             QtGui.QRegularExpressionValidator(
                 QtCore.QRegularExpression(r"\d*"), None

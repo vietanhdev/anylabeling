@@ -4,6 +4,7 @@ import os
 import cv2
 import numpy as np
 from PyQt5 import QtCore
+from PyQt5.QtCore import QCoreApplication
 
 from anylabeling.views.labeling.shape import Shape
 from anylabeling.views.labeling.utils.opencv import qt_img_to_rgb_cv_img
@@ -28,7 +29,9 @@ class YOLOv8(Model):
             "classes",
         ]
         widgets = ["button_run"]
-        output_modes = ["rectangle"]
+        output_modes = {
+            "rectangle": QCoreApplication.translate("Model", "Rectangle"),
+        }
         default_output_mode = "rectangle"
 
     def __init__(self, model_config, on_message) -> None:

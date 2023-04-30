@@ -20,6 +20,13 @@
 - **Youtube Demo:** [https://www.youtube.com/watch?v=xLVz-f6OeUY](https://www.youtube.com/watch?v=xLVz-f6OeUY)
 - **Documentation:** [https://anylabeling.com](https://anylabeling.com)
 
+**Features:**
+
+- [x] Image annotation for polygon, rectangle, circle, line and point.
+- [x] Auto-labeling with YOLOv5 and Segment Anything.
+- [x] Text detection, recognition and KIE (Key Information Extraction) labeling.
+- [x] Multiple languages availables: English, Vietnamese, Chinese.
+
 ## I. Install and run
 
 ### 1. Download and run executable
@@ -106,4 +113,6 @@ If you want to contribute to **AnyLabeling**, please read [Contribution Guidelin
 
 ## VI. References
 
-- Labeling UI built with ideas and components from [LabelImg](https://github.com/heartexlabs/labelImg), [labelme](https://github.com/wkentaro/labelme).
+- Labeling UI built with ideas and components from [LabelImg](https://github.com/heartexlabs/labelImg), [LabelMe](https://github.com/wkentaro/labelme).
+- Auto-labeling with [Segment Anything Models](https://segment-anything.com/).
+- Auto-labeling with [YOLOv5](https://github.com/ultralytics/yolov5), [YOLOv8](https://github.com/ultralytics/ultralytics).

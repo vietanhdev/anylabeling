@@ -21,7 +21,7 @@ class ModelManager(QObject):
     prediction_started = pyqtSignal()
     prediction_finished = pyqtSignal()
     request_next_files_requested = pyqtSignal()
-    output_modes_changed = pyqtSignal(list, str)
+    output_modes_changed = pyqtSignal(dict, str)
 
     model_configs = {}
 
@@ -72,7 +72,9 @@ class ModelManager(QObject):
     @pyqtSlot()
     def on_model_download_finished(self):
         """Handle model download thread finished"""
-        self.new_model_status.emit("Model loaded. Ready for labeling.")
+        self.new_model_status.emit(
+            self.tr("Model loaded. Ready for labeling.")
+        )
         if self.loaded_model_info and self.loaded_model_info["model"]:
             self.model_loaded.emit(
                 self.loaded_model_info["model"].get_required_widgets()
@@ -98,12 +100,13 @@ class ModelManager(QObject):
                     self.on_model_download_finished
                 )
             self.unload_model()
-            self.new_model_status.emit("No model selected.")
+            self.new_model_status.emit(self.str("No model selected."))
             return
         self.model_download_thread = QThread()
         self.new_model_status.emit(
-            f"Loading model: {self.model_infos[model_name]['display_name']}."
-            " Please wait..."
+            self.tr("Loading model: {model_name}. Please wait...").format(
+                model_name=self.model_infos[model_name]["display_name"]
+            )
         )
         self.model_download_worker = GenericWorker(
             self._load_model, model_name
@@ -182,7 +185,7 @@ class ModelManager(QObject):
         """
         if self.loaded_model_info is None:
             self.new_model_status.emit(
-                "Model is not loaded. Choose a mode to continue."
+                self.tr("Model is not loaded. Choose a mode to continue.")
             )
             self.prediction_finished.emit()
             return
@@ -194,10 +197,10 @@ class ModelManager(QObject):
         except Exception as e:  # noqa
             print(f"Error in predict_shapes: {e}")
             self.new_model_status.emit(
-                "Error in model prediction. Please check the model."
+                self.tr("Error in model prediction. Please check the model.")
             )
         self.new_model_status.emit(
-            "Finished inferencing AI model. Check the result."
+            self.tr("Finished inferencing AI model. Check the result.")
         )
         self.prediction_finished.emit()
 
@@ -208,10 +211,12 @@ class ModelManager(QObject):
         """
         if self.loaded_model_info is None:
             self.new_model_status.emit(
-                "Model is not loaded. Choose a mode to continue."
+                self.tr("Model is not loaded. Choose a mode to continue.")
             )
             return
-        self.new_model_status.emit("Inferencing AI model. Please wait...")
+        self.new_model_status.emit(
+            self.tr("Inferencing AI model. Please wait...")
+        )
         self.prediction_started.emit()
 
         with self.model_execution_thread_lock:
@@ -220,7 +225,10 @@ class ModelManager(QObject):
                 and self.model_execution_thread.isRunning()
             ):
                 self.new_model_status.emit(
-                    "Another model is being executed. Please wait for it to finish."
+                    self.tr(
+                        "Another model is being executed."
+                        " Please wait for it to finish."
+                    )
                 )
                 self.prediction_finished.emit()
                 return

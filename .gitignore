@@ -7,3 +7,4 @@ anylabeling/data
 /dist
 /build
 /wheels_dist
+*_ui.py

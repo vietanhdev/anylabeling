@@ -4,6 +4,7 @@ import math
 import os
 import os.path as osp
 import re
+import sys
 import webbrowser
 
 import imgviz
@@ -17,13 +18,14 @@ from PyQt5.QtWidgets import (
     QPlainTextEdit,
     QVBoxLayout,
     QWhatsThis,
+    QMessageBox,
 )
 
 from anylabeling.services.auto_labeling.types import AutoLabelingMode
 
 from ...app_info import __appname__
 from . import utils
-from .config import get_config
+from .config import get_config, save_config
 from .label_file import LabelFile, LabelFileError
 from .logger import logger
 from .shape import Shape
@@ -268,7 +270,7 @@ class LabelingWidget(LabelDialog):
             self.open_next_image,
             shortcuts["open_next"],
             "next",
-            self.tr("Open next (hold Ctl+Shift to copy labels)"),
+            self.tr("Open next (hold Ctrl+Shift to copy labels)"),
             enabled=False,
         )
         open_prev_image = action(
@@ -276,7 +278,7 @@ class LabelingWidget(LabelDialog):
             self.open_prev_image,
             shortcuts["open_prev"],
             "prev",
-            self.tr("Open prev (hold Ctl+Shift to copy labels)"),
+            self.tr("Open prev (hold Ctrl+Shift to copy labels)"),
             enabled=False,
         )
         save = action(
@@ -324,19 +326,20 @@ class LabelingWidget(LabelDialog):
         save_auto.setChecked(self._config["auto_save"])
 
         save_with_image_data = action(
-            text="Save With Image Data",
+            text=self.tr("Save With Image Data"),
             slot=self.enable_save_image_with_data,
-            tip="Save image data in label file",
+            icon="save",
+            tip=self.tr("Save image data in label file"),
             checkable=True,
             checked=self._config["store_data"],
         )
 
         close = action(
-            "&Close",
+            self.tr("&Close"),
             self.close_file,
             shortcuts["close"],
             "cancel",
-            "Close current file",
+            self.tr("Close current file"),
         )
 
         toggle_keep_prev_mode = action(
@@ -463,11 +466,11 @@ class LabelingWidget(LabelDialog):
             enabled=False,
         )
         remove_point = action(
-            text="Remove Selected Point",
+            text=self.tr("Remove Selected Point"),
             slot=self.remove_selected_point,
             shortcut=shortcuts["remove_selected_point"],
             icon="edit",
-            tip="Remove selected point from polygon",
+            tip=self.tr("Remove selected point from polygon"),
             enabled=False,
         )
 
@@ -493,6 +496,13 @@ class LabelingWidget(LabelDialog):
             icon="eye",
             tip=self.tr("Show all polygons"),
             enabled=False,
+        )
+
+        documentation = action(
+            self.tr("&Documentation"),
+            self.documentation,
+            icon="help",
+            tip=self.tr("Show documentation"),
         )
 
         contact = action(
@@ -603,6 +613,32 @@ class LabelingWidget(LabelDialog):
             checkable=True,
             checked=self._config["show_texts"],
             enabled=True,
+        )
+
+        # Languages
+        select_lang_en = action(
+            "English",
+            functools.partial(self.set_language, "en_US"),
+            icon="us",
+            checkable=True,
+            checked=self._config["language"] == "en_US",
+            enabled=self._config["language"] != "en_US",
+        )
+        select_lang_vi = action(
+            "Tiếng Việt",
+            functools.partial(self.set_language, "vi_VN"),
+            icon="vn",
+            checkable=True,
+            checked=self._config["language"] == "vi_VN",
+            enabled=self._config["language"] != "vi_VN",
+        )
+        select_lang_zh = action(
+            "中文",
+            functools.partial(self.set_language, "zh_CN"),
+            icon="cn",
+            checkable=True,
+            checked=self._config["language"] == "zh_CN",
+            enabled=self._config["language"] != "zh_CN",
         )
 
         # Group zoom controls into a list for easier toggling.
@@ -757,6 +793,7 @@ class LabelingWidget(LabelDialog):
             file=self.menu(self.tr("&File")),
             edit=self.menu(self.tr("&Edit")),
             view=self.menu(self.tr("&View")),
+            language=self.menu(self.tr("&Language")),
             help=self.menu(self.tr("&Help")),
             recent_files=QtWidgets.QMenu(self.tr("Open &Recent")),
             label_list=label_menu,
@@ -780,7 +817,21 @@ class LabelingWidget(LabelDialog):
                 None,
             ),
         )
-        utils.add_actions(self.menus.help, (contact,))
+        utils.add_actions(
+            self.menus.help,
+            (
+                documentation,
+                contact,
+            ),
+        )
+        utils.add_actions(
+            self.menus.language,
+            (
+                select_lang_en,
+                select_lang_vi,
+                select_lang_zh,
+            ),
+        )
         utils.add_actions(
             self.menus.view,
             (
@@ -876,7 +927,7 @@ class LabelingWidget(LabelDialog):
             self.finish_auto_labeling_object
         )
         self.auto_labeling_widget.model_manager.prediction_started.connect(
-            lambda: self.canvas.set_loading(True, "Please wait...")
+            lambda: self.canvas.set_loading(True, self.tr("Please wait..."))
         )
         self.auto_labeling_widget.model_manager.prediction_finished.connect(
             lambda: self.canvas.set_loading(False)
@@ -1008,11 +1059,32 @@ class LabelingWidget(LabelDialog):
 
         self.set_text_editing(False)
 
+    def set_language(self, language):
+        if self._config["language"] == language:
+            return
+        self._config["language"] = language
+        save_config(self._config)
+
+        # Show dialog to restart application
+        msg_box = QMessageBox()
+        msg_box.setText(
+            self.tr("Please restart the application to apply changes.")
+        )
+        msg_box.exec_()
+        self.parent.parent.close()
+
     def get_labeling_instruction(self):
+        text_mode = self.tr("Mode:")
+        text_shortcuts = self.tr("Shortcuts:")
+        text_previous = self.tr("Previous:")
+        text_next = self.tr("Next:")
+        text_rectangle = self.tr("Rectangle:")
+        text_polygon = self.tr("Polygon:")
         return (
-            f"<b>Mode:</b> {self.canvas.get_mode()} - <b>Shortcuts:</b>"
-            " Previous: <b>A</b>, Next: <b>D</b>, Rectangle: <b>R</b>,"
-            " Polygon: <b>P</b>"
+            f"<b>{text_mode}</b> {self.canvas.get_mode()} - <b>{text_shortcuts}</b>"
+            f" {text_previous} <b>A</b>, {text_next} <b>D</b>,"
+            f" {text_rectangle} <b>R</b>,"
+            f" {text_polygon}: <b>P</b>"
         )
 
     @pyqtSlot()
@@ -1150,6 +1222,10 @@ class LabelingWidget(LabelDialog):
         self.label_list.clear()
         self.load_shapes(self.canvas.shapes)
         self.actions.undo.setEnabled(self.canvas.is_shape_restorable)
+
+    def documentation(self):
+        url = "https://anylabeling.com/"  # NOQA
+        webbrowser.open(url)
 
     def contact(self):
         url = "https://aicurious.io/contact/"  # NOQA
@@ -2595,7 +2671,7 @@ class LabelingWidget(LabelDialog):
         if enable:
             # Enable text editing and set shape text from selected shape
             if len(self.canvas.selected_shapes) == 1:
-                self.shape_text_label.setText("Object Text")
+                self.shape_text_label.setText(self.tr("Object Text"))
                 self.shape_text_edit.textChanged.disconnect()
                 self.shape_text_edit.setPlainText(
                     self.canvas.selected_shapes[0].text
@@ -2604,7 +2680,7 @@ class LabelingWidget(LabelDialog):
                     self.shape_text_changed
                 )
             else:
-                self.shape_text_label.setText("Image Text")
+                self.shape_text_label.setText(self.tr("Image Text"))
                 self.shape_text_edit.textChanged.disconnect()
                 self.shape_text_edit.setPlainText(
                     self.other_data.get("image_text", "")
@@ -2616,7 +2692,7 @@ class LabelingWidget(LabelDialog):
         else:
             self.shape_text_edit.setDisabled(True)
             self.shape_text_label.setText(
-                "Switch to Edit mode for text editing"
+                self.tr("Switch to Edit mode for text editing")
             )
             self.shape_text_edit.textChanged.disconnect()
             self.shape_text_edit.setPlainText("")
