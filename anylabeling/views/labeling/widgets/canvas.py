@@ -827,6 +827,7 @@ class Canvas(
             for s in self.selected_shapes_copy:
                 s.paint(p)
 
+        # Fill polygon on the fly
         if (
             self.fill_drawing()
             and self.create_mode == "polygon"
@@ -837,6 +838,24 @@ class Canvas(
             drawing_shape.add_point(self.line[1])
             drawing_shape.fill = True
             drawing_shape.paint(p)
+
+        # Draw the diagonal + crosshair lines for the current rectangle
+        if (
+            self.create_mode == "rectangle"
+            and self.current is not None
+            and len(self.current.points) == 1
+        ):
+            min_x = min(self.current.points[0].x(), self.prev_move_point.x())
+            min_y = min(self.current.points[0].y(), self.prev_move_point.y())
+            max_x = max(self.current.points[0].x(), self.prev_move_point.x())
+            max_y = max(self.current.points[0].y(), self.prev_move_point.y())
+
+            pen = QtGui.QPen(QtGui.QColor("#aaa"), 1, Qt.SolidLine)
+            p.setPen(pen)
+            p.drawLine(min_x, min_y, max_x, max_y)
+            p.drawLine(min_x, max_y, max_x, min_y)
+            p.drawLine(min_x, (min_y + max_y) / 2, max_x, (min_y + max_y) / 2)
+            p.drawLine((min_x + max_x) / 2, min_y, (min_x + max_x) / 2, max_y)
 
         # Draw texts
         if self.show_texts:
