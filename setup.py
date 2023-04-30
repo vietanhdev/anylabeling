@@ -29,7 +29,8 @@ def get_install_requires():
         "opencv-python-headless",
         'PyQt5>=5.15.7; platform_system != "Darwin"',
         "onnx==1.13.1",
-        "onnxruntime==1.14.1",
+        'onnxruntime==1.14.1; platform_system == "Darwin"',
+        'onnxruntime-gpu==1.14.1; platform_system != "Darwin"',
         "qimage2ndarray==1.10.0",
     ]
 
