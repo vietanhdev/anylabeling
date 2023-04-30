@@ -64,12 +64,13 @@ class SegmentAnything(Model):
             raise Exception(f"Decoder not found: {decoder_model_abs_path}")
 
         # Load models
-        cuda = True if onnxruntime.get_device() == "GPU" else False
-        providers = (
-            ["CUDAExecutionProvider", "CPUExecutionProvider"]
-            if cuda
-            else ["CPUExecutionProvider"]
-        )
+        providers = onnxruntime.get_available_providers()
+        if providers:
+            logging.info(
+                "Available providers for ONNXRuntime: %s", ", ".join(providers)
+            )
+        else:
+            logging.warning("No available providers for ONNXRuntime")
         self.encoder_session = onnxruntime.InferenceSession(
             encoder_model_abs_path, providers=providers
         )
