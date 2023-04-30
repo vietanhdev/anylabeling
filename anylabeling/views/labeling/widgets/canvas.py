@@ -845,17 +845,35 @@ class Canvas(
             and self.current is not None
             and len(self.current.points) == 1
         ):
-            min_x = min(self.current.points[0].x(), self.prev_move_point.x())
-            min_y = min(self.current.points[0].y(), self.prev_move_point.y())
-            max_x = max(self.current.points[0].x(), self.prev_move_point.x())
-            max_y = max(self.current.points[0].y(), self.prev_move_point.y())
+            min_x = int(
+                min(self.current.points[0].x(), self.prev_move_point.x())
+            )
+            min_y = int(
+                min(self.current.points[0].y(), self.prev_move_point.y())
+            )
+            max_x = int(
+                max(self.current.points[0].x(), self.prev_move_point.x())
+            )
+            max_y = int(
+                max(self.current.points[0].y(), self.prev_move_point.y())
+            )
 
             pen = QtGui.QPen(QtGui.QColor("#aaa"), 1, Qt.SolidLine)
             p.setPen(pen)
             p.drawLine(min_x, min_y, max_x, max_y)
             p.drawLine(min_x, max_y, max_x, min_y)
-            p.drawLine(min_x, (min_y + max_y) / 2, max_x, (min_y + max_y) / 2)
-            p.drawLine((min_x + max_x) / 2, min_y, (min_x + max_x) / 2, max_y)
+            p.drawLine(
+                min_x,
+                int((min_y + max_y) / 2),
+                max_x,
+                int((min_y + max_y) / 2),
+            )
+            p.drawLine(
+                int((min_x + max_x) / 2),
+                min_y,
+                int((min_x + max_x) / 2),
+                max_y,
+            )
 
         # Draw texts
         if self.show_texts:
