@@ -116,11 +116,6 @@
         <translation>Tìm kiếm tệp</translation>
     </message>
     <message>
-        <location filename="../views/labeling/label_widget.py" line="197"/>
-        <source>Các tệp</source>
-        <translation type="obsolete">Tệp</translation>
-    </message>
-    <message>
         <location filename="../../views/labeling/label_widget.py" line="254"/>
         <source>&amp;Open</source>
         <translation>Mở</translation>
@@ -782,6 +777,11 @@ Polygons</source>
         <source>Please wait...</source>
         <translation>Xin chờ chút...</translation>
     </message>
+    <message>
+        <location filename="../../views/labeling/label_widget.py" line="582"/>
+        <source>&amp;Brightness Contrast</source>
+        <translation>Độ Sáng / Tương Phản</translation>
+    </message>
 </context>
 <context>
     <name>Model</name>
@@ -796,7 +796,7 @@ Polygons</source>
         <translation type="obsolete">Đang tải mô hình. Việc này có thể mất chút thời gian...</translation>
     </message>
     <message>
-        <location filename="../../services/auto_labeling/model.py" line="126"/>
+        <location filename="../../services/auto_labeling/model.py" line="125"/>
         <source>Downloading {download_url}: {percent}%</source>
         <translation>Đang tải {download_url}: {percent}%</translation>
     </message>
@@ -804,6 +804,11 @@ Polygons</source>
         <location filename="../../services/auto_labeling/segment_anything.py" line="42"/>
         <source>Polygon</source>
         <translation>Đa Giác</translation>
+    </message>
+    <message>
+        <location filename="../../services/auto_labeling/model.py" line="65"/>
+        <source>Downloading model from registry...</source>
+        <translation>Đang tải mô hình...</translation>
     </message>
 </context>
 <context>
@@ -842,6 +847,11 @@ Polygons</source>
         <location filename="../../services/auto_labeling/model_manager.py" line="106"/>
         <source>Loading model: {model_name}. Please wait...</source>
         <translation>Đang nạp mô hình: {model_name}. Xin chờ...</translation>
+    </message>
+    <message>
+        <location filename="../../services/auto_labeling/model_manager.py" line="103"/>
+        <source>No model selected.</source>
+        <translation>Chưa chọn mô hình.</translation>
     </message>
 </context>
 <context>

@@ -64,8 +64,7 @@ class Model(QObject):
 
         self.on_message(
             QCoreApplication.translate(
-                "Model",
-                "Downloading model from registry. This may take a while...",
+                "Model", "Downloading model from registry..."
             )
         )
 

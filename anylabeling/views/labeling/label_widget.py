@@ -580,7 +580,7 @@ class LabelingWidget(LabelDialog):
             enabled=False,
         )
         brightness_contrast = action(
-            "&Brightness Contrast",
+            self.tr("&Brightness Contrast"),
             self.brightness_contrast,
             None,
             "color",

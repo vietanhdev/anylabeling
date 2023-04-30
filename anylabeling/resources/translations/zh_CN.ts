@@ -777,6 +777,11 @@ Polygons</source>
         <source>Please restart the application to apply changes.</source>
         <translation>请重新启动应用程序以应用更改。</translation>
     </message>
+    <message>
+        <location filename="../../views/labeling/label_widget.py" line="582"/>
+        <source>&amp;Brightness Contrast</source>
+        <translation>亮度对比度</translation>
+    </message>
 </context>
 <context>
     <name>Model</name>
@@ -786,7 +791,7 @@ Polygons</source>
         <translation>矩形</translation>
     </message>
     <message>
-        <location filename="../../services/auto_labeling/model.py" line="126"/>
+        <location filename="../../services/auto_labeling/model.py" line="125"/>
         <source>Downloading {download_url}: {percent}%</source>
         <translation>下载{download_url}：{percent}%</translation>
     </message>
@@ -794,6 +799,11 @@ Polygons</source>
         <location filename="../../services/auto_labeling/segment_anything.py" line="42"/>
         <source>Polygon</source>
         <translation>多边形</translation>
+    </message>
+    <message>
+        <location filename="../../services/auto_labeling/model.py" line="65"/>
+        <source>Downloading model from registry...</source>
+        <translation>从注册表下载模型...</translation>
     </message>
 </context>
 <context>
@@ -832,6 +842,11 @@ Polygons</source>
         <location filename="../../services/auto_labeling/model_manager.py" line="106"/>
         <source>Loading model: {model_name}. Please wait...</source>
         <translation>正在加载模型：{model_name}。请稍候...</translation>
+    </message>
+    <message>
+        <location filename="../../services/auto_labeling/model_manager.py" line="103"/>
+        <source>No model selected.</source>
+        <translation>未选择模型。</translation>
     </message>
 </context>
 <context>

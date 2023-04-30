@@ -100,7 +100,7 @@ class ModelManager(QObject):
                     self.on_model_download_finished
                 )
             self.unload_model()
-            self.new_model_status.emit(self.str("No model selected."))
+            self.new_model_status.emit(self.tr("No model selected."))
             return
         self.model_download_thread = QThread()
         self.new_model_status.emit(

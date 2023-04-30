@@ -777,6 +777,11 @@ Polygons</source>
         <source>Please wait...</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <location filename="../../views/labeling/label_widget.py" line="582"/>
+        <source>&amp;Brightness Contrast</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>Model</name>
@@ -786,13 +791,18 @@ Polygons</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../services/auto_labeling/model.py" line="126"/>
+        <location filename="../../services/auto_labeling/model.py" line="125"/>
         <source>Downloading {download_url}: {percent}%</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../../services/auto_labeling/segment_anything.py" line="42"/>
         <source>Polygon</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../services/auto_labeling/model.py" line="65"/>
+        <source>Downloading model from registry...</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -831,6 +841,11 @@ Polygons</source>
     <message>
         <location filename="../../services/auto_labeling/model_manager.py" line="106"/>
         <source>Loading model: {model_name}. Please wait...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../services/auto_labeling/model_manager.py" line="103"/>
+        <source>No model selected.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
