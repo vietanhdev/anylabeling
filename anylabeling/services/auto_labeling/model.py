@@ -1,11 +1,17 @@
 import logging
 import os
 import pathlib
-import urllib.request
-from abc import abstractmethod
-
 import yaml
 import onnx
+import urllib.request
+
+# Temporarily disable SSL verification
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
+
+from abc import abstractmethod
+
 
 from PyQt5.QtCore import QFile, QObject
 from PyQt5.QtGui import QImage
@@ -100,8 +106,8 @@ class Model(QObject):
                 try:
                     onnx.checker.check_model(model_abs_path)
                 except onnx.checker.ValidationError as e:
-                    print("The model is invalid: %s" % e)
-                    print("Action: Delete and redownload...")
+                    logging.warning("The model is invalid: %s", str(e))
+                    logging.warning("Action: Delete and redownload...")
                     os.remove(model_abs_path)
                 else:
                     return model_abs_path
@@ -116,7 +122,7 @@ class Model(QObject):
                 download_url[:20] + "..." + download_url[-20:]
             )
         logging.info(
-            f"Downloading {ellipsis_download_url} to {model_abs_path}"
+            "Downloading %s to %s", ellipsis_download_url, model_abs_path
         )
         try:
             # Download and show progress
