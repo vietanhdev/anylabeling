@@ -1746,7 +1746,7 @@ class LabelingWidget(LabelDialog):
         self.set_scroll(orientation, value)
 
     def set_scroll(self, orientation, value):
-        self.scroll_bars[orientation].setValue(value)
+        self.scroll_bars[orientation].setValue(round(value))
         self.scroll_values[orientation][self.filename] = value
 
     def set_zoom(self, value):
@@ -1775,8 +1775,8 @@ class LabelingWidget(LabelDialog):
         if canvas_width_old != canvas_width_new:
             canvas_scale_factor = canvas_width_new / canvas_width_old
 
-            x_shift = round(pos.x() * canvas_scale_factor) - pos.x()
-            y_shift = round(pos.y() * canvas_scale_factor) - pos.y()
+            x_shift = round(pos.x() * canvas_scale_factor - pos.x())
+            y_shift = round(pos.y() * canvas_scale_factor - pos.y())
 
             self.set_scroll(
                 Qt.Horizontal,
