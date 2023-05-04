@@ -1,4 +1,4 @@
-name: Publish Python 🐍 distributions 📦 to PyPI and TestPyPI
+name: Publish Python 🐍 distributions 📦 to PyPI and TestPyPI - GPU Support
 
 on:
   push:
@@ -26,14 +26,13 @@ jobs:
         pip install
         build
         --user
-    - name: Set preferred device to CPU
+    - name: Set preferred device to GPU
       run: >-
-        sed -i'' -e 's/\_\_preferred_device\_\_[ ]*=[ ]*\"[A-Za-z0-9]*\"/__preferred_device__ = "CPU"/g' anylabeling/app_info.py
+        sed -i'' -e 's/\_\_preferred_device\_\_[ ]*=[ ]*\"[A-Za-z0-9]*\"/__preferred_device__ = "GPU"/g' anylabeling/app_info.py
     - name: Build a binary wheel and a source tarball
       run: >-
         python -m
         build
-        --sdist
         --wheel
         --outdir dist/
         .

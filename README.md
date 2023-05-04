@@ -58,19 +58,13 @@ conda install -c conda-forge pyqt==5.15.7
 - Install anylabeling:
 
 ```bash
-pip install anylabeling
+pip install anylabeling # or pip install anylabeling-gpu for GPU support
 ```
 
-- Run app:
+- Start labeling:
 
 ```bash
 anylabeling
-```
-
-Or
-
-```bash
-python -m anylabeling.app
 ```
 
 ## II. Development

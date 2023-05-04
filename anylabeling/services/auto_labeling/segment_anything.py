@@ -65,6 +65,11 @@ class SegmentAnything(Model):
 
         # Load models
         providers = onnxruntime.get_available_providers()
+
+        # Pop TensorRT Runtime due to crashing issues
+        # TODO: Add back when TensorRT backend is stable
+        providers = [p for p in providers if p != "TensorrtExecutionProvider"]
+
         if providers:
             logging.info(
                 "Available providers for ONNXRuntime: %s", ", ".join(providers)

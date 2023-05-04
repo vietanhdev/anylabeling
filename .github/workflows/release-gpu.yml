@@ -76,10 +76,10 @@ jobs:
         auto-update-conda: true
         python-version: '3.7'
 
-    - name: Set preferred device to CPU
+    - name: Set preferred device to GPU
       shell: bash -l {0}
       run: >-
-        sed -i'' -e 's/\_\_preferred_device\_\_[ ]*=[ ]*\"[A-Za-z0-9]*\"/__preferred_device__ = "CPU"/g' anylabeling/app_info.py
+        sed -i'' -e 's/\_\_preferred_device\_\_[ ]*=[ ]*\"[A-Za-z0-9]*\"/__preferred_device__ = "GPU"/g' anylabeling/app_info.py
 
     - name: Install main
       shell: bash -l {0}
@@ -116,7 +116,7 @@ jobs:
       with:
         upload_url: ${{ steps.get_release_info.outputs.upload_url }}
         asset_path: ./dist/anylabeling
-        asset_name: AnyLabeling-${{ runner.os }}
+        asset_name: AnyLabeling-${{ runner.os }}-GPU
         asset_content_type: application/octet-stream
       if: runner.os != 'Windows'
 
@@ -128,7 +128,7 @@ jobs:
       with:
         upload_url: ${{ steps.get_release_info.outputs.upload_url }}
         asset_path: ./dist/anylabeling.exe
-        asset_name: AnyLabeling.exe
+        asset_name: AnyLabeling-GPU.exe
         asset_content_type: application/octet-stream
       if: runner.os == 'Windows'
 
@@ -148,6 +148,6 @@ jobs:
       with:
         upload_url: ${{ steps.get_release_info.outputs.upload_url }}
         asset_path: ./dist/AnyLabeling.dmg
-        asset_name: AnyLabeling.dmg
+        asset_name: AnyLabeling-GPU.dmg
         asset_content_type: application/octet-stream
       if: runner.os == 'macOS'

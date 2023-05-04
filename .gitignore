@@ -8,3 +8,4 @@ anylabeling/data
 /build
 /wheels_dist
 *_ui.py
+anylabeling/app_info.py-*
