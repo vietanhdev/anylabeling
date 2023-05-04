@@ -1,11 +1,8 @@
 import os
 import re
 import platform
-import logging
 
 from setuptools import find_packages, setup
-
-package_name = "anylabeling"
 
 
 def get_version():
@@ -34,9 +31,17 @@ def get_preferred_device():
     return device
 
 
+def get_package_name():
+    """Get package name based on context"""
+    package_name = "anylabeling"
+    preferred_device = get_preferred_device()
+    if preferred_device == "GPU" and platform.system() != "Darwin":
+        package_name = "anylabeling-gpu"
+    return package_name
+
+
 def get_install_requires():
     """Get python requirements based on context"""
-    global package_name
     install_requires = [
         "imgviz>=0.11",
         "natsort>=7.1.0",
@@ -56,11 +61,10 @@ def get_install_requires():
     preferred_device = get_preferred_device()
     if preferred_device == "GPU" and platform.system() != "Darwin":
         install_requires.append("onnxruntime-gpu==1.14.1")
-        logging.info("Building AnyLabeling with GPU support")
-        package_name = "anylabeling-gpu"
+        print("Building AnyLabeling with GPU support")
     else:
         install_requires.append("onnxruntime==1.14.1")
-        logging.info("Building AnyLabeling without GPU support")
+        print("Building AnyLabeling without GPU support")
 
     if os.name == "nt":  # Windows
         install_requires.append("colorama")
@@ -76,7 +80,7 @@ def get_long_description():
 
 
 setup(
-    name=package_name,
+    name=get_package_name(),
     version=get_version(),
     packages=find_packages(),
     description="Effortless data labeling with AI support",
