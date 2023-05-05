@@ -6,6 +6,7 @@ keep_prev: false
 keep_prev_scale: false
 keep_prev_brightness: false
 keep_prev_contrast: false
+auto_use_last_label: false
 show_cross_line: true
 show_groups: true
 show_texts: true

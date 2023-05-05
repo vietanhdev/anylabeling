@@ -124,8 +124,14 @@ class LabelDialog(QtWidgets.QDialog):
             raise ValueError(f"Unsupported completion: {completion}")
         completer.setModel(self.label_list.model())
         self.edit.setCompleter(completer)
+        # Save last label
+        self._last_label = ""
+
+    def get_last_label(self):
+        return self._last_label
 
     def add_label_history(self, label):
+        self._last_label = label
         if self.label_list.findItems(label, QtCore.Qt.MatchExactly):
             return
         self.label_list.addItem(label)
