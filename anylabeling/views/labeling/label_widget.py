@@ -347,10 +347,22 @@ class LabelingWidget(LabelDialog):
             self.toggle_keep_prev_mode,
             shortcuts["toggle_keep_prev_mode"],
             None,
-            self.tr('Toggle "keep pevious annotation" mode'),
+            self.tr('Toggle "Keep Previous Annotation" mode'),
             checkable=True,
         )
         toggle_keep_prev_mode.setChecked(self._config["keep_prev"])
+
+        toggle_auto_use_last_label_mode = action(
+            self.tr("Auto Use Last Label"),
+            self.toggle_auto_use_last_label,
+            None,
+            None,
+            self.tr('Toggle "Auto Use Last Label" mode'),
+            checkable=True,
+        )
+        toggle_auto_use_last_label_mode.setChecked(
+            self._config["auto_use_last_label"]
+        )
 
         create_mode = action(
             self.tr("Create Polygons"),
@@ -707,6 +719,7 @@ class LabelingWidget(LabelDialog):
             close=close,
             delete_file=delete_file,
             toggle_keep_prev_mode=toggle_keep_prev_mode,
+            toggle_auto_use_last_label_mode=toggle_auto_use_last_label_mode,
             delete=delete,
             edit=edit,
             duplicate=duplicate,
@@ -750,6 +763,7 @@ class LabelingWidget(LabelDialog):
                 remove_point,
                 None,
                 toggle_keep_prev_mode,
+                toggle_auto_use_last_label_mode,
             ),
             # menu shown at right click
             menu=(
@@ -1710,10 +1724,14 @@ class LabelingWidget(LabelDialog):
             or not text
             or self.canvas.shapes[-1].label == AutoLabelingMode.OBJECT
         ):
-            previous_text = self.label_dialog.edit.text()
-            text, flags, group_id = self.label_dialog.pop_up(text)
-            if not text:
-                self.label_dialog.edit.setText(previous_text)
+            last_label = self.find_last_label()
+            if self._config["auto_use_last_label"] and last_label:
+                text = last_label
+            else:
+                previous_text = self.label_dialog.edit.text()
+                text, flags, group_id = self.label_dialog.pop_up(text)
+                if not text:
+                    self.label_dialog.edit.setText(previous_text)
 
         if text and not self.validate_label(text):
             self.error_message(
@@ -1802,21 +1820,25 @@ class LabelingWidget(LabelDialog):
     def enable_keep_prev_scale(self, enabled):
         self._config["keep_prev_scale"] = enabled
         self.actions.keep_prev_scale.setChecked(enabled)
+        save_config(self._config)
 
     def enable_show_cross_line(self, enabled):
         self._config["show_cross_line"] = enabled
         self.actions.show_cross_line.setChecked(enabled)
         self.canvas.set_show_cross_line(enabled)
+        save_config(self._config)
 
     def enable_show_groups(self, enabled):
         self._config["show_groups"] = enabled
         self.actions.show_groups.setChecked(enabled)
         self.canvas.set_show_groups(enabled)
+        save_config(self._config)
 
     def enable_show_texts(self, enabled):
         self._config["show_texts"] = enabled
         self.actions.show_texts.setChecked(enabled)
         self.canvas.set_show_texts(enabled)
+        save_config(self._config)
 
     def on_new_brightness_contrast(self, qimage):
         self.canvas.load_pixmap(
@@ -2111,6 +2133,7 @@ class LabelingWidget(LabelDialog):
             Qt.ControlModifier | Qt.ShiftModifier
         ):
             self._config["keep_prev"] = True
+            save_config(self._config)
 
         if not self.may_continue():
             return
@@ -2128,6 +2151,7 @@ class LabelingWidget(LabelDialog):
                 self.load_file(filename)
 
         self._config["keep_prev"] = keep_prev
+        save_config(self._config)
 
     def open_next_image(self, _value=False, load=True):
         keep_prev = self._config["keep_prev"]
@@ -2135,6 +2159,7 @@ class LabelingWidget(LabelDialog):
             Qt.ControlModifier | Qt.ShiftModifier
         ):
             self._config["keep_prev"] = True
+            save_config(self._config)
 
         if not self.may_continue():
             return
@@ -2157,6 +2182,7 @@ class LabelingWidget(LabelDialog):
             self.load_file(self.filename)
 
         self._config["keep_prev"] = keep_prev
+        save_config(self._config)
 
     def open_file(self, _value=False):
         if not self.may_continue():
@@ -2361,6 +2387,13 @@ class LabelingWidget(LabelDialog):
 
     def toggle_keep_prev_mode(self):
         self._config["keep_prev"] = not self._config["keep_prev"]
+        save_config(self._config)
+
+    def toggle_auto_use_last_label(self):
+        self._config["auto_use_last_label"] = not self._config[
+            "auto_use_last_label"
+        ]
+        save_config(self._config)
 
     def remove_selected_point(self):
         self.canvas.remove_selected_point()
@@ -2577,6 +2610,19 @@ class LabelingWidget(LabelDialog):
         Find the last label in the label list.
         Exclude labels for auto labeling.
         """
+
+        # Get from dialog history
+        last_label = self.label_dialog.get_last_label()
+        if last_label:
+            return last_label
+
+        # Get selected label from the label list
+        items = self.label_list.selected_items()
+        if items:
+            shape = items[0].data(Qt.UserRole)
+            return shape.label
+
+        # Get the last label from the label list
         for item in reversed(self.label_list):
             shape = item.data(Qt.UserRole)
             if shape.label not in [
@@ -2585,6 +2631,8 @@ class LabelingWidget(LabelDialog):
                 AutoLabelingMode.REMOVE,
             ]:
                 return shape.label
+
+        # No label is found
         return ""
 
     def finish_auto_labeling_object(self):
@@ -2600,15 +2648,20 @@ class LabelingWidget(LabelDialog):
             return
 
         # Ask a label for the object
-        previous_text = self.label_dialog.edit.text()
-        text, flags, group_id = self.label_dialog.pop_up(
-            text=self.find_last_label(),
-            flags={},
-            group_id=None,
-        )
-        if not text:
-            self.label_dialog.edit.setText(previous_text)
-            return
+        text, flags, group_id = "", {}, None
+        last_label = self.find_last_label()
+        if self._config["auto_use_last_label"] and last_label:
+            text = last_label
+        else:
+            previous_text = self.label_dialog.edit.text()
+            text, flags, group_id = self.label_dialog.pop_up(
+                text=self.find_last_label(),
+                flags={},
+                group_id=None,
+            )
+            if not text:
+                self.label_dialog.edit.setText(previous_text)
+                return
 
         if not self.validate_label(text):
             self.error_message(
