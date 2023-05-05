@@ -1,8 +1,8 @@
 <p align="center">
   <img alt="AnyLabeling" style="width: 128px; max-width: 100%; height: auto;" src="https://user-images.githubusercontent.com/18329471/232250539-2b15b9ee-5593-41d0-ba22-e0442f314cce.png"/>
   <h1 align="center">🌟 AnyLabeling 🌟</h1>
-  <p align="center">Effortless data labeling with AI support from <b>YOLO</b> and <b>Segment Anything</b>!<p>
-  <p align="center"><b>AnyLabeling = LabelImg + Labelme + Improved UI + Auto-labeling</b><p>
+  <p align="center">Effortless data labeling with AI support from <b>YOLO</b> and <b>Segment Anything</b>!</p>
+  <p align="center"><b>AnyLabeling = LabelImg + Labelme + Improved UI + Auto-labeling</b></p>
 </p>
 
 ![](https://user-images.githubusercontent.com/18329471/234640541-a6a65fbc-d7a5-4ec3-9b65-55305b01a7aa.png)
@@ -39,8 +39,8 @@
 
 ### 2. Install from Pypi
 
-- Requirements: Python >= 3.8
-- Recommended: Miniconda/Anaconda <https://docs.conda.io/en/latest/miniconda.html>
+- Requirements: Python >= 3.8, <= 3.10.
+- Recommended: [Miniconda/Anaconda](https://docs.conda.io/en/latest/miniconda.html).
 
 - Create environment:
 
