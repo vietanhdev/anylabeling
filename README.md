@@ -14,7 +14,7 @@
 [![Documentation](https://img.shields.io/badge/Read-Documentation-green)](https://anylabeling.com/)
 
 <a href="https://www.youtube.com/watch?v=xLVz-f6OeUY">
-  <img alt="AnyLabeling" src="assets/screenshot.png"/>
+  <img alt="AnyLabeling" src="https://raw.githubusercontent.com/vietanhdev/anylabeling/master/assets/screenshot.png"/>
 </a>
 
 - **Youtube Demo:** [https://www.youtube.com/watch?v=xLVz-f6OeUY](https://www.youtube.com/watch?v=xLVz-f6OeUY)
