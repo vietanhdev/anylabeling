@@ -1,8 +1,8 @@
 import os
 
-from PyQt5 import QtGui, uic
+from PyQt5 import uic
 from PyQt5.QtCore import pyqtSignal, pyqtSlot
-from PyQt5.QtWidgets import QWidget
+from PyQt5.QtWidgets import QWidget, QFileDialog
 
 from anylabeling.services.auto_labeling.model_manager import ModelManager
 from anylabeling.services.auto_labeling.types import AutoLabelingMode
@@ -10,6 +10,7 @@ from anylabeling.services.auto_labeling.types import AutoLabelingMode
 
 class AutoLabelingWidget(QWidget):
     new_model_selected = pyqtSignal(str)
+    new_custom_model_selected = pyqtSignal(str)
     auto_segmentation_requested = pyqtSignal()
     auto_segmentation_disabled = pyqtSignal()
     auto_labeling_mode_changed = pyqtSignal(AutoLabelingMode)
@@ -23,12 +24,16 @@ class AutoLabelingWidget(QWidget):
         uic.loadUi(os.path.join(current_dir, "auto_labeling.ui"), self)
 
         self.model_manager = ModelManager()
+        self.model_manager.model_configs_changed.connect(
+            lambda model_list: self.update_model_configs(model_list)
+        )
         self.model_manager.new_model_status.connect(self.on_new_model_status)
         self.new_model_selected.connect(self.model_manager.load_model)
-        self.model_manager.model_loaded.connect(self.update_visible_widgets)
-        self.model_manager.model_loaded.connect(
-            self.enable_model_select_combobox
+        self.new_custom_model_selected.connect(
+            self.model_manager.load_custom_model
         )
+        self.model_manager.model_loaded.connect(self.update_visible_widgets)
+        self.model_manager.model_loaded.connect(self.on_new_model_loaded)
         self.model_manager.new_auto_labeling_result.connect(
             lambda auto_labeling_result: self.parent.new_shapes_from_auto_labeling(
                 auto_labeling_result
@@ -49,13 +54,7 @@ class AutoLabelingWidget(QWidget):
             )
         )
 
-        # Add models to combobox
-        self.model_select_combobox.clear()
-        self.model_select_combobox.addItem(self.tr("No Model"), userData=None)
-        for model_info in self.model_manager.get_model_infos().values():
-            self.model_select_combobox.addItem(
-                model_info["display_name"], userData=model_info["name"]
-            )
+        self.update_model_configs(self.model_manager.get_model_configs())
 
         # Auto labeling buttons
         self.button_run.setShortcut("I")
@@ -97,6 +96,25 @@ class AutoLabelingWidget(QWidget):
         self.auto_labeling_mode_changed.connect(self.update_button_colors)
         self.auto_labeling_mode = AutoLabelingMode.NONE
         self.auto_labeling_mode_changed.emit(self.auto_labeling_mode)
+
+    def update_model_configs(self, model_list):
+        """Update model list"""
+        # Add models to combobox
+        self.model_select_combobox.clear()
+        self.model_select_combobox.addItem(self.tr("No Model"), userData=None)
+        self.model_select_combobox.addItem(
+            self.tr("...Load Custom Model"), userData="load_custom_model"
+        )
+        for model_config in model_list:
+            self.model_select_combobox.addItem(
+                (
+                    self.tr("(User) ")
+                    if model_config.get("is_custom_model", False)
+                    else ""
+                )
+                + model_config["display_name"],
+                userData=model_config["config_file"],
+            )
 
     @pyqtSlot()
     def update_button_colors(self):
@@ -159,8 +177,16 @@ class AutoLabelingWidget(QWidget):
     def on_new_model_status(self, status):
         self.model_status_label.setText(status)
 
-    @pyqtSlot()
-    def enable_model_select_combobox(self):
+    def on_new_model_loaded(self, model_config):
+        """Enable model select combobox"""
+        self.model_select_combobox.currentIndexChanged.disconnect()
+        config_file = model_config["config_file"]
+        self.model_select_combobox.setCurrentIndex(
+            self.model_select_combobox.findData(config_file)
+        )
+        self.model_select_combobox.currentIndexChanged.connect(
+            self.on_model_select_combobox_changed
+        )
         self.model_select_combobox.setEnabled(True)
 
     def on_output_modes_changed(self, output_modes, default_output_mode):
@@ -187,15 +213,39 @@ class AutoLabelingWidget(QWidget):
 
     def on_model_select_combobox_changed(self, index):
         """Handle model select combobox change"""
-        model_name = self.model_select_combobox.itemData(index)
+        self.clear_auto_labeling_action_requested.emit()
+        config_path = self.model_select_combobox.itemData(index)
+
+        # Load custom model?
+        if config_path == "load_custom_model":
+            # Unload current model
+            self.model_manager.unload_model()
+            # Open file dialog to select "config.yaml" file for model
+            file_dialog = QFileDialog(self)
+            file_dialog.setFileMode(QFileDialog.ExistingFile)
+            file_dialog.setNameFilter("Config file (*.yaml)")
+            if file_dialog.exec_():
+                config_file = file_dialog.selectedFiles()[0]
+                # Disable combobox while loading model
+                if config_path:
+                    self.model_select_combobox.setEnabled(False)
+                self.hide_labeling_widgets()
+                self.model_manager.load_custom_model(config_file)
+            else:
+                self.model_select_combobox.setCurrentIndex(0)
+            return
+
         # Disable combobox while loading model
-        if model_name:
+        if config_path:
             self.model_select_combobox.setEnabled(False)
         self.hide_labeling_widgets()
-        self.new_model_selected.emit(model_name)
+        self.new_model_selected.emit(config_path)
 
-    def update_visible_widgets(self, widgets):
+    def update_visible_widgets(self, model_config):
         """Update widget status"""
+        if not model_config or "model" not in model_config:
+            return
+        widgets = model_config["model"].get_required_widgets()
         for widget in widgets:
             getattr(self, widget).show()
 

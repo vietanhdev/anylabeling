@@ -66,9 +66,6 @@ def get_install_requires():
         install_requires.append("onnxruntime==1.14.1")
         print("Building AnyLabeling without GPU support")
 
-    if os.name == "nt":  # Windows
-        install_requires.append("colorama")
-
     return install_requires
 
 

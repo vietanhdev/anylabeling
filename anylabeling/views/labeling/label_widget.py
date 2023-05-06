@@ -4,7 +4,6 @@ import math
 import os
 import os.path as osp
 import re
-import sys
 import webbrowser
 
 import imgviz
@@ -25,7 +24,7 @@ from anylabeling.services.auto_labeling.types import AutoLabelingMode
 
 from ...app_info import __appname__
 from . import utils
-from .config import get_config, save_config
+from ...config import get_config, save_config
 from .label_file import LabelFile, LabelFileError
 from .logger import logger
 from .shape import Shape

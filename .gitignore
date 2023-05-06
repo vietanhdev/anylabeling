@@ -9,3 +9,4 @@ anylabeling/data
 /wheels_dist
 *_ui.py
 anylabeling/app_info.py-*
+zipped_models/*

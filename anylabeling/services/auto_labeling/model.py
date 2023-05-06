@@ -4,6 +4,7 @@ import pathlib
 import yaml
 import onnx
 import urllib.request
+from urllib.parse import urlparse
 
 # Temporarily disable SSL verification
 import ssl
@@ -59,15 +60,34 @@ class Model(QObject):
         """
         return self.Meta.widgets
 
-    def get_model_abs_path(self, model_path, model_folder_name):
+    def get_model_abs_path(self, model_config, model_path_field_name):
         """
         Get model absolute path from config path or download from url
         """
         # Try getting model path from config folder
-        model_abs_path = os.path.abspath(model_path)
-        if os.path.exists(model_abs_path):
-            return model_abs_path
+        model_path = model_config[model_path_field_name]
 
+        # Model path is a local path
+        if not model_path.startswith(("http://", "https://")):
+            # Relative path to executable or absolute path?
+            model_abs_path = os.path.abspath(model_path)
+            if os.path.exists(model_abs_path):
+                return model_abs_path
+
+            # Relative path to config file?
+            config_file_path = model_config["config_file"]
+            config_folder = os.path.dirname(config_file_path)
+            model_abs_path = os.path.abspath(
+                os.path.join(config_folder, model_path)
+            )
+            if os.path.exists(model_abs_path):
+                return model_abs_path
+
+            raise QCoreApplication.translate(
+                "Model", "Model path not found: {model_path}"
+            ).format(model_path=model_path)
+
+        # Download model from url
         self.on_message(
             QCoreApplication.translate(
                 "Model", "Downloading model from registry..."
@@ -75,20 +95,12 @@ class Model(QObject):
         )
 
         # Build download url
-        filename = os.path.basename(model_path)
-        if model_path.startswith("anylabeling_assets/"):
-            download_url = (
-                self.BASE_DOWNLOAD_URL
-                + model_path[len("anylabeling_assets/") :]
-            )
-        elif model_path.startswith(("http://", "https://")):
-            download_url = model_path
-        else:
-            raise Exception(
-                f"Unknown model path: {model_path}. "
-                "Model path must start with anylabeling_assets/ or "
-                "http:// or https://"
-            )
+        def get_filename_from_url(url):
+            a = urlparse(url)
+            return os.path.basename(a.path)
+
+        filename = get_filename_from_url(model_path)
+        download_url = model_path
 
         # Create model folder
         home_dir = os.path.expanduser("~")
@@ -97,7 +109,7 @@ class Model(QObject):
                 home_dir,
                 "anylabeling_data",
                 "models",
-                model_folder_name,
+                model_config["name"],
                 filename,
             )
         )
@@ -108,7 +120,10 @@ class Model(QObject):
                 except onnx.checker.ValidationError as e:
                     logging.warning("The model is invalid: %s", str(e))
                     logging.warning("Action: Delete and redownload...")
-                    os.remove(model_abs_path)
+                    try:
+                        os.remove(model_abs_path)
+                    except Exception as e:  # noqa
+                        logging.warning("Could not delete: %s", str(e))
                 else:
                     return model_abs_path
             else:
@@ -141,7 +156,7 @@ class Model(QObject):
             )
         except Exception as e:  # noqa
             self.on_message(f"Could not download {download_url}")
-            raise Exception(f"Could not download {download_url}: {e}") from e
+            return None
 
         return model_abs_path
 

@@ -53,14 +53,18 @@ class SegmentAnything(Model):
 
         # Get encoder and decoder model paths
         encoder_model_abs_path = self.get_model_abs_path(
-            self.config["encoder_model_path"], self.config["name"]
+            self.config, "encoder_model_path"
         )
-        if not os.path.isfile(encoder_model_abs_path):
+        if not encoder_model_abs_path or not os.path.isfile(
+            encoder_model_abs_path
+        ):
             raise Exception(f"Encoder not found: {encoder_model_abs_path}")
         decoder_model_abs_path = self.get_model_abs_path(
-            self.config["decoder_model_path"], self.config["name"]
+            self.config, "decoder_model_path"
         )
-        if not os.path.isfile(decoder_model_abs_path):
+        if not decoder_model_abs_path or not os.path.isfile(
+            decoder_model_abs_path
+        ):
             raise Exception(f"Decoder not found: {decoder_model_abs_path}")
 
         # Load models
