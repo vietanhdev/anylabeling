@@ -10,7 +10,11 @@ import yaml
 
 from anylabeling import configs as anylabeling_configs
 
-from .logger import logger
+from .views.labeling.logger import logger
+
+
+# Save current config file
+current_config_file = None
 
 
 def update_dict(target_dict, new_dict, validate_item=None):
@@ -68,6 +72,8 @@ def get_config(config_file_or_yaml=None, config_from_args=None):
     config = get_default_config()
 
     # 2. specified as file or yaml
+    if config_file_or_yaml is None:
+        config_file_or_yaml = current_config_file
     if config_file_or_yaml is not None:
         config_from_yaml = yaml.safe_load(config_file_or_yaml)
         if not isinstance(config_from_yaml, dict):

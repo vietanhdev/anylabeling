@@ -39,10 +39,8 @@ class YOLOv8(Model):
         # Run the parent class's init method
         super().__init__(model_config, on_message)
 
-        model_abs_path = self.get_model_abs_path(
-            self.config["model_path"], self.config["name"]
-        )
-        if not os.path.isfile(model_abs_path):
+        model_abs_path = self.get_model_abs_path(self.config, "model_path")
+        if not model_abs_path or not os.path.isfile(model_abs_path):
             raise Exception(f"Model not found: {model_abs_path}")
 
         self.net = cv2.dnn.readNet(model_abs_path)

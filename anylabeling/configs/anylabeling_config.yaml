@@ -113,3 +113,7 @@ shortcuts:
   ungroup_selected_shapes: U
 
   auto_label: Ctrt+A
+
+
+# Auto labeling
+custom_models: []

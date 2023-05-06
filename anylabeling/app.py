@@ -8,7 +8,8 @@ import yaml
 from PyQt5 import QtCore, QtWidgets
 
 from anylabeling.app_info import __appname__
-from anylabeling.views.labeling.config import get_config
+from anylabeling.config import get_config
+from anylabeling import config as anylabeling_config
 from anylabeling.views.mainwindow import MainWindow
 from anylabeling.views.labeling.logger import logger
 from anylabeling.views.labeling.utils import new_icon
@@ -137,6 +138,7 @@ def main():
     filename = config_from_args.pop("filename")
     output = config_from_args.pop("output")
     config_file_or_yaml = config_from_args.pop("config")
+    anylabeling_config.current_config_file = config_file_or_yaml
     config = get_config(config_file_or_yaml, config_from_args)
 
     if not config["labels"] and config["validate_label"]:

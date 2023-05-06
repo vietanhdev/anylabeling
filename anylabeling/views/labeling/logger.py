@@ -4,10 +4,6 @@ import os
 
 import termcolor
 
-if os.name == "nt":  # Windows
-    import colorama
-
-    colorama.init()
 
 COLORS = {
     "WARNING": "yellow",
