@@ -13,11 +13,18 @@
 [![Pypi Downloads](https://pepy.tech/badge/anylabeling)](https://pypi.org/project/anylabeling/)
 [![Documentation](https://img.shields.io/badge/Read-Documentation-green)](https://anylabeling.com/)
 
-<a href="https://www.youtube.com/watch?v=xLVz-f6OeUY">
+<a href="https://youtu.be/5qVJiYNX5Kk">
   <img alt="AnyLabeling" src="https://raw.githubusercontent.com/vietanhdev/anylabeling/master/assets/screenshot.png"/>
 </a>
 
-- **Youtube Demo:** [https://www.youtube.com/watch?v=xLVz-f6OeUY](https://www.youtube.com/watch?v=xLVz-f6OeUY)
+**Auto Labeling with Segment Anything**
+
+<a href="https://youtu.be/5qVJiYNX5Kk">
+  <img style="width: 800px; margin-left: auto; margin-right: auto; display: block;" alt="AnyLabeling-SegmentAnything" src="https://user-images.githubusercontent.com/18329471/236625792-07f01838-3f69-48b0-a12e-30bad27bd921.gif"/>
+</a>
+
+
+- **Youtube Demo:** [https://www.youtube.com/watch?v=5qVJiYNX5Kk](https://www.youtube.com/watch?v=5qVJiYNX5Kk)
 - **Documentation:** [https://anylabeling.com](https://anylabeling.com)
 
 **Features:**
