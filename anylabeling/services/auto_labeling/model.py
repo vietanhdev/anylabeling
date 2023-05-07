@@ -6,10 +6,11 @@ import onnx
 import urllib.request
 from urllib.parse import urlparse
 
-# Temporarily disable SSL verification
 import ssl
+ssl._create_default_https_context = ssl._create_unverified_context  # Prevent issue when downloading models behind a proxy
 
-ssl._create_default_https_context = ssl._create_unverified_context
+import socket
+socket.setdefaulttimeout(240)  # Prevent timeout whhen downloading models
 
 from abc import abstractmethod
 
@@ -155,6 +156,7 @@ class Model(QObject):
                 download_url, model_abs_path, reporthook=_progress
             )
         except Exception as e:  # noqa
+            print(f"Could not download {download_url}: {e}")
             self.on_message(f"Could not download {download_url}")
             return None
 
