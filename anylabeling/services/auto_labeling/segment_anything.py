@@ -58,14 +58,24 @@ class SegmentAnything(Model):
         if not encoder_model_abs_path or not os.path.isfile(
             encoder_model_abs_path
         ):
-            raise Exception("Could not download or initialize encoder of Segment Anything.")
+            raise FileNotFoundError(
+                QCoreApplication.translate(
+                    "Model",
+                    "Could not download or initialize encoder of Segment Anything.",
+                )
+            )
         decoder_model_abs_path = self.get_model_abs_path(
             self.config, "decoder_model_path"
         )
         if not decoder_model_abs_path or not os.path.isfile(
             decoder_model_abs_path
         ):
-            raise Exception("Could not download or initialize decoder of Segment Anything.")
+            raise FileNotFoundError(
+                QCoreApplication.translate(
+                    "Model",
+                    "Could not download or initialize decoder of Segment Anything.",
+                )
+            )
 
         # Load models
         providers = onnxruntime.get_available_providers()

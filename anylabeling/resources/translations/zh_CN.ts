@@ -816,7 +816,7 @@ Polygons</source>
         <translation>矩形</translation>
     </message>
     <message>
-        <location filename="../../services/auto_labeling/model.py" line="146"/>
+        <location filename="../../services/auto_labeling/model.py" line="161"/>
         <source>Downloading {download_url}: {percent}%</source>
         <translation>下载{download_url}：{percent}%</translation>
     </message>
@@ -826,40 +826,70 @@ Polygons</source>
         <translation>多边形</translation>
     </message>
     <message>
-        <location filename="../../services/auto_labeling/model.py" line="91"/>
+        <location filename="../../services/auto_labeling/model.py" line="106"/>
         <source>Downloading model from registry...</source>
         <translation>从注册表下载模型...</translation>
     </message>
     <message>
-        <location filename="../../services/auto_labeling/model.py" line="86"/>
+        <location filename="../../services/auto_labeling/model.py" line="101"/>
         <source>Model path not found: {model_path}</source>
         <translation>找不到模型路径：{model_path}</translation>
+    </message>
+    <message>
+        <location filename="../../services/auto_labeling/yolov8.py" line="44"/>
+        <source>Could not download or initialize YOLOv8 model.</source>
+        <translation>无法下载或初始化YOLOv8模型。</translation>
+    </message>
+    <message>
+        <location filename="../../services/auto_labeling/model.py" line="51"/>
+        <source>Config file not found: {model_config}</source>
+        <translation>找不到配置文件：{model_config}</translation>
+    </message>
+    <message>
+        <location filename="../../services/auto_labeling/model.py" line="61"/>
+        <source>Unknown config type: {type}</source>
+        <translation>未知的配置类型：{type}</translation>
+    </message>
+    <message>
+        <location filename="../../services/auto_labeling/segment_anything.py" line="61"/>
+        <source>Could not download or initialize encoder of Segment Anything.</source>
+        <translation type="obsolete">无法下载或初始化Segment Anything的编码器。</translation>
+    </message>
+    <message>
+        <location filename="../../services/auto_labeling/segment_anything.py" line="68"/>
+        <source>Could not download or initialize decoder of Segment Anything.</source>
+        <translation type="obsolete">无法下载或初始化Segment Anything的解码器。</translation>
+    </message>
+    <message>
+        <location filename="../../services/auto_labeling/yolov5.py" line="44"/>
+        <source>Could not download or initialize YOLOv5 model.</source>
+        <translation>无法下载或初始化YOLOv5模型。</translation>
     </message>
 </context>
 <context>
     <name>ModelManager</name>
     <message>
-        <location filename="../../services/auto_labeling/model_manager.py" line="376"/>
+        <location filename="../../services/auto_labeling/model_manager.py" line="392"/>
         <source>Model is not loaded. Choose a mode to continue.</source>
         <translation>模型未加载。选择一个模式继续。</translation>
     </message>
     <message>
-        <location filename="../../services/auto_labeling/model_manager.py" line="362"/>
+        <location filename="../../services/auto_labeling/model_manager.py" line="378"/>
         <source>Error in model prediction. Please check the model.</source>
         <translation>模型预测错误。请检查模型。</translation>
     </message>
     <message>
-        <location filename="../../services/auto_labeling/model_manager.py" line="365"/>
+        <location filename="../../services/auto_labeling/model_manager.py" line="381"/>
         <source>Finished inferencing AI model. Check the result.</source>
         <translation>完成推理AI模型。检查结果。</translation>
     </message>
     <message>
-        <location filename="../../services/auto_labeling/model_manager.py" line="380"/>
+        <location filename="../../services/auto_labeling/model_manager.py" line="396"/>
         <source>Inferencing AI model. Please wait...</source>
         <translation>推理AI模型。请稍候...</translation>
     </message>
     <message>
-        <location filename="../../services/auto_labeling/model_manager.py" line="390"/>
+        <location filename="../../services/auto_labeling/model_manager.py" line="406"/>
         <source>Another model is being executed. Please wait for it to finish.</source>
         <translation>另一个模型正在执行。请等待它完成。</translation>
     </message>
@@ -869,37 +899,37 @@ Polygons</source>
         <translation>模型已加载。准备好进行标注。</translation>
     </message>
     <message>
-        <location filename="../../services/auto_labeling/model_manager.py" line="241"/>
+        <location filename="../../services/auto_labeling/model_manager.py" line="242"/>
         <source>Loading model: {model_name}. Please wait...</source>
         <translation>正在加载模型：{model_name}。请稍候...</translation>
     </message>
     <message>
-        <location filename="../../services/auto_labeling/model_manager.py" line="225"/>
+        <location filename="../../services/auto_labeling/model_manager.py" line="226"/>
         <source>No model selected.</source>
         <translation>未选择模型。</translation>
     </message>
     <message>
-        <location filename="../../services/auto_labeling/model_manager.py" line="146"/>
+        <location filename="../../services/auto_labeling/model_manager.py" line="147"/>
         <source>Error in loading custom model: Invalid path.</source>
         <translation>加载自定义模型时出错：无效路径。</translation>
     </message>
     <message>
-        <location filename="../../services/auto_labeling/model_manager.py" line="157"/>
+        <location filename="../../services/auto_labeling/model_manager.py" line="158"/>
         <source>Error in loading custom model: Invalid config file.</source>
         <translation>加载自定义模型时出错：无效的配置文件。</translation>
     </message>
     <message>
-        <location filename="../../services/auto_labeling/model_manager.py" line="168"/>
+        <location filename="../../services/auto_labeling/model_manager.py" line="169"/>
         <source>Error in loading custom model: Invalid config file format.</source>
         <translation>加载自定义模型时出错：无效的配置文件格式。</translation>
     </message>
     <message>
-        <location filename="../../services/auto_labeling/model_manager.py" line="235"/>
+        <location filename="../../services/auto_labeling/model_manager.py" line="236"/>
         <source>Error in loading model: Invalid model name.</source>
         <translation>加载模型时出错：无效的模型名称。</translation>
     </message>
     <message>
-        <location filename="../../services/auto_labeling/model_manager.py" line="310"/>
+        <location filename="../../services/auto_labeling/model_manager.py" line="326"/>
         <source>Error in loading model: {error_message}</source>
         <translation>加载模型时出错：{error_message}</translation>
     </message>

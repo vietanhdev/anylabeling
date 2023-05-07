@@ -816,7 +816,7 @@ Polygons</source>
         <translation>Chữ Nhật</translation>
     </message>
     <message>
-        <location filename="../../services/auto_labeling/model.py" line="146"/>
+        <location filename="../../services/auto_labeling/model.py" line="161"/>
         <source>Downloading {download_url}: {percent}%</source>
         <translation>Đang tải {download_url}: {percent}%</translation>
     </message>
@@ -826,40 +826,70 @@ Polygons</source>
         <translation>Đa Giác</translation>
     </message>
     <message>
-        <location filename="../../services/auto_labeling/model.py" line="91"/>
+        <location filename="../../services/auto_labeling/model.py" line="106"/>
         <source>Downloading model from registry...</source>
         <translation>Đang tải mô hình...</translation>
     </message>
     <message>
-        <location filename="../../services/auto_labeling/model.py" line="86"/>
+        <location filename="../../services/auto_labeling/model.py" line="101"/>
         <source>Model path not found: {model_path}</source>
         <translation>Không tìm thấy đường dẫn mô hình: {model_path}</translation>
+    </message>
+    <message>
+        <location filename="../../services/auto_labeling/yolov8.py" line="44"/>
+        <source>Could not download or initialize YOLOv8 model.</source>
+        <translation>Không thể tải về hoặc khởi tạo mô hình YOLOv8.</translation>
+    </message>
+    <message>
+        <location filename="../../services/auto_labeling/model.py" line="51"/>
+        <source>Config file not found: {model_config}</source>
+        <translation>Không tìm thấy tệp cấu hình: {model_config}</translation>
+    </message>
+    <message>
+        <location filename="../../services/auto_labeling/model.py" line="61"/>
+        <source>Unknown config type: {type}</source>
+        <translation>Loại cấu hình không xác định: {type}</translation>
+    </message>
+    <message>
+        <location filename="../../services/auto_labeling/segment_anything.py" line="61"/>
+        <source>Could not download or initialize encoder of Segment Anything.</source>
+        <translation type="obsolete">Không thể tải về hoặc khởi tạo bộ mã hóa (encoder) của Segment Anything.</translation>
+    </message>
+    <message>
+        <location filename="../../services/auto_labeling/segment_anything.py" line="68"/>
+        <source>Could not download or initialize decoder of Segment Anything.</source>
+        <translation type="obsolete">Không thể tải về hoặc khởi tạo bộ giải mã (decoder) của Segment Anything.</translation>
+    </message>
+    <message>
+        <location filename="../../services/auto_labeling/yolov5.py" line="44"/>
+        <source>Could not download or initialize YOLOv5 model.</source>
+        <translation>Không thể tải về hoặc khởi tạo mô hình YOLOv5.</translation>
     </message>
 </context>
 <context>
     <name>ModelManager</name>
     <message>
-        <location filename="../../services/auto_labeling/model_manager.py" line="376"/>
+        <location filename="../../services/auto_labeling/model_manager.py" line="392"/>
         <source>Model is not loaded. Choose a mode to continue.</source>
         <translation>Chưa nạp mô hình. Vui lòng chọn một mô hình để tiếp tục.</translation>
     </message>
     <message>
-        <location filename="../../services/auto_labeling/model_manager.py" line="362"/>
+        <location filename="../../services/auto_labeling/model_manager.py" line="378"/>
         <source>Error in model prediction. Please check the model.</source>
         <translation>Lỗi trong quá trình dự đoán. Vui lòng kiểm tra mô hình.</translation>
     </message>
     <message>
-        <location filename="../../services/auto_labeling/model_manager.py" line="365"/>
+        <location filename="../../services/auto_labeling/model_manager.py" line="381"/>
         <source>Finished inferencing AI model. Check the result.</source>
         <translation>Đã hoàn thành dự đoán AI. Vui lòng kiểm tra kết quả.</translation>
     </message>
     <message>
-        <location filename="../../services/auto_labeling/model_manager.py" line="380"/>
+        <location filename="../../services/auto_labeling/model_manager.py" line="396"/>
         <source>Inferencing AI model. Please wait...</source>
         <translation>Đang chạy mô hình AI. Xin chờ chút...</translation>
     </message>
     <message>
-        <location filename="../../services/auto_labeling/model_manager.py" line="390"/>
+        <location filename="../../services/auto_labeling/model_manager.py" line="406"/>
         <source>Another model is being executed. Please wait for it to finish.</source>
         <translation>Một mô hình AI khác đang được thực thi. Vui lòng đợi đến khi hoàn thành.</translation>
     </message>
@@ -869,37 +899,37 @@ Polygons</source>
         <translation>Mô hình đã được nạp. Sẵn sàng để gán nhãn.</translation>
     </message>
     <message>
-        <location filename="../../services/auto_labeling/model_manager.py" line="241"/>
+        <location filename="../../services/auto_labeling/model_manager.py" line="242"/>
         <source>Loading model: {model_name}. Please wait...</source>
         <translation>Đang nạp mô hình: {model_name}. Xin chờ...</translation>
     </message>
     <message>
-        <location filename="../../services/auto_labeling/model_manager.py" line="225"/>
+        <location filename="../../services/auto_labeling/model_manager.py" line="226"/>
         <source>No model selected.</source>
         <translation>Chưa chọn mô hình.</translation>
     </message>
     <message>
-        <location filename="../../services/auto_labeling/model_manager.py" line="146"/>
+        <location filename="../../services/auto_labeling/model_manager.py" line="147"/>
         <source>Error in loading custom model: Invalid path.</source>
         <translation>Lỗi trong quá trình nạp mô hình: Đường dẫn không hợp lệ.</translation>
     </message>
     <message>
-        <location filename="../../services/auto_labeling/model_manager.py" line="157"/>
+        <location filename="../../services/auto_labeling/model_manager.py" line="158"/>
         <source>Error in loading custom model: Invalid config file.</source>
         <translation>Lỗi trong quá trình nạp mô hình: Tệp cấu hình không hợp lệ.</translation>
     </message>
     <message>
-        <location filename="../../services/auto_labeling/model_manager.py" line="168"/>
+        <location filename="../../services/auto_labeling/model_manager.py" line="169"/>
         <source>Error in loading custom model: Invalid config file format.</source>
         <translation>Lỗi trong quá trình nạp mô hình: Định dạng tệp cấu hình không hợp lệ.</translation>
     </message>
     <message>
-        <location filename="../../services/auto_labeling/model_manager.py" line="235"/>
+        <location filename="../../services/auto_labeling/model_manager.py" line="236"/>
         <source>Error in loading model: Invalid model name.</source>
         <translation>Lỗi trong quá trình nạp mô hình: Tên mô hình không hợp lệ.</translation>
     </message>
     <message>
-        <location filename="../../services/auto_labeling/model_manager.py" line="310"/>
+        <location filename="../../services/auto_labeling/model_manager.py" line="326"/>
         <source>Error in loading model: {error_message}</source>
         <translation>Lỗi trong quá trình nạp mô hình: {error_message}</translation>
     </message>
