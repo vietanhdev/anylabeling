@@ -232,7 +232,7 @@ jobs:
         npm install -g create-dmg
         cd dist
         create-dmg AnyLabeling.app || test -f AnyLabeling\ 0.0.0.dmg
-        mv AnyLabeling\ 0.0.0.dmg AnyLabeling.dmg
+        mv AnyLabeling\ 0.0.0.dmg AnyLabeling-GPU.dmg
       if: runner.os == 'macOS'
 
     - name: Upload release app on macOS
@@ -242,7 +242,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.get_release_info.outputs.upload_url }}
-        asset_path: ./dist/AnyLabeling.dmg
+        asset_path: ./dist/AnyLabeling-GPU.dmg
         asset_name: AnyLabeling-GPU.dmg
         asset_content_type: application/octet-stream
       if: runner.os == 'macOS'
