@@ -816,12 +816,12 @@ Polygons</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../services/auto_labeling/model.py" line="91"/>
+        <location filename="../../services/auto_labeling/model.py" line="106"/>
         <source>Downloading model from registry...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../services/auto_labeling/model.py" line="146"/>
+        <location filename="../../services/auto_labeling/model.py" line="161"/>
         <source>Downloading {download_url}: {percent}%</source>
         <translation type="unfinished"></translation>
     </message>
@@ -831,8 +831,28 @@ Polygons</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../services/auto_labeling/model.py" line="86"/>
+        <location filename="../../services/auto_labeling/model.py" line="101"/>
         <source>Model path not found: {model_path}</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../services/auto_labeling/yolov8.py" line="44"/>
+        <source>Could not download or initialize YOLOv8 model.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../services/auto_labeling/model.py" line="51"/>
+        <source>Config file not found: {model_config}</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../services/auto_labeling/model.py" line="61"/>
+        <source>Unknown config type: {type}</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../services/auto_labeling/yolov5.py" line="44"/>
+        <source>Could not download or initialize YOLOv5 model.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -844,62 +864,62 @@ Polygons</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../services/auto_labeling/model_manager.py" line="225"/>
+        <location filename="../../services/auto_labeling/model_manager.py" line="226"/>
         <source>No model selected.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../services/auto_labeling/model_manager.py" line="241"/>
+        <location filename="../../services/auto_labeling/model_manager.py" line="242"/>
         <source>Loading model: {model_name}. Please wait...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../services/auto_labeling/model_manager.py" line="376"/>
+        <location filename="../../services/auto_labeling/model_manager.py" line="392"/>
         <source>Model is not loaded. Choose a mode to continue.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../services/auto_labeling/model_manager.py" line="362"/>
+        <location filename="../../services/auto_labeling/model_manager.py" line="378"/>
         <source>Error in model prediction. Please check the model.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../services/auto_labeling/model_manager.py" line="365"/>
+        <location filename="../../services/auto_labeling/model_manager.py" line="381"/>
         <source>Finished inferencing AI model. Check the result.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../services/auto_labeling/model_manager.py" line="380"/>
+        <location filename="../../services/auto_labeling/model_manager.py" line="396"/>
         <source>Inferencing AI model. Please wait...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../services/auto_labeling/model_manager.py" line="390"/>
+        <location filename="../../services/auto_labeling/model_manager.py" line="406"/>
         <source>Another model is being executed. Please wait for it to finish.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../services/auto_labeling/model_manager.py" line="146"/>
+        <location filename="../../services/auto_labeling/model_manager.py" line="147"/>
         <source>Error in loading custom model: Invalid path.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../services/auto_labeling/model_manager.py" line="157"/>
+        <location filename="../../services/auto_labeling/model_manager.py" line="158"/>
         <source>Error in loading custom model: Invalid config file.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../services/auto_labeling/model_manager.py" line="168"/>
+        <location filename="../../services/auto_labeling/model_manager.py" line="169"/>
         <source>Error in loading custom model: Invalid config file format.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../services/auto_labeling/model_manager.py" line="235"/>
+        <location filename="../../services/auto_labeling/model_manager.py" line="236"/>
         <source>Error in loading model: Invalid model name.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../services/auto_labeling/model_manager.py" line="310"/>
+        <location filename="../../services/auto_labeling/model_manager.py" line="326"/>
         <source>Error in loading model: {error_message}</source>
         <translation type="unfinished"></translation>
     </message>

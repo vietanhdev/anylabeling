@@ -180,10 +180,13 @@ class AutoLabelingWidget(QWidget):
     def on_new_model_loaded(self, model_config):
         """Enable model select combobox"""
         self.model_select_combobox.currentIndexChanged.disconnect()
-        config_file = model_config["config_file"]
-        self.model_select_combobox.setCurrentIndex(
-            self.model_select_combobox.findData(config_file)
-        )
+        if "config_file" not in model_config:
+            self.model_select_combobox.setCurrentIndex(0)
+        else:
+            config_file = model_config["config_file"]
+            self.model_select_combobox.setCurrentIndex(
+                self.model_select_combobox.findData(config_file)
+            )
         self.model_select_combobox.currentIndexChanged.connect(
             self.on_model_select_combobox_changed
         )

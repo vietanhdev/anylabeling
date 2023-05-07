@@ -1,5 +1,4 @@
 import os
-import uuid
 import copy
 import time
 import importlib.resources as pkg_resources
@@ -119,15 +118,17 @@ class ModelManager(QObject):
     @pyqtSlot()
     def on_model_download_finished(self):
         """Handle model download thread finished"""
-        self.new_model_status.emit(
-            self.tr("Model loaded. Ready for labeling.")
-        )
         if self.loaded_model_config and self.loaded_model_config["model"]:
+            self.new_model_status.emit(
+                self.tr("Model loaded. Ready for labeling.")
+            )
             self.model_loaded.emit(self.loaded_model_config)
             self.output_modes_changed.emit(
                 self.loaded_model_config["model"].Meta.output_modes,
                 self.loaded_model_config["model"].Meta.default_output_mode,
             )
+        else:
+            self.model_loaded.emit({})
 
     def load_custom_model(self, config_file):
         """Run custom model loading in a thread"""
@@ -280,6 +281,11 @@ class ModelManager(QObject):
                         )
                     )
                 )
+                print(
+                    "Error in loading model: {error_message}".format(
+                        error_message=str(e)
+                    )
+                )
                 return
         elif model_config["type"] == "yolov8":
             from .yolov8 import YOLOv8
@@ -297,6 +303,11 @@ class ModelManager(QObject):
                         )
                     )
                 )
+                print(
+                    "Error in loading model: {error_message}".format(
+                        error_message=str(e)
+                    )
+                )
                 return
         elif model_config["type"] == "segment_anything":
             from .segment_anything import SegmentAnything
@@ -307,6 +318,11 @@ class ModelManager(QObject):
                 )
                 self.auto_segmentation_model_selected.emit()
             except Exception as e:  # noqa
+                print(
+                    "Error in loading model: {error_message}".format(
+                        error_message=str(e)
+                    )
+                )
                 self.new_model_status.emit(
                     self.tr(
                         "Error in loading model: {error_message}".format(

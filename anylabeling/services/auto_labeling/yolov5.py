@@ -41,7 +41,11 @@ class YOLOv5(Model):
 
         model_abs_path = self.get_model_abs_path(self.config, "model_path")
         if not model_abs_path or not os.path.isfile(model_abs_path):
-            raise Exception(f"Model not found: {model_abs_path}")
+            raise FileNotFoundError(
+                QCoreApplication.translate(
+                    "Model", "Could not download or initialize YOLOv5 model."
+                )
+            )
 
         self.net = cv2.dnn.readNet(model_abs_path)
         if __preferred_device__ == "GPU":

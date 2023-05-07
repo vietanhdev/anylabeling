@@ -6,17 +6,23 @@ import onnx
 import urllib.request
 from urllib.parse import urlparse
 
-# Temporarily disable SSL verification
+from PyQt5.QtCore import QCoreApplication
+
 import ssl
 
-ssl._create_default_https_context = ssl._create_unverified_context
+ssl._create_default_https_context = (
+    ssl._create_unverified_context
+)  # Prevent issue when downloading models behind a proxy
+
+import socket
+
+socket.setdefaulttimeout(240)  # Prevent timeout when downloading models
 
 from abc import abstractmethod
 
 
 from PyQt5.QtCore import QFile, QObject
 from PyQt5.QtGui import QImage
-from PyQt5.QtCore import QCoreApplication
 
 from .types import AutoLabelingResult
 from anylabeling.views.labeling.label_file import LabelFile, LabelFileError
@@ -41,13 +47,21 @@ class Model(QObject):
         # Load and check config
         if isinstance(model_config, str):
             if not os.path.isfile(model_config):
-                raise Exception(f"Config file not found: {model_config}")
+                raise FileNotFoundError(
+                    QCoreApplication.translate(
+                        "Model", "Config file not found: {model_config}"
+                    ).format(model_config=model_config)
+                )
             with open(model_config, "r") as f:
                 self.config = yaml.safe_load(f)
         elif isinstance(model_config, dict):
             self.config = model_config
         else:
-            raise Exception(f"Unknown config type: {type(model_config)}")
+            raise ValueError(
+                QCoreApplication.translate(
+                    "Model", "Unknown config type: {type}"
+                ).format(type=type(model_config))
+            )
         self.check_missing_config(
             config_names=self.Meta.required_config_names,
             config=self.config,
@@ -155,6 +169,7 @@ class Model(QObject):
                 download_url, model_abs_path, reporthook=_progress
             )
         except Exception as e:  # noqa
+            print(f"Could not download {download_url}: {e}")
             self.on_message(f"Could not download {download_url}")
             return None
 
