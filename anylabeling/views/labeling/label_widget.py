@@ -354,7 +354,7 @@ class LabelingWidget(LabelDialog):
         toggle_auto_use_last_label_mode = action(
             self.tr("Auto Use Last Label"),
             self.toggle_auto_use_last_label,
-            None,
+            shortcuts["toggle_auto_use_last_label"],
             None,
             self.tr('Toggle "Auto Use Last Label" mode'),
             checkable=True,
