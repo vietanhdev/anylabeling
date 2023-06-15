@@ -91,25 +91,22 @@ class QToaster(QtWidgets.QFrame):
             self.opacity_ani.stop()
             parent_rect = self.parent().rect()
             geo = self.geometry()
+            margin = int(self.margin)
             if self.corner == QtCore.Qt.TopLeftCorner:
                 geo.moveTopLeft(
-                    parent_rect.topLeft()
-                    + QtCore.QPoint(self.margin, self.margin)
+                    parent_rect.topLeft() + QtCore.QPoint(margin, margin)
                 )
             elif self.corner == QtCore.Qt.TopRightCorner:
                 geo.moveTopRight(
-                    parent_rect.topRight()
-                    + QtCore.QPoint(-self.margin, self.margin)
+                    parent_rect.topRight() + QtCore.QPoint(-margin, margin)
                 )
             elif self.corner == QtCore.Qt.BottomRightCorner:
                 geo.moveBottomRight(
-                    parent_rect.bottomRight()
-                    + QtCore.QPoint(-self.margin, -self.margin)
+                    parent_rect.bottomRight() + QtCore.QPoint(-margin, -margin)
                 )
             else:
                 geo.moveBottomLeft(
-                    parent_rect.bottomLeft()
-                    + QtCore.QPoint(self.margin, -self.margin)
+                    parent_rect.bottomLeft() + QtCore.QPoint(margin, -margin)
                 )
             self.setGeometry(geo)
             self.restore()
@@ -165,6 +162,7 @@ class QToaster(QtWidgets.QFrame):
         parent_window=True,
     ):  # pylint: disable=too-many-statements,too-many-locals,too-many-arguments
         """Show message as a toaster"""
+        margin = int(margin)
 
         if parent and parent_window:
             parent = parent.window()
