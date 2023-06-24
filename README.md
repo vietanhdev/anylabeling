@@ -11,7 +11,7 @@
 [![license](https://img.shields.io/github/license/vietanhdev/anylabeling.svg)](https://github.com/vietanhdev/anylabeling/blob/master/LICENSE)
 [![open issues](https://isitmaintained.com/badge/open/vietanhdev/anylabeling.svg)](https://github.com/vietanhdev/anylabeling/issues)
 [![Pypi Downloads](https://pepy.tech/badge/anylabeling)](https://pypi.org/project/anylabeling/)
-[![Documentation](https://img.shields.io/badge/Read-Documentation-green)](https://anylabeling.com/)
+[![Documentation](https://img.shields.io/badge/Read-Documentation-green)](https://anylabeling.nrl.ai/)
 
 <a href="https://youtu.be/5qVJiYNX5Kk">
   <img alt="AnyLabeling" src="https://raw.githubusercontent.com/vietanhdev/anylabeling/master/assets/screenshot.png"/>
@@ -25,7 +25,7 @@
 
 
 - **Youtube Demo:** [https://www.youtube.com/watch?v=5qVJiYNX5Kk](https://www.youtube.com/watch?v=5qVJiYNX5Kk)
-- **Documentation:** [https://anylabeling.com](https://anylabeling.com)
+- **Documentation:** [https://anylabeling.nrl.ai](https://anylabeling.nrl.ai)
 
 **Features:**
 
@@ -106,7 +106,7 @@ bash build_executable.sh
 
 ## IV. Contribution
 
-If you want to contribute to **AnyLabeling**, please read [Contribution Guidelines](https://anylabeling.com/docs/contribution).
+If you want to contribute to **AnyLabeling**, please read [Contribution Guidelines](https://anylabeling.nrl.ai/docs/contribution).
 
 ## V. Star history
 
