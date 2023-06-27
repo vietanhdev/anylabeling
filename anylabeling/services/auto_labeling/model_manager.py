@@ -1,17 +1,30 @@
 import os
 import copy
 import time
+import shutil
+import pathlib
+import logging
+import tempfile
+import zipfile
 import importlib.resources as pkg_resources
 from threading import Lock
+import urllib.request
 
 import yaml
 from PyQt5.QtCore import QObject, QThread, pyqtSignal, pyqtSlot
+from PyQt5.QtCore import QCoreApplication
 
 from anylabeling.configs import auto_labeling as auto_labeling_configs
 from anylabeling.services.auto_labeling.types import AutoLabelingResult
 from anylabeling.utils import GenericWorker
 
 from anylabeling.config import get_config, save_config
+
+import ssl
+
+ssl._create_default_https_context = (
+    ssl._create_unverified_context
+)  # Prevent issue when downloading models behind a proxy
 
 
 class ModelManager(QObject):
@@ -40,6 +53,7 @@ class ModelManager(QObject):
         self.model_download_worker = None
         self.model_download_thread = None
         self.model_execution_thread = None
+        self.model_execution_worker = None
         self.model_execution_thread_lock = Lock()
 
         self.load_model_configs()
@@ -51,11 +65,32 @@ class ModelManager(QObject):
             auto_labeling_configs, "models.yaml"
         ) as f:
             model_list = yaml.safe_load(f)
+            for model in model_list:
+                model["is_custom_model"] = False
+
+            # Check downloaded
+            for model in model_list:
+                home_dir = os.path.expanduser("~")
+                model_download_path = os.path.join(
+                    home_dir, "anylabeling_data", "models", model["name"]
+                )
+                pathlib.Path(model_download_path).mkdir(
+                    parents=True, exist_ok=True
+                )
+                config_file = os.path.join(model_download_path, "config.yaml")
+                model["config_file"] = config_file
+
+                # Initialize model config if needed
+                if not os.path.isfile(config_file):
+                    model["has_downloaded"] = False
+                    with open(config_file, "w") as f:
+                        yaml.dump(model, f)
 
         # Load list of custom models
         custom_models = get_config().get("custom_models", [])
         for custom_model in custom_models:
             custom_model["is_custom_model"] = True
+            custom_model["has_downloaded"] = True
 
         # Remove invalid/not found custom models
         custom_models = [
@@ -72,24 +107,17 @@ class ModelManager(QObject):
         # Load model configs
         model_configs = []
         for model in model_list:
-            model_config = {}
-            config_file = model["config_file"]
-            if config_file.startswith(":/"):  # Config file is in resources
-                config_file_name = config_file[2:]
-                with pkg_resources.open_text(
-                    auto_labeling_configs, config_file_name
-                ) as f:
-                    model_config = yaml.safe_load(f)
-                    model_config["config_file"] = config_file
-            else:  # Config file is in local file system
+            model_config = copy.deepcopy(model)
+            config_file = model.get("config_file", None)
+            if config_file:
                 with open(config_file, "r") as f:
                     model_config = yaml.safe_load(f)
                     model_config["config_file"] = os.path.normpath(
                         os.path.abspath(config_file)
                     )
-            model_config["is_custom_model"] = model.get(
-                "is_custom_model", False
-            )
+                    model_config["is_custom_model"] = model.get(
+                        "is_custom_model", False
+                    )
             model_configs.append(model_config)
 
         # Sort by last used
@@ -190,7 +218,14 @@ class ModelManager(QObject):
                 custom_models.sort(
                     key=lambda x: x.get("last_used", 0), reverse=True
                 )
-                custom_models.pop()
+                removed_model = custom_models.pop()
+                # Remove old model folder
+                config_file = removed_model["config_file"]
+                if os.path.exists(config_file):
+                    try:
+                        pathlib.Path(config_file).parent.rmdir()
+                    except OSError:
+                        pass
             custom_models = [model_config] + custom_models
 
         # Save config
@@ -257,6 +292,87 @@ class ModelManager(QObject):
         )
         self.model_download_thread.start()
 
+    def _download_and_extract_model(self, model_config):
+        """Download and extract a model from model config"""
+        config_file = model_config["config_file"]
+        # Check if model is already downloaded
+        if not os.path.exists(config_file):
+            raise ValueError(self.tr("Error in loading config file."))
+        with open(config_file, "r") as f:
+            model_config = yaml.safe_load(f)
+        if model_config.get("has_downloaded", False):
+            return
+
+        # Download model
+        download_url = model_config.get("download_url", None)
+        if not download_url:
+            raise ValueError(self.tr("Missing download_url in config file."))
+        tmp_dir = tempfile.mkdtemp()
+        zip_model_path = os.path.join(tmp_dir, "model.zip")
+
+        # Download url
+        ellipsis_download_url = download_url
+        if len(download_url) > 40:
+            ellipsis_download_url = (
+                download_url[:20] + "..." + download_url[-20:]
+            )
+        logging.info(
+            "Downloading %s to %s", ellipsis_download_url, zip_model_path
+        )
+        try:
+            # Download and show progress
+            def _progress(count, block_size, total_size):
+                percent = int(count * block_size * 100 / total_size)
+                self.new_model_status.emit(
+                    QCoreApplication.translate(
+                        "Model", "Downloading {download_url}: {percent}%"
+                    ).format(
+                        download_url=ellipsis_download_url, percent=percent
+                    )
+                )
+
+            urllib.request.urlretrieve(
+                download_url, zip_model_path, reporthook=_progress
+            )
+        except Exception as e:  # noqa
+            print(f"Could not download {download_url}: {e}")
+            self.new_model_status.emit(f"Could not download {download_url}")
+            return None
+
+        # Extract model
+        tmp_extract_dir = os.path.join(tmp_dir, "extract")
+        extract_dir = os.path.dirname(config_file)
+        with zipfile.ZipFile(zip_model_path, "r") as zip_ref:
+            zip_ref.extractall(tmp_extract_dir)
+
+        # Find model folder (containing config.yaml)
+        model_folder = None
+        for root, _, files in os.walk(tmp_extract_dir):
+            if "config.yaml" in files:
+                model_folder = root
+                break
+        if model_folder is None:
+            raise ValueError(
+                self.tr("Could not find config.yaml in zip file.")
+            )
+
+        # Move model folder to correct location
+        shutil.rmtree(extract_dir)
+        shutil.move(model_folder, extract_dir)
+
+        # Clean up
+        shutil.rmtree(tmp_dir)
+
+        # Update config file
+        with open(config_file, "r") as f:
+            model_config = yaml.safe_load(f)
+        model_config["has_downloaded"] = True
+        model_config["config_file"] = config_file
+        with open(config_file, "w") as f:
+            yaml.dump(model_config, f)
+
+        return model_config
+
     def _load_model(self, model_id):
         """Load and return model info"""
         if self.loaded_model_config is not None:
@@ -265,6 +381,11 @@ class ModelManager(QObject):
             self.auto_segmentation_model_unselected.emit()
 
         model_config = copy.deepcopy(self.model_configs[model_id])
+
+        # Download and extract model
+        if not model_config.get("has_downloaded", True):
+            model_config = self._download_and_extract_model(model_config)
+
         if model_config["type"] == "yolov5":
             from .yolov5 import YOLOv5
 

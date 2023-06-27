@@ -79,44 +79,15 @@ class Model(QObject):
         Get model absolute path from config path or download from url
         """
         # Try getting model path from config folder
+        config_folder = os.path.dirname(model_config["config_file"])
         model_path = model_config[model_path_field_name]
-
-        # Model path is a local path
-        if not model_path.startswith(("http://", "https://")):
-            # Relative path to executable or absolute path?
-            model_abs_path = os.path.abspath(model_path)
-            if os.path.exists(model_abs_path):
-                return model_abs_path
-
-            # Relative path to config file?
-            config_file_path = model_config["config_file"]
-            config_folder = os.path.dirname(config_file_path)
+        if os.path.isfile(os.path.join(config_folder, model_path)):
             model_abs_path = os.path.abspath(
                 os.path.join(config_folder, model_path)
             )
-            if os.path.exists(model_abs_path):
-                return model_abs_path
+            return model_abs_path
 
-            raise QCoreApplication.translate(
-                "Model", "Model path not found: {model_path}"
-            ).format(model_path=model_path)
-
-        # Download model from url
-        self.on_message(
-            QCoreApplication.translate(
-                "Model", "Downloading model from registry..."
-            )
-        )
-
-        # Build download url
-        def get_filename_from_url(url):
-            a = urlparse(url)
-            return os.path.basename(a.path)
-
-        filename = get_filename_from_url(model_path)
-        download_url = model_path
-
-        # Create model folder
+        # Try getting model from assets folder
         home_dir = os.path.expanduser("~")
         model_abs_path = os.path.abspath(
             os.path.join(
@@ -124,55 +95,9 @@ class Model(QObject):
                 "anylabeling_data",
                 "models",
                 model_config["name"],
-                filename,
+                model_path,
             )
         )
-        if os.path.exists(model_abs_path):
-            if model_abs_path.lower().endswith(".onnx"):
-                try:
-                    onnx.checker.check_model(model_abs_path)
-                except onnx.checker.ValidationError as e:
-                    logging.warning("The model is invalid: %s", str(e))
-                    logging.warning("Action: Delete and redownload...")
-                    try:
-                        os.remove(model_abs_path)
-                    except Exception as e:  # noqa
-                        logging.warning("Could not delete: %s", str(e))
-                else:
-                    return model_abs_path
-            else:
-                return model_abs_path
-        pathlib.Path(model_abs_path).parent.mkdir(parents=True, exist_ok=True)
-
-        # Download url
-        ellipsis_download_url = download_url
-        if len(download_url) > 40:
-            ellipsis_download_url = (
-                download_url[:20] + "..." + download_url[-20:]
-            )
-        logging.info(
-            "Downloading %s to %s", ellipsis_download_url, model_abs_path
-        )
-        try:
-            # Download and show progress
-            def _progress(count, block_size, total_size):
-                percent = int(count * block_size * 100 / total_size)
-                self.on_message(
-                    QCoreApplication.translate(
-                        "Model", "Downloading {download_url}: {percent}%"
-                    ).format(
-                        download_url=ellipsis_download_url, percent=percent
-                    )
-                )
-
-            urllib.request.urlretrieve(
-                download_url, model_abs_path, reporthook=_progress
-            )
-        except Exception as e:  # noqa
-            print(f"Could not download {download_url}: {e}")
-            self.on_message(f"Could not download {download_url}")
-            return None
-
         return model_abs_path
 
     def check_missing_config(self, config_names, config):
