@@ -1,21 +1,21 @@
-- name: "segment_anything_vit_b_quant-r20230416"
+- name: "sam_vit_b_01ec64"
   display_name: Segment Anything (ViT-B)
-  download_url: https://github.com/vietanhdev/anylabeling-assets/releases/download/v0.4.0/segment_anything_vit_b_quant-r20230416.zip
-- name: "segment_anything_vit_b-r20230416"
+  download_url: https://huggingface.co/vietanhdev/segment-anything-onnx-models/resolve/main/sam_vit_b_01ec64.zip
+- name: "sam_vit_b_01ec64_quant"
   display_name: Segment Anything (ViT-B Quant)
-  download_url: https://github.com/vietanhdev/anylabeling-assets/releases/download/v0.4.0/segment_anything_vit_b-r20230416.zip
-- name: "segment_anything_vit_l_quant-r20230416"
+  download_url: https://huggingface.co/vietanhdev/segment-anything-onnx-models/resolve/main/sam_vit_b_01ec64_quant.zip
+- name: "sam_vit_l_0b3195_quant"
   display_name: Segment Anything (ViT-L)
-  download_url: https://github.com/vietanhdev/anylabeling-assets/releases/download/v0.4.0/segment_anything_vit_l-r20230416.zip
-- name: "segment_anything_vit_l-r20230416"
+  download_url: https://huggingface.co/vietanhdev/segment-anything-onnx-models/resolve/main/sam_vit_l_0b3195_quant.zip
+- name: "sam_vit_l_0b3195"
   display_name: Segment Anything (ViT-L Quant)
-  download_url: https://github.com/vietanhdev/anylabeling-assets/releases/download/v0.4.0/segment_anything_vit_l_quant-r20230416.zip
-- name: "segment_anything_vit_h-r20230416"
+  download_url: https://huggingface.co/vietanhdev/segment-anything-onnx-models/resolve/main/sam_vit_l_0b3195.zip
+- name: "sam_vit_h_4b8939"
   display_name: Segment Anything (ViT-H)
-  download_url: https://huggingface.co/vietanhdev/anylabeling-segment-anything-vit-h/resolve/main/sam_vit_h_4b8939.zip
-- name: "segment_anything_vit_h_quant-r20230416"
+  download_url: https://huggingface.co/vietanhdev/segment-anything-onnx-models/resolve/main/sam_vit_h_4b8939.zip
+- name: "sam_vit_h_4b8939_quant"
   display_name: Segment Anything (ViT-H Quant)
-  download_url: https://github.com/vietanhdev/anylabeling-assets/releases/download/v0.4.0/segment_anything_vit_h_quant-r20230416.zip
+  download_url: https://huggingface.co/vietanhdev/segment-anything-onnx-models/resolve/main/sam_vit_h_4b8939_quant.zip
 - name: "yolov5n-r20230415"
   display_name: YOLOv5n
   download_url: https://github.com/vietanhdev/anylabeling-assets/releases/download/v0.4.0/yolov5n-r20230415.zip
