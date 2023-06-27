@@ -735,7 +735,7 @@ class Canvas(
         if self.is_loading:
             # Draw a semi-transparent rectangle
             p.setPen(Qt.NoPen)
-            p.setBrush(QtGui.QColor(0, 0, 0, 100))
+            p.setBrush(QtGui.QColor(0, 0, 0, 20))
             p.drawRect(self.pixmap.rect())
 
             # Draw a spinning wheel

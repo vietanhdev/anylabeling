@@ -1,5 +1,6 @@
 import logging
 import os
+import traceback
 
 import cv2
 import numpy as np
@@ -216,10 +217,15 @@ class SegmentAnything(Model):
             if self.stop_inference:
                 return AutoLabelingResult([], replace=False)
             masks = self.model.predict_masks(image_embedding, self.marks)
+            if len(masks.shape) == 4:
+                masks = masks[0][0]
+            else:
+                masks = masks[0]
             shapes = self.post_process(masks)
         except Exception as e:  # noqa
             logging.warning("Could not inference model")
             logging.warning(e)
+            traceback.print_exc()
             return AutoLabelingResult([], replace=False)
 
         result = AutoLabelingResult(shapes, replace=False)
