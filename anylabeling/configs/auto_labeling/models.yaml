@@ -1,3 +1,6 @@
+- name: "mobile_sam_20230629"
+  display_name: Segment Anything (MobileSAM)
+  download_url: https://huggingface.co/vietanhdev/segment-anything-onnx-models/resolve/main/mobile_sam_20230629.zip
 - name: "sam_vit_b_01ec64"
   display_name: Segment Anything (ViT-B)
   download_url: https://huggingface.co/vietanhdev/segment-anything-onnx-models/resolve/main/sam_vit_b_01ec64.zip
