@@ -7,12 +7,12 @@
 - name: "sam_vit_b_01ec64_quant"
   display_name: Segment Anything (ViT-B Quant)
   download_url: https://huggingface.co/vietanhdev/segment-anything-onnx-models/resolve/main/sam_vit_b_01ec64_quant.zip
-- name: "sam_vit_l_0b3195_quant"
-  display_name: Segment Anything (ViT-L)
-  download_url: https://huggingface.co/vietanhdev/segment-anything-onnx-models/resolve/main/sam_vit_l_0b3195_quant.zip
 - name: "sam_vit_l_0b3195"
-  display_name: Segment Anything (ViT-L Quant)
+  display_name: Segment Anything (ViT-L)
   download_url: https://huggingface.co/vietanhdev/segment-anything-onnx-models/resolve/main/sam_vit_l_0b3195.zip
+- name: "sam_vit_l_0b3195_quant"
+  display_name: Segment Anything (ViT-L Quant)
+  download_url: https://huggingface.co/vietanhdev/segment-anything-onnx-models/resolve/main/sam_vit_l_0b3195_quant.zip
 - name: "sam_vit_h_4b8939"
   display_name: Segment Anything (ViT-H)
   download_url: https://huggingface.co/vietanhdev/segment-anything-onnx-models/resolve/main/sam_vit_h_4b8939.zip
