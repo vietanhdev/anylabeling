@@ -6,6 +6,7 @@ import os.path as osp
 import re
 import webbrowser
 
+import darkdetect
 import imgviz
 import natsort
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -124,6 +125,23 @@ class LabelingWidget(LabelDialog):
         self.label_list = LabelListWidget()
         self.last_open_dir = None
 
+        if not darkdetect.isDark():
+            dock_title_style = (
+                "QDockWidget::title {"
+                "text-align: center;"
+                "padding: 0px;"
+                "background-color: #f0f0f0;"
+                "}"
+            )
+        else:
+            dock_title_style = (
+                "QDockWidget::title {"
+                "text-align: center;"
+                "padding: 0px;"
+                "background-color: #333333;"
+                "}"
+            )
+
         self.flag_dock = self.flag_widget = None
         self.flag_dock = QtWidgets.QDockWidget(self.tr("Flags"), self)
         self.flag_dock.setObjectName("Flags")
@@ -151,13 +169,7 @@ class LabelingWidget(LabelDialog):
         self.shape_dock = QtWidgets.QDockWidget(self.tr("Objects"), self)
         self.shape_dock.setObjectName("Objects")
         self.shape_dock.setWidget(self.label_list)
-        self.shape_dock.setStyleSheet(
-            "QDockWidget::title {"
-            "text-align: center;"
-            "padding: 0px;"
-            "background-color: #f0f0f0;"
-            "}"
-        )
+        self.shape_dock.setStyleSheet(dock_title_style)
 
         self.unique_label_list = UniqueLabelQListWidget()
         self.unique_label_list.setToolTip(
@@ -175,13 +187,7 @@ class LabelingWidget(LabelDialog):
         self.label_dock = QtWidgets.QDockWidget(self.tr("Labels"), self)
         self.label_dock.setObjectName("Labels")
         self.label_dock.setWidget(self.unique_label_list)
-        self.label_dock.setStyleSheet(
-            "QDockWidget::title {"
-            "text-align: center;"
-            "padding: 0px;"
-            "background-color: #f0f0f0;"
-            "}"
-        )
+        self.label_dock.setStyleSheet(dock_title_style)
 
         self.file_search = QtWidgets.QLineEdit()
         self.file_search.setPlaceholderText(self.tr("Search Filename"))
@@ -200,13 +206,7 @@ class LabelingWidget(LabelDialog):
         file_list_widget = QtWidgets.QWidget()
         file_list_widget.setLayout(file_list_layout)
         self.file_dock.setWidget(file_list_widget)
-        self.file_dock.setStyleSheet(
-            "QDockWidget::title {"
-            "text-align: center;"
-            "padding: 0px;"
-            "background-color: #f0f0f0;"
-            "}"
-        )
+        self.file_dock.setStyleSheet(dock_title_style)
 
         self.zoom_widget = ZoomWidget()
         self.setAcceptDrops(True)
