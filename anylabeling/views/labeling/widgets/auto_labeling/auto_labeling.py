@@ -57,6 +57,23 @@ class AutoLabelingWidget(QWidget):
 
         self.update_model_configs(self.model_manager.get_model_configs())
 
+        # Disable tools when inference is running
+        def set_enable_tools(enable):
+            self.model_select_combobox.setEnabled(enable)
+            self.output_select_combobox.setEnabled(enable)
+            self.button_add_point.setEnabled(enable)
+            self.button_remove_point.setEnabled(enable)
+            self.button_add_rect.setEnabled(enable)
+            self.button_clear.setEnabled(enable)
+            self.button_finish_object.setEnabled(enable)
+
+        self.model_manager.prediction_started.connect(
+            lambda: set_enable_tools(False)
+        )
+        self.model_manager.prediction_finished.connect(
+            lambda: set_enable_tools(True)
+        )
+
         # Auto labeling buttons
         self.button_run.setShortcut("I")
         self.button_run.clicked.connect(self.run_prediction)

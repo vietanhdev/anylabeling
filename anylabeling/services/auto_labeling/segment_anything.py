@@ -105,8 +105,11 @@ class SegmentAnything(Model):
         Post process masks
         """
         # Find contours
+        masks[masks > 0.0] = 255
+        masks[masks <= 0.0] = 0
+        masks = masks.astype(np.uint8)
         contours, _ = cv2.findContours(
-            masks.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE
+            masks, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE
         )
 
         # Refine contours
@@ -116,6 +119,16 @@ class SegmentAnything(Model):
             epsilon = 0.001 * cv2.arcLength(contour, True)
             approx = cv2.approxPolyDP(contour, epsilon, True)
             approx_contours.append(approx)
+
+        # Remove too big contours ( >90% of image size)
+        if len(approx_contours) > 1:
+            image_size = masks.shape[0] * masks.shape[1]
+            areas = [cv2.contourArea(contour) for contour in approx_contours]
+            filtered_approx_contours = [
+                contour
+                for contour, area in zip(approx_contours, areas)
+                if area < image_size * 0.9
+            ]
 
         # Remove small contours (area < 20% of average area)
         if len(approx_contours) > 1:
@@ -235,7 +248,6 @@ class SegmentAnything(Model):
         self.stop_inference = True
         if self.pre_inference_thread:
             self.pre_inference_thread.quit()
-            self.pre_inference_thread.wait()
 
     def preload_worker(self, files):
         """
