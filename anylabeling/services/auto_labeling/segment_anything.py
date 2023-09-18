@@ -222,7 +222,7 @@ class SegmentAnything(Model):
                 cv_image = qt_img_to_rgb_cv_img(image, filename)
                 if self.stop_inference:
                     return AutoLabelingResult([], replace=False)
-                image_embedding = self.model.encode(cv_image)
+                image_embedding = self.model.encode(cv_image, filename)
                 self.image_embedding_cache.put(
                     filename,
                     image_embedding,
@@ -263,7 +263,7 @@ class SegmentAnything(Model):
             if self.stop_inference:
                 return
             cv_image = qt_img_to_rgb_cv_img(image)
-            image_embedding = self.model.encode(cv_image)
+            image_embedding = self.model.encode(cv_image, filename)
             self.image_embedding_cache.put(
                 filename,
                 image_embedding,

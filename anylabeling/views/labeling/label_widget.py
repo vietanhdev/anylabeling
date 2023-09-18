@@ -2332,10 +2332,12 @@ class LabelingWidget(LabelDialog):
             os.remove(label_file)
             logger.info("Label file is removed: %s", label_file)
 
+            print(self.filename)
             item = self.file_list_widget.currentItem()
-            item.setCheckState(Qt.Unchecked)
-
+            if item != None:
+                item.setCheckState(Qt.Unchecked)
             self.reset_state()
+            
 
     # Message Dialogs. #
     def has_labels(self):

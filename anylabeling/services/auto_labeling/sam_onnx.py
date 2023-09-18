@@ -4,7 +4,7 @@ from copy import deepcopy
 import cv2
 import numpy as np
 import onnxruntime
-
+import os
 
 class SegmentAnythingONNX:
     """Segmentation model using SegmentAnything"""
@@ -26,10 +26,13 @@ class SegmentAnythingONNX:
             )
         else:
             logging.warning("No available providers for ONNXRuntime")
-        self.encoder_session = onnxruntime.InferenceSession(
-            encoder_model_path, providers=providers
-        )
-        self.encoder_input_name = self.encoder_session.get_inputs()[0].name
+        self.providers = providers
+        self.encoder_model_path = encoder_model_path
+        # Changes made to reduce excessive memory usage
+        #self.encoder_session = onnxruntime.InferenceSession(
+        #    encoder_model_path, providers=providers
+        #)
+        #self.encoder_input_name = self.encoder_session.get_inputs()[0].name
         self.decoder_session = onnxruntime.InferenceSession(
             decoder_model_path, providers=providers
         )
@@ -152,7 +155,7 @@ class SegmentAnythingONNX:
             output_masks.append(batch_masks)
         return np.array(output_masks)
 
-    def encode(self, cv_image):
+    def encode(self, cv_image, filename):
         """
         Calculate embedding and metadata for a single image.
         """
@@ -175,11 +178,21 @@ class SegmentAnythingONNX:
             (self.input_size[1], self.input_size[0]),
             flags=cv2.INTER_LINEAR,
         )
-
-        encoder_inputs = {
-            self.encoder_input_name: cv_image.astype(np.float32),
-        }
-        image_embedding = self.run_encoder(encoder_inputs)
+        
+        filename = filename.split(".")[0]
+        embedding_path = f"{filename}.npy"
+        
+        if os.path.exists(embedding_path):
+            image_embedding = np.load(embedding_path)
+        else:
+            self.encoder_session = onnxruntime.InferenceSession(
+            self.encoder_model_path, providers=self.providers
+            )
+            self.encoder_input_name = self.encoder_session.get_inputs()[0].name
+            encoder_inputs = {
+                self.encoder_input_name: cv_image.astype(np.float32),
+            }
+            image_embedding = self.run_encoder(encoder_inputs)
         return {
             "image_embedding": image_embedding,
             "original_size": original_size,
