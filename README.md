@@ -12,6 +12,9 @@
 [![open issues](https://isitmaintained.com/badge/open/vietanhdev/anylabeling.svg)](https://github.com/vietanhdev/anylabeling/issues)
 [![Pypi Downloads](https://pepy.tech/badge/anylabeling)](https://pypi.org/project/anylabeling/)
 [![Documentation](https://img.shields.io/badge/Read-Documentation-green)](https://anylabeling.nrl.ai/)
+[![Follow](https://img.shields.io/badge/+Follow-vietanhdev-blue)]([[https://anylabeling.nrl.ai/](https://twitter.com/vietanhdev)](https://twitter.com/vietanhdev))
+
+> +⭐ Follow [vietanhdev](https://twitter.com/vietanhdev) for project updates.
 
 <a href="https://youtu.be/5qVJiYNX5Kk">
   <img alt="AnyLabeling" src="https://raw.githubusercontent.com/vietanhdev/anylabeling/master/assets/screenshot.png"/>
