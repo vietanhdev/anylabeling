@@ -385,6 +385,10 @@ class ModelManager(QObject):
         # Download and extract model
         if not model_config.get("has_downloaded", True):
             model_config = self._download_and_extract_model(model_config)
+            if model_config is None:
+                return
+
+            self.model_configs[model_id].update(model_config)
 
         if model_config["type"] == "yolov5":
             from .yolov5 import YOLOv5
