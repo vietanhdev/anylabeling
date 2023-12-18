@@ -1,5 +1,5 @@
 import os.path as osp
-from math import sqrt
+from math import hypot, sqrt
 
 import numpy as np
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -91,6 +91,30 @@ def distance_to_line(point, line):
         return 0
     return np.linalg.norm(np.cross(p2 - p1, p1 - p3)) / np.linalg.norm(p2 - p1)
 
+def squared_distance_to_line(point, line):
+    '''
+    Use python math because it is faster than using numpy
+    '''
+    p1, p2 = line
+    px, py = point.x(), point.y()
+    x1, y1 = p1.x(), p1.y()
+    x2, y2 = p2.x(), p2.y()
+    
+    dx, dy = x2 - x1, y2 - y1
+    if dx == dy == 0:
+        return hypot(px - x1, py - y1)
+    
+    # Calculate the projection and check if it falls on the line segment
+    t = ((px - x1) * dx + (py - y1) * dy) / (dx * dx + dy * dy)
+    if t < 0:
+        dx, dy = px - x1, py - y1  # point to p1
+    elif t > 1:
+        dx, dy = px - x2, py - y2  # point to p2
+    else:
+        near_x, near_y = x1 + t * dx, y1 + t * dy
+        dx, dy = px - near_x, py - near_y
+    
+    return hypot(dx, dy)
 
 def fmt_shortcut(text):
     mod, key = text.split("+", 1)

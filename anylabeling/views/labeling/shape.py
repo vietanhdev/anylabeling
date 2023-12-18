@@ -177,10 +177,15 @@ class Shape:
                         self.draw_vertex(vrtx_path, i)
             elif self.shape_type == "linestrip":
                 line_path.moveTo(self.points[0])
-                for i, p in enumerate(self.points):
+                if self.selected:
+                    self.draw_vertex(vrtx_path, 0)
+
+                # Small improvement to start at the 2nd point and technically correct
+                for i, p in enumerate(self.points[1:], start=1):
                     line_path.lineTo(p)
                     if self.selected:
                         self.draw_vertex(vrtx_path, i)
+
             elif self.shape_type == "point":
                 assert len(self.points) == 1
                 self.draw_vertex(vrtx_path, 0)
@@ -191,12 +196,15 @@ class Shape:
                 # may be desirable.
                 self.draw_vertex(vrtx_path, 0)
 
-                for i, p in enumerate(self.points):
+                # Small improvement to start at the 2nd point and technically correct
+                for i, p in enumerate(self.points[1:], start=1):
                     line_path.lineTo(p)
                     if self.selected:
                         self.draw_vertex(vrtx_path, i)
+
                 if self.is_closed():
-                    line_path.lineTo(self.points[0])
+                    # Properly close the path
+                    line_path.closeSubpath()
 
             painter.drawPath(line_path)
             painter.drawPath(vrtx_path)
@@ -243,14 +251,18 @@ class Shape:
         return min_i
 
     def nearest_edge(self, point, epsilon):
-        """Get nearest edge index"""
-        min_distance = float("inf")
+        """Comparing squared distance will speed up the calculation
+        and avoid using sqrt in calculation
+        if d1 < d2 then d1^2 < d2^2
+        """
+        min_dist_squared = epsilon ** 2
         post_i = None
         for i in range(len(self.points)):
             line = [self.points[i - 1], self.points[i]]
-            dist = utils.distance_to_line(point, line)
-            if dist <= epsilon and dist < min_distance:
-                min_distance = dist
+            dist = utils.squared_distance_to_line(point, line)
+            dist_squared = dist ** 2
+            if dist_squared <= min_dist_squared:
+                min_dist_squared = dist_squared
                 post_i = i
         return post_i
 

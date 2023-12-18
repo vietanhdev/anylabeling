@@ -15,6 +15,7 @@ from .qt import (
     add_actions,
     distance,
     distance_to_line,
+    squared_distance_to_line,
     fmt_shortcut,
     label_validator,
     new_action,
