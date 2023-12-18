@@ -91,19 +91,20 @@ def distance_to_line(point, line):
         return 0
     return np.linalg.norm(np.cross(p2 - p1, p1 - p3)) / np.linalg.norm(p2 - p1)
 
+
 def squared_distance_to_line(point, line):
-    '''
+    """
     Use python math because it is faster than using numpy
-    '''
+    """
     p1, p2 = line
     px, py = point.x(), point.y()
     x1, y1 = p1.x(), p1.y()
     x2, y2 = p2.x(), p2.y()
-    
+
     dx, dy = x2 - x1, y2 - y1
     if dx == dy == 0:
         return hypot(px - x1, py - y1)
-    
+
     # Calculate the projection and check if it falls on the line segment
     t = ((px - x1) * dx + (py - y1) * dy) / (dx * dx + dy * dy)
     if t < 0:
@@ -113,8 +114,9 @@ def squared_distance_to_line(point, line):
     else:
         near_x, near_y = x1 + t * dx, y1 + t * dy
         dx, dy = px - near_x, py - near_y
-    
+
     return hypot(dx, dy)
+
 
 def fmt_shortcut(text):
     mod, key = text.split("+", 1)

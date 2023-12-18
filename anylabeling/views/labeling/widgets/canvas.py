@@ -276,10 +276,10 @@ class Canvas(
         # Throttle the update call for now until more optimization is made
         current_time = time()
         if current_time - self._last_update_time > self._update_interval:
-             # Update will better optimize the the call to repaint
+            # Update will better optimize the the call to repaint
             self.update()
             self._last_update_time = current_time
-        
+
         self.restore_cursor()
 
         # Polygon drawing.

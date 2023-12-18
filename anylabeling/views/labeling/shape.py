@@ -255,12 +255,12 @@ class Shape:
         and avoid using sqrt in calculation
         if d1 < d2 then d1^2 < d2^2
         """
-        min_dist_squared = epsilon ** 2
+        min_dist_squared = epsilon**2
         post_i = None
         for i in range(len(self.points)):
             line = [self.points[i - 1], self.points[i]]
             dist = utils.squared_distance_to_line(point, line)
-            dist_squared = dist ** 2
+            dist_squared = dist**2
             if dist_squared <= min_dist_squared:
                 min_dist_squared = dist_squared
                 post_i = i
