@@ -1,5 +1,6 @@
 """This module defines Canvas widget - the core component for drawing image labels"""
 import imgviz
+from time import time
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QWheelEvent
@@ -91,6 +92,9 @@ class Canvas(
         self.menus = (QtWidgets.QMenu(), QtWidgets.QMenu())
         # Set widget options.
         self.setMouseTracking(True)
+        # Need to throttle mouse move until further inspection
+        self._last_update_time = time()
+        self._update_interval = 0.016  # ~60Hz update rate
         self.setFocusPolicy(QtCore.Qt.WheelFocus)
         self.show_cross_line = True
         self.show_shape_groups = True
@@ -268,7 +272,14 @@ class Canvas(
             return
 
         self.prev_move_point = pos
-        self.repaint()
+
+        # Throttle the update call for now until more optimization is made
+        current_time = time()
+        if current_time - self._last_update_time > self._update_interval:
+             # Update will better optimize the the call to repaint
+            self.update()
+            self._last_update_time = current_time
+        
         self.restore_cursor()
 
         # Polygon drawing.
