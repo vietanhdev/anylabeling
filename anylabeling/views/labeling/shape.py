@@ -249,7 +249,7 @@ class Shape:
                 min_distance = dist
                 min_i = i
         return min_i
-    
+
     def nearest_edge(self, point, epsilon):
         """Comparing squared distance will speed up the calculation
         and avoid using sqrt in calculation
