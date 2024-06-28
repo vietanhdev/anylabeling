@@ -1066,7 +1066,7 @@ class LabelingWidget(LabelDialog):
 
         self.populate_mode_actions()
 
-        self.first_start = True
+        self.first_start = False
         if self.first_start:
             QWhatsThis.enterWhatsThisMode()
 

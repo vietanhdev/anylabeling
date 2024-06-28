@@ -57,20 +57,20 @@ Thank you to [Roboflow](https://roboflow.com/?ref=anylabeling) for supporting ou
 
 ### 2. Install from Pypi
 
-- Requirements: Python >= 3.8, <= 3.10.
+- Requirements: Python >= 3.8, <= 3.12. Recommended: Python 3.12.
 - Recommended: [Miniconda/Anaconda](https://docs.conda.io/en/latest/miniconda.html).
 
 - Create environment:
 
 ```bash
-conda create -n anylabeling python=3.8
+conda create -n anylabeling python=3.12
 conda activate anylabeling
 ```
 
 - **(For macOS only)** Install PyQt5 using Conda:
 
 ```bash
-conda install -c conda-forge pyqt==5.15.7
+conda install -c conda-forge pyqt==5.15.9
 ```
 
 - Install anylabeling:
@@ -86,6 +86,13 @@ anylabeling
 ```
 
 ## II. Development
+
+- Install packages:
+
+```bash
+pip install -r requirements-dev.txt
+# or pip install -r requirements-macos-dev.txt for MacOS
+```
 
 - Generate resources:
 
