@@ -33,7 +33,7 @@
 **Features:**
 
 - [x] Image annotation for polygon, rectangle, circle, line and point.
-- [x] Auto-labeling with YOLOv5 and Segment Anything.
+- [x] Auto-labeling YOLOv8, Segment Anything (SAM, SAM2).
 - [x] Text detection, recognition and KIE (Key Information Extraction) labeling.
 - [x] Multiple languages availables: English, Vietnamese, Chinese.
 
@@ -49,7 +49,7 @@
 
 ### 2. Install from Pypi
 
-- Requirements: Python >= 3.8, <= 3.12. Recommended: Python 3.12.
+- Requirements: Python 3.10+. Recommended: Python 3.12.
 - Recommended: [Miniconda/Anaconda](https://docs.conda.io/en/latest/miniconda.html).
 
 - Create environment:
@@ -126,4 +126,4 @@ If you want to contribute to **AnyLabeling**, please read [Contribution Guidelin
 
 - Labeling UI built with ideas and components from [LabelImg](https://github.com/heartexlabs/labelImg), [LabelMe](https://github.com/wkentaro/labelme).
 - Auto-labeling with [Segment Anything Models](https://segment-anything.com/), [MobileSAM](https://github.com/ChaoningZhang/MobileSAM).
-- Auto-labeling with [YOLOv5](https://github.com/ultralytics/yolov5), [YOLOv8](https://github.com/ultralytics/ultralytics).
+- Auto-labeling with [YOLOv8](https://github.com/ultralytics/ultralytics).

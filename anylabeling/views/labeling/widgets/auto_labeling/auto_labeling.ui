@@ -43,6 +43,9 @@
      <property name="spacing">
       <number>2</number>
      </property>
+     <property name="leftMargin">
+      <number>4</number>
+     </property>
      <property name="topMargin">
       <number>0</number>
      </property>
@@ -186,6 +189,11 @@
        <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>10</pointsize>
+      </font>
      </property>
      <property name="styleSheet">
       <string notr="true">margin-top: 0;

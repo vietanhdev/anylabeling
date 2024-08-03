@@ -3,6 +3,7 @@ import os
 import traceback
 
 import cv2
+import onnx
 import numpy as np
 from PyQt5 import QtCore
 from PyQt5.QtCore import QThread
@@ -16,6 +17,7 @@ from .lru_cache import LRUCache
 from .model import Model
 from .types import AutoLabelingResult
 from .sam_onnx import SegmentAnythingONNX
+from .sam2_onnx import SegmentAnything2ONNX
 
 
 class SegmentAnything(Model):
@@ -78,9 +80,14 @@ class SegmentAnything(Model):
             )
 
         # Load models
-        self.model = SegmentAnythingONNX(
-            encoder_model_abs_path, decoder_model_abs_path
-        )
+        if self.detect_model_variant(decoder_model_abs_path) == "sam2":
+            self.model = SegmentAnything2ONNX(
+                encoder_model_abs_path, decoder_model_abs_path
+            )
+        else:
+            self.model = SegmentAnythingONNX(
+                encoder_model_abs_path, decoder_model_abs_path
+            )
 
         # Mark for auto labeling
         # points, rectangles
@@ -95,6 +102,14 @@ class SegmentAnything(Model):
         self.pre_inference_thread = None
         self.pre_inference_worker = None
         self.stop_inference = False
+
+    def detect_model_variant(self, decoder_model_abs_path):
+        """Load and detect model variant based on the model architecture"""
+        model = onnx.load(decoder_model_abs_path)
+        input_names = [input.name for input in model.graph.input]
+        if "high_res_feats_0" in input_names:
+            return "sam2"
+        return "sam"
 
     def set_auto_labeling_marks(self, marks):
         """Set auto labeling marks"""

@@ -1,3 +1,15 @@
+- name: "sam2_hiera_tiny_20240803"
+  display_name: Segment Anything 2 (Hiera-Tiny)
+  download_url: https://huggingface.co/vietanhdev/segment-anything-2-onnx-models/resolve/main/sam2_hiera_tiny.zip
+- name: "sam2_hiera_small_20240803"
+  display_name: Segment Anything 2 (Hiera-Small)
+  download_url: https://huggingface.co/vietanhdev/segment-anything-2-onnx-models/resolve/main/sam2_hiera_small.zip
+- name: "sam2_hiera_base_plus_20240803"
+  display_name: Segment Anything 2 (Hiera-Base+)
+  download_url: https://huggingface.co/vietanhdev/segment-anything-2-onnx-models/resolve/main/sam2_hiera_base_plus.zip
+- name: "sam2_hiera_large_20240803"
+  display_name: Segment Anything 2 (Hiera-Large)
+  download_url: https://huggingface.co/vietanhdev/segment-anything-2-onnx-models/resolve/main/sam2_hiera_large.zip
 - name: "mobile_sam_20230629"
   display_name: Segment Anything (MobileSAM)
   download_url: https://huggingface.co/vietanhdev/segment-anything-onnx-models/resolve/main/mobile_sam_20230629.zip
@@ -19,22 +31,6 @@
 - name: "sam_vit_h_4b8939_quant"
   display_name: Segment Anything (ViT-H Quant)
   download_url: https://huggingface.co/vietanhdev/segment-anything-onnx-models/resolve/main/sam_vit_h_4b8939_quant.zip
-- name: "yolov5n-r20230415"
-  display_name: YOLOv5n
-  download_url: https://github.com/vietanhdev/anylabeling-assets/releases/download/v0.4.0/yolov5n-r20230415.zip
-- name: "yolov5s-r20230415"
-  display_name: YOLOv5s
-  download_url: https://github.com/vietanhdev/anylabeling-assets/releases/download/v0.4.0/yolov5s-r20230415.zip
-- name: "yolov5m-r20230415"
-  display_name: YOLOv5m
-  download_url: https://github.com/vietanhdev/anylabeling-assets/releases/download/v0.4.0/yolov5m-r20230415.zip
-- name: "yolov5l-r20230415"
-  display_name: YOLOv5l
-  download_url: https://github.com/vietanhdev/anylabeling-assets/releases/download/v0.4.0/yolov5l-r20230415.zip
-- name: "yolov5x-r20230415"
-  display_name: YOLOv5x
-  download_url: https://github.com/vietanhdev/anylabeling-assets/releases/download/v0.4.0/yolov5x-r20230415.zip
-- name: "yolov8n-r20230415"
   display_name: YOLOv8n
   download_url: https://github.com/vietanhdev/anylabeling-assets/releases/download/v0.4.0/yolov8n-r20230415.zip
 - name: "yolov8s-r20230415"

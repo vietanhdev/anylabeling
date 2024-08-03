@@ -13,25 +13,12 @@ class SegmentAnythingONNX:
         self.target_size = 1024
         self.input_size = (684, 1024)
 
-        # Load models
-        providers = onnxruntime.get_available_providers()
-
-        # Pop TensorRT Runtime due to crashing issues
-        # TODO: Add back when TensorRT backend is stable
-        providers = [p for p in providers if p != "TensorrtExecutionProvider"]
-
-        if providers:
-            logging.info(
-                "Available providers for ONNXRuntime: %s", ", ".join(providers)
-            )
-        else:
-            logging.warning("No available providers for ONNXRuntime")
         self.encoder_session = onnxruntime.InferenceSession(
-            encoder_model_path, providers=providers
+            encoder_model_path
         )
         self.encoder_input_name = self.encoder_session.get_inputs()[0].name
         self.decoder_session = onnxruntime.InferenceSession(
-            decoder_model_path, providers=providers
+            decoder_model_path
         )
 
     def get_input_points(self, prompt):
