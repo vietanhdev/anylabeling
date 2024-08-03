@@ -5,6 +5,6 @@ natsort==8.1.0
 termcolor==1.1.0
 PyYAML==6.0
 onnx==1.16.2
-onnxruntime-gpu==1.16.3
+onnxruntime-gpu==1.18.1
 qimage2ndarray==1.10.0
 darkdetect==0.8.0
