@@ -1237,11 +1237,11 @@ class LabelingWidget(LabelDialog):
         self.actions.undo.setEnabled(self.canvas.is_shape_restorable)
 
     def documentation(self):
-        url = "https://anylabeling.com/"  # NOQA
+        url = "https://anylabeling.nrl.ai/"  # NOQA
         webbrowser.open(url)
 
     def contact(self):
-        url = "https://aicurious.io/contact/"  # NOQA
+        url = "https://www.nrl.ai/contact"  # NOQA
         webbrowser.open(url)
 
     def toggle_drawing_sensitive(self, drawing=True):
