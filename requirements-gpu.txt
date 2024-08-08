@@ -4,7 +4,7 @@ imgviz==1.5.0
 natsort==8.1.0
 termcolor==1.1.0
 PyYAML==6.0.1
-onnx==1.16.2
+onnx==1.16.1
 onnxruntime-gpu==1.18.1
 qimage2ndarray==1.10.0
 darkdetect==0.8.0
