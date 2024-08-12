@@ -50,7 +50,7 @@ def get_install_requires():
         "termcolor==1.1.0",
         "opencv-python-headless==4.7.0.72",
         'PyQt5>=5.15.7; platform_system != "Darwin"',
-        "onnx==1.16.2",
+        "onnx==1.16.1",
         "qimage2ndarray==1.10.0",
         "darkdetect==0.8.0",
     ]
