@@ -213,7 +213,7 @@
     <message>
         <location filename="../../views/labeling/label_widget.py" line="317"/>
         <source>Save &amp;Automatically</source>
-        <translation>保存 &amp;并自动执行</translation>
+        <translation>自动保存</translation>
     </message>
     <message>
         <location filename="../../views/labeling/label_widget.py" line="317"/>
@@ -223,7 +223,7 @@
     <message>
         <location filename="../../views/labeling/label_widget.py" line="327"/>
         <source>Save With Image Data</source>
-        <translation>保存包括图像数据在内的文件</translation>
+        <translation>同时保存图像数据</translation>
     </message>
     <message>
         <location filename="../../views/labeling/label_widget.py" line="327"/>
@@ -952,7 +952,7 @@ Polygons</source>
     <message>
         <location filename="../../views/labeling/widgets/auto_labeling/auto_labeling_ui.py" line="106"/>
         <source>Auto</source>
-        <translation>自动</translation>
+        <translation>自动标注</translation>
     </message>
     <message>
         <location filename="../../views/labeling/widgets/auto_labeling/auto_labeling_ui.py" line="107"/>
@@ -962,7 +962,7 @@ Polygons</source>
     <message>
         <location filename="../../views/labeling/widgets/auto_labeling/auto_labeling_ui.py" line="108"/>
         <source>Output</source>
-        <translation>产量</translation>
+        <translation>输出</translation>
     </message>
     <message>
         <location filename="../../views/labeling/widgets/auto_labeling/auto_labeling_ui.py" line="109"/>
@@ -997,7 +997,7 @@ Polygons</source>
     <message>
         <location filename="../../views/labeling/widgets/auto_labeling/auto_labeling_ui.py" line="115"/>
         <source>Clear</source>
-        <translation>明确</translation>
+        <translation>清除</translation>
     </message>
     <message>
         <location filename="../../views/labeling/widgets/auto_labeling/auto_labeling_ui.py" line="116"/>
