@@ -2525,6 +2525,7 @@ class LabelingWidget(LabelDialog):
         extensions = [
             f".{fmt.data().decode().lower()}"
             for fmt in QtGui.QImageReader.supportedImageFormats()
+            if fmt.data().decode().lower() != "svg"
         ]
 
         images = []
