@@ -42,7 +42,7 @@ jobs:
 
       - name: Create Release
         id: create_release
-        uses: mikepenz/action-gh-release@v0.2.0-a03
+        uses: softprops/action-gh-release@v2
         with:
           body: ${{steps.github_release.outputs.changelog}}
           draft: true
@@ -52,7 +52,7 @@ jobs:
         run: echo "${{ steps.create_release.outputs.upload_url }}" > release_url.txt
 
       - name: Save release url file for publish
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v4
         with:
           name: release_url
           path: release_url.txt
@@ -99,7 +99,7 @@ jobs:
         pyinstaller anylabeling.spec
 
     - name: Load release url file from release job
-      uses: actions/download-artifact@v1
+      uses: actions/download-artifact@v4
       with:
         name: release_url
 
@@ -110,7 +110,7 @@ jobs:
 
     - name: Upload release executable on macOS & Linux
       id: upload_release_executable_macos_linux
-      uses: actions/upload-release-asset@v1
+      uses: softprops/action-gh-release@v2
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
@@ -122,7 +122,7 @@ jobs:
 
     - name: Upload release executable on Windows
       id: upload_release_executable_windows
-      uses: actions/upload-release-asset@v1
+      uses: softprops/action-gh-release@v2
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
@@ -142,7 +142,7 @@ jobs:
 
     - name: Upload release app on macOS
       id: upload_release_app_macos
-      uses: actions/upload-release-asset@v1
+      uses: softprops/action-gh-release@v2
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
@@ -194,7 +194,7 @@ jobs:
         pyinstaller anylabeling.spec
 
     - name: Load release url file from release job
-      uses: actions/download-artifact@v1
+      uses: actions/download-artifact@v4
       with:
         name: release_url
 
@@ -205,7 +205,7 @@ jobs:
 
     - name: Upload release executable on macOS & Linux
       id: upload_release_executable_macos_linux
-      uses: actions/upload-release-asset@v1
+      uses: softprops/action-gh-release@v2
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
@@ -217,7 +217,7 @@ jobs:
 
     - name: Upload release executable on Windows
       id: upload_release_executable_windows
-      uses: actions/upload-release-asset@v1
+      uses: softprops/action-gh-release@v2
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
@@ -237,7 +237,7 @@ jobs:
 
     - name: Upload release app on macOS
       id: upload_release_app_macos
-      uses: actions/upload-release-asset@v1
+      uses: softprops/action-gh-release@v2
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
