@@ -11,8 +11,9 @@ permissions:
 jobs:
   release:
     if: startsWith(github.ref, 'refs/tags/')
-
     runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
 
     steps:
       - name: Build Changelog
@@ -42,27 +43,18 @@ jobs:
 
       - name: Create Release
         id: create_release
-        uses: mikepenz/action-gh-release@v0.2.0-a03
+        uses: softprops/action-gh-release@v2
         with:
           body: ${{steps.github_release.outputs.changelog}}
           draft: true
           prerelease: true
 
-      - name: Create release url file
-        run: echo "${{ steps.create_release.outputs.upload_url }}" > release_url.txt
-
-      - name: Save release url file for publish
-        uses: actions/upload-artifact@v1
-        with:
-          name: release_url
-          path: release_url.txt
-
-  publish:
+  build:
     needs: [release]
-
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
+        device: [CPU, GPU]
 
     runs-on: ${{ matrix.os }}
 
@@ -76,10 +68,10 @@ jobs:
         python-version: "3.10.14"
         miniconda-version: "latest"
 
-    - name: Set preferred device to CPU
+    - name: Set preferred device
       shell: bash -l {0}
       run: >-
-        sed -i'' -e 's/\_\_preferred_device\_\_[ ]*=[ ]*\"[A-Za-z0-9]*\"/__preferred_device__ = "CPU"/g' anylabeling/app_info.py
+        sed -i'' -e 's/\_\_preferred_device\_\_[ ]*=[ ]*\"[A-Za-z0-9]*\"/__preferred_device__ = "${{ matrix.device }}"/g' anylabeling/app_info.py
 
     - name: Install main
       shell: bash -l {0}
@@ -98,37 +90,27 @@ jobs:
         pip install pyinstaller
         pyinstaller anylabeling.spec
 
-    - name: Load release url file from release job
-      uses: actions/download-artifact@v1
-      with:
-        name: release_url
-
-    - name: Get release file name & upload url
-      id: get_release_info
-      run: |
-        echo "::set-output name=upload_url::$(cat release_url/release_url.txt)"
-
     - name: Upload release executable on macOS & Linux
       id: upload_release_executable_macos_linux
-      uses: actions/upload-release-asset@v1
+      uses: softprops/action-gh-release@v2
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        upload_url: ${{ steps.get_release_info.outputs.upload_url }}
+        upload_url: ${{ needs.release.outputs.upload_url }}
         asset_path: ./dist/anylabeling
-        asset_name: AnyLabeling-${{ runner.os }}
+        asset_name: AnyLabeling-${{ runner.os }}${{ matrix.device == 'GPU' && '-GPU' || '' }}
         asset_content_type: application/octet-stream
       if: runner.os != 'Windows'
 
     - name: Upload release executable on Windows
       id: upload_release_executable_windows
-      uses: actions/upload-release-asset@v1
+      uses: softprops/action-gh-release@v2
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        upload_url: ${{ steps.get_release_info.outputs.upload_url }}
+        upload_url: ${{ needs.release.outputs.upload_url }}
         asset_path: ./dist/anylabeling.exe
-        asset_name: AnyLabeling.exe
+        asset_name: AnyLabeling${{ matrix.device == 'GPU' && '-GPU' || '' }}.exe
         asset_content_type: application/octet-stream
       if: runner.os == 'Windows'
 
@@ -137,112 +119,17 @@ jobs:
         npm install -g create-dmg
         cd dist
         create-dmg AnyLabeling.app || test -f AnyLabeling\ 0.0.0.dmg
-        mv AnyLabeling\ 0.0.0.dmg AnyLabeling.dmg
+        mv AnyLabeling\ 0.0.0.dmg AnyLabeling${{ matrix.device == 'GPU' && '-GPU' || '' }}.dmg
       if: runner.os == 'macOS'
 
     - name: Upload release app on macOS
       id: upload_release_app_macos
-      uses: actions/upload-release-asset@v1
+      uses: softprops/action-gh-release@v2
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        upload_url: ${{ steps.get_release_info.outputs.upload_url }}
-        asset_path: ./dist/AnyLabeling.dmg
-        asset_name: AnyLabeling.dmg
-        asset_content_type: application/octet-stream
-      if: runner.os == 'macOS'
-
-  publish-gpu:
-    needs: [release]
-
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest]
-
-    runs-on: ${{ matrix.os }}
-
-    steps:
-    - uses: actions/checkout@v2
-      with:
-        submodules: true
-
-    - uses: conda-incubator/setup-miniconda@v2
-      with:
-        python-version: "3.10.14"
-        miniconda-version: "latest"
-
-    - name: Set preferred device to GPU
-      shell: bash -l {0}
-      run: >-
-        sed -i'' -e 's/\_\_preferred_device\_\_[ ]*=[ ]*\"[A-Za-z0-9]*\"/__preferred_device__ = "GPU"/g' anylabeling/app_info.py
-
-    - name: Install main
-      shell: bash -l {0}
-      run: |
-        pip install .
-
-    - name: Install PyQt5 for macOS
-      shell: bash -l {0}
-      run: |
-        conda install -c conda-forge pyqt==5.15.7
-      if: runner.os == 'macOS'
-
-    - name: Run pyinstaller
-      shell: bash -l {0}
-      run: |
-        pip install pyinstaller
-        pyinstaller anylabeling.spec
-
-    - name: Load release url file from release job
-      uses: actions/download-artifact@v1
-      with:
-        name: release_url
-
-    - name: Get release file name & upload url
-      id: get_release_info
-      run: |
-        echo "::set-output name=upload_url::$(cat release_url/release_url.txt)"
-
-    - name: Upload release executable on macOS & Linux
-      id: upload_release_executable_macos_linux
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.get_release_info.outputs.upload_url }}
-        asset_path: ./dist/anylabeling
-        asset_name: AnyLabeling-${{ runner.os }}-GPU
-        asset_content_type: application/octet-stream
-      if: runner.os != 'Windows'
-
-    - name: Upload release executable on Windows
-      id: upload_release_executable_windows
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.get_release_info.outputs.upload_url }}
-        asset_path: ./dist/anylabeling.exe
-        asset_name: AnyLabeling-GPU.exe
-        asset_content_type: application/octet-stream
-      if: runner.os == 'Windows'
-
-    - name: Create dmg for macOS
-      run: |
-        npm install -g create-dmg
-        cd dist
-        create-dmg AnyLabeling.app || test -f AnyLabeling\ 0.0.0.dmg
-        mv AnyLabeling\ 0.0.0.dmg AnyLabeling-GPU.dmg
-      if: runner.os == 'macOS'
-
-    - name: Upload release app on macOS
-      id: upload_release_app_macos
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.get_release_info.outputs.upload_url }}
-        asset_path: ./dist/AnyLabeling-GPU.dmg
-        asset_name: AnyLabeling-GPU.dmg
+        upload_url: ${{ needs.release.outputs.upload_url }}
+        asset_path: ./dist/AnyLabeling${{ matrix.device == 'GPU' && '-GPU' || '' }}.dmg
+        asset_name: AnyLabeling${{ matrix.device == 'GPU' && '-GPU' || '' }}.dmg
         asset_content_type: application/octet-stream
       if: runner.os == 'macOS'
