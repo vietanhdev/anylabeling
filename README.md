@@ -1,5 +1,5 @@
 <p align="center">
-  <img alt="AnyLabeling" style="width: 128px; max-width: 100%; height: auto;" src="https://user-images.githubusercontent.com/18329471/232250539-2b15b9ee-5593-41d0-ba22-e0442f314cce.png"/>
+  <img alt="AnyLabeling" style="width: 128px; max-width: 100%; height: auto;" src="https://github.com/user-attachments/assets/847e47e6-acf0-4f96-9ed9-5485ab405ae0"/>
   <h1 align="center">🌟 AnyLabeling 🌟</h1>
   <p align="center">Effortless data labeling with AI support from <b>YOLO</b> and <b>Segment Anything</b>!</p>
   <p align="center"><b>AnyLabeling = LabelImg + Labelme + Improved UI + Auto-labeling</b></p>
@@ -14,7 +14,10 @@
 [![Documentation](https://img.shields.io/badge/Read-Documentation-green)](https://anylabeling.nrl.ai/)
 [![Follow](https://img.shields.io/badge/+Follow-vietanhdev-blue)]([[https://anylabeling.nrl.ai/](https://twitter.com/vietanhdev)](https://twitter.com/vietanhdev))
 
-> +⭐ Follow [vietanhdev](https://twitter.com/vietanhdev) for project updates.
+[![AnyLearning-Banner](https://github.com/user-attachments/assets/c2de3534-3e04-439b-bdca-19f6fcb9fc61)](https://anylearning.nrl.ai/)
+
+[![ai-flow 62b3c222](https://github.com/user-attachments/assets/a47a0eea-ec59-4c59-9733-737b1977e56b)](https://anylearning.nrl.ai/)
+
 
 <a href="https://youtu.be/5qVJiYNX5Kk">
   <img alt="AnyLabeling" src="https://raw.githubusercontent.com/vietanhdev/anylabeling/master/assets/screenshot.png"/>
