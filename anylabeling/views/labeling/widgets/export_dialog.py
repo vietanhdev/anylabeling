@@ -81,7 +81,13 @@ class ExportDialog(QDialog):
         self.source_browse_button = QPushButton("Browse...")
         self.source_browse_button.setEnabled(False)
         select_folder_layout.addWidget(self.source_browse_button)
+
         source_layout.addLayout(select_folder_layout)
+
+        # Add recursive search option
+        self.recursive_check = QCheckBox("Search recursively in subfolders")
+        self.recursive_check.setChecked(True)
+        source_layout.addWidget(self.recursive_check)
 
         layout.addWidget(source_group)
 
@@ -353,7 +359,7 @@ class ExportDialog(QDialog):
         if not self.validate_inputs():
             return
 
-        # Disable controls during expor
+        # Disable controls during export
         self.set_controls_enabled(False)
 
         # Get export parameters
@@ -368,6 +374,7 @@ class ExportDialog(QDialog):
         train_ratio = self.train_spin.value() / 100.0
         val_ratio = self.val_spin.value() / 100.0
         test_ratio = self.test_spin.value() / 100.0
+        recursive = self.recursive_check.isChecked()
 
         # Create and start export worker
         self.export_worker = ExportWorker(
@@ -378,6 +385,7 @@ class ExportDialog(QDialog):
             train_ratio,
             val_ratio,
             test_ratio,
+            recursive,
         )
 
         # Connect worker signals
@@ -452,6 +460,7 @@ class ExportDialog(QDialog):
         self.source_browse_button.setEnabled(
             enabled and self.select_folder_radio.isChecked()
         )
+        self.recursive_check.setEnabled(enabled)
 
         # Output folder selection
         self.output_folder_edit.setEnabled(enabled)

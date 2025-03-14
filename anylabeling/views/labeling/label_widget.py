@@ -869,7 +869,6 @@ class LabelingWidget(LabelDialog):
         utils.add_actions(
             self.menus.tools,
             (
-                tools,
                 export_annotations,
             ),
         )

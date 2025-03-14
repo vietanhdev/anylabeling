@@ -29,6 +29,7 @@ class ExportWorker(QRunnable):
         train_ratio=0.7,
         val_ratio=0.2,
         test_ratio=0.1,
+        recursive=False,
     ):
         """Initialize the export worker.
 
@@ -37,9 +38,10 @@ class ExportWorker(QRunnable):
             input_dir: Input directory containing JSON annotations
             output_dir: Output directory for exported annotations
             split_data: Whether to split data into train/val/test sets
-            train_ratio: Ratio of data for training se
-            val_ratio: Ratio of data for validation se
-            test_ratio: Ratio of data for test se
+            train_ratio: Ratio of data for training set
+            val_ratio: Ratio of data for validation set
+            test_ratio: Ratio of data for test set
+            recursive: Whether to scan input directory recursively
         """
         super().__init__()
         self.signals = ExportSignals()
@@ -50,6 +52,7 @@ class ExportWorker(QRunnable):
         self.train_ratio = train_ratio
         self.val_ratio = val_ratio
         self.test_ratio = test_ratio
+        self.recursive = recursive
         self.running = False
 
     def _create_split_dirs(self):
@@ -88,12 +91,24 @@ class ExportWorker(QRunnable):
 
     def _get_json_files(self):
         """Get all JSON files in the input directory."""
-        return [
-            f
-            for f in os.listdir(self.input_dir)
-            if f.lower().endswith(".json")
-            and osp.isfile(osp.join(self.input_dir, f))
-        ]
+        if not self.recursive:
+            # Non-recursive mode: only get files from the top-level directory
+            return [
+                f
+                for f in os.listdir(self.input_dir)
+                if f.lower().endswith(".json")
+                and osp.isfile(osp.join(self.input_dir, f))
+            ]
+
+        # Recursive mode: get files from all subdirectories
+        json_files = []
+        for root, _, files in os.walk(self.input_dir):
+            for f in files:
+                if f.lower().endswith(".json"):
+                    # Store the relative path from input_dir
+                    rel_path = osp.relpath(osp.join(root, f), self.input_dir)
+                    json_files.append(rel_path)
+        return json_files
 
     def _load_json_file(self, json_file):
         """Load a JSON annotation file."""
@@ -111,17 +126,22 @@ class ExportWorker(QRunnable):
             image_path = json_data["imagePath"]
             # Check if it's a relative path
             if not osp.isabs(image_path):
+                # Create full path relative to the location of the json file
+                json_full_path = osp.join(self.input_dir, json_file)
                 image_path = osp.join(
-                    osp.dirname(osp.join(self.input_dir, json_file)),
+                    osp.dirname(json_full_path),
                     image_path,
                 )
             if osp.exists(image_path):
                 return image_path
 
         # Otherwise, try to find an image with the same base name
-        base_name = osp.splitext(json_file)[0]
+        json_full_path = osp.join(self.input_dir, json_file)
+        json_dir = osp.dirname(json_full_path)
+        base_name = osp.splitext(osp.basename(json_file))[0]
+
         for ext in [".jpg", ".jpeg", ".png", ".bmp"]:
-            image_path = osp.join(self.input_dir, base_name + ext)
+            image_path = osp.join(json_dir, base_name + ext)
             if osp.exists(image_path):
                 return image_path
 
@@ -148,22 +168,48 @@ class ExportWorker(QRunnable):
 
     def _get_output_path(self, json_file, split):
         """Get the output path for an exported annotation file."""
-        base_name = osp.splitext(json_file)[0]
+        # Get the base name (without extension)
+        base_name = osp.splitext(osp.basename(json_file))[0]
+
+        # If recursive mode and json_file has directories, preserve the structure
+        subdir = ""
+        if self.recursive and osp.dirname(json_file):
+            subdir = osp.dirname(json_file)
 
         if self.split_data:
             if self.export_format == "yolo":
+                # For YOLO, we don't preserve subdirectories since it uses a flat structure
                 return osp.join(
                     self.output_dir, split, "labels", base_name + ".txt"
                 )
             elif self.export_format == "pascal_voc":
-                return osp.join(self.output_dir, split, base_name + ".xml")
+                # For Pascal VOC, preserve subdirectories
+                if subdir:
+                    os.makedirs(
+                        osp.join(self.output_dir, split, subdir), exist_ok=True
+                    )
+                    return osp.join(
+                        self.output_dir, split, subdir, base_name + ".xml"
+                    )
+                else:
+                    return osp.join(self.output_dir, split, base_name + ".xml")
             else:
                 return None  # COCO and CreateML are dataset-wide formats
         else:
             if self.export_format == "yolo":
+                # For YOLO, we don't preserve subdirectories since it uses a flat structure
                 return osp.join(self.output_dir, "labels", base_name + ".txt")
             elif self.export_format == "pascal_voc":
-                return osp.join(self.output_dir, split, base_name + ".xml")
+                # For Pascal VOC, preserve subdirectories
+                if subdir:
+                    os.makedirs(
+                        osp.join(self.output_dir, subdir), exist_ok=True
+                    )
+                    return osp.join(
+                        self.output_dir, subdir, base_name + ".xml"
+                    )
+                else:
+                    return osp.join(self.output_dir, base_name + ".xml")
             else:
                 return None
 
