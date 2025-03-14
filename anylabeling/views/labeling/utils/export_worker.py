@@ -4,6 +4,7 @@ import os
 import os.path as osp
 import json
 import random
+import uuid
 from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot, QRunnable
 from .export_formats import FormatExporter
 
@@ -30,6 +31,7 @@ class ExportWorker(QRunnable):
         val_ratio=0.2,
         test_ratio=0.1,
         recursive=False,
+        use_random_names=False,
     ):
         """Initialize the export worker.
 
@@ -42,6 +44,7 @@ class ExportWorker(QRunnable):
             val_ratio: Ratio of data for validation set
             test_ratio: Ratio of data for test set
             recursive: Whether to scan input directory recursively
+            use_random_names: Whether to use random UUID4 names for exported items
         """
         super().__init__()
         self.signals = ExportSignals()
@@ -53,6 +56,7 @@ class ExportWorker(QRunnable):
         self.val_ratio = val_ratio
         self.test_ratio = test_ratio
         self.recursive = recursive
+        self.use_random_names = use_random_names
         self.running = False
 
     def _create_split_dirs(self):
@@ -171,6 +175,10 @@ class ExportWorker(QRunnable):
         # Get the base name (without extension)
         base_name = osp.splitext(osp.basename(json_file))[0]
 
+        # Generate a random name if requested
+        if self.use_random_names:
+            base_name = str(uuid.uuid4())
+
         # If recursive mode and json_file has directories, preserve the structure
         subdir = ""
         if self.recursive and osp.dirname(json_file):
@@ -274,16 +282,26 @@ class ExportWorker(QRunnable):
                 if image_path:
                     import shutil
 
+                    # Get file name and extension for the image
+                    img_name, img_ext = osp.splitext(osp.basename(image_path))
+
+                    # Generate a random name if requested
+                    output_img_name = osp.basename(image_path)
+                    if self.use_random_names:
+                        # Extract base_name from the output_path
+                        random_base = osp.splitext(osp.basename(output_path))[0]
+                        output_img_name = random_base + img_ext
+
                     if self.split_data:
                         image_output_path = osp.join(
                             self.output_dir,
                             split,
                             "images",
-                            osp.basename(image_path),
+                            output_img_name,
                         )
                     else:
                         image_output_path = osp.join(
-                            self.output_dir, "images", osp.basename(image_path)
+                            self.output_dir, "images", output_img_name,
                         )
                     shutil.copy2(image_path, image_output_path)
 
@@ -322,6 +340,9 @@ class ExportWorker(QRunnable):
 
                 # Get output path
                 base_name = osp.splitext(json_file)[0]
+                # Apply random name if requested
+                if self.use_random_names:
+                    base_name = str(uuid.uuid4())
                 output_path = osp.join(split_dir, base_name + ".xml")
 
                 # Export to Pascal VOC forma
@@ -337,8 +358,18 @@ class ExportWorker(QRunnable):
                 if image_path:
                     import shutil
 
+                    # Get file name and extension for the image
+                    img_name, img_ext = osp.splitext(osp.basename(image_path))
+                    
+                    # Generate a random name if requested
+                    output_img_name = osp.basename(image_path)
+                    if self.use_random_names:
+                        # Extract base_name from the output_path
+                        random_base = osp.splitext(osp.basename(output_path))[0]
+                        output_img_name = random_base + img_ext
+
                     image_output_path = osp.join(
-                        split_dir, osp.basename(image_path)
+                        split_dir, output_img_name
                     )
                     shutil.copy2(image_path, image_output_path)
 
@@ -399,8 +430,19 @@ class ExportWorker(QRunnable):
                 # Copy image file
                 import shutil
 
+                # Get file name and extension for the image
+                img_name, img_ext = osp.splitext(osp.basename(image_path))
+                
+                # Generate a random name if requested
+                output_img_name = osp.basename(image_path)
+                if self.use_random_names:
+                    random_base = str(uuid.uuid4())
+                    output_img_name = random_base + img_ext
+                    # Update the image path in all_image_paths for the export formats
+                    all_image_paths[-1] = output_img_name
+
                 image_output_path = osp.join(
-                    split_dir, osp.basename(image_path)
+                    split_dir, output_img_name
                 )
                 shutil.copy2(image_path, image_output_path)
 
@@ -478,8 +520,19 @@ class ExportWorker(QRunnable):
                 # Copy image file
                 import shutil
 
+                # Get file name and extension for the image
+                img_name, img_ext = osp.splitext(osp.basename(image_path))
+                
+                # Generate a random name if requested
+                output_img_name = osp.basename(image_path)
+                if self.use_random_names:
+                    random_base = str(uuid.uuid4())
+                    output_img_name = random_base + img_ext
+                    # Update the image path in all_image_paths for the export formats
+                    all_image_paths[-1] = output_img_name
+
                 image_output_path = osp.join(
-                    split_dir, osp.basename(image_path)
+                    split_dir, output_img_name
                 )
                 shutil.copy2(image_path, image_output_path)
 

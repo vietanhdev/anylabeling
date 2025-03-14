@@ -1,6 +1,7 @@
 """Export dialog widget for exporting annotations to different formats."""
 
 import os
+import uuid
 from PyQt5.QtCore import Qt, QThreadPool
 from PyQt5.QtWidgets import (
     QDialog,
@@ -103,6 +104,18 @@ class ExportDialog(QDialog):
         output_layout.addWidget(self.output_browse_button)
 
         layout.addWidget(output_group)
+
+        # -- Export options --
+        export_options_group = QGroupBox("Export Options")
+        export_options_layout = QVBoxLayout()
+        export_options_group.setLayout(export_options_layout)
+
+        # Random names option
+        self.random_names_check = QCheckBox("Use random names (UUID4) for exported items")
+        self.random_names_check.setToolTip("Generate unique identifiers for exported files")
+        export_options_layout.addWidget(self.random_names_check)
+
+        layout.addWidget(export_options_group)
 
         # -- Data split options --
         split_group = QGroupBox("Data Split")
@@ -375,6 +388,7 @@ class ExportDialog(QDialog):
         val_ratio = self.val_spin.value() / 100.0
         test_ratio = self.test_spin.value() / 100.0
         recursive = self.recursive_check.isChecked()
+        use_random_names = self.random_names_check.isChecked()
 
         # Create and start export worker
         self.export_worker = ExportWorker(
@@ -386,6 +400,7 @@ class ExportDialog(QDialog):
             val_ratio,
             test_ratio,
             recursive,
+            use_random_names,
         )
 
         # Connect worker signals
@@ -465,6 +480,9 @@ class ExportDialog(QDialog):
         # Output folder selection
         self.output_folder_edit.setEnabled(enabled)
         self.output_browse_button.setEnabled(enabled)
+
+        # Export options
+        self.random_names_check.setEnabled(enabled)
 
         # Data split options
         self.split_check.setEnabled(enabled)
