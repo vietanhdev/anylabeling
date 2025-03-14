@@ -31,6 +31,7 @@
 - name: "sam_vit_h_4b8939_quant"
   display_name: Segment Anything (ViT-H Quant)
   download_url: https://huggingface.co/vietanhdev/segment-anything-onnx-models/resolve/main/sam_vit_h_4b8939_quant.zip
+- name: "yolov8n-r20230415"
   display_name: YOLOv8n
   download_url: https://github.com/vietanhdev/anylabeling-assets/releases/download/v0.4.0/yolov8n-r20230415.zip
 - name: "yolov8s-r20230415"

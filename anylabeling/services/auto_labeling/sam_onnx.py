@@ -13,13 +13,9 @@ class SegmentAnythingONNX:
         self.target_size = 1024
         self.input_size = (684, 1024)
 
-        self.encoder_session = onnxruntime.InferenceSession(
-            encoder_model_path
-        )
+        self.encoder_session = onnxruntime.InferenceSession(encoder_model_path)
         self.encoder_input_name = self.encoder_session.get_inputs()[0].name
-        self.decoder_session = onnxruntime.InferenceSession(
-            decoder_model_path
-        )
+        self.decoder_session = onnxruntime.InferenceSession(decoder_model_path)
 
     def get_input_points(self, prompt):
         """Get input points"""

@@ -31,20 +31,6 @@ repos:
     -   id: black
         exclude: tests/|anylabeling/resources/resources.py
         args: [--check]
--   repo: https://github.com/PyCQA/flake8
-    rev: 6.0.0
-    hooks:
-    -   id: flake8
-        additional_dependencies: [
-            'flake8-blind-except',
-            'flake8-docstrings',
-            'flake8-bugbear',
-            'flake8-comprehensions',
-            'flake8-docstrings',
-            'flake8-implicit-str-concat',
-            'pydocstyle>=5.0.0',
-        ]
-        exclude: anylabeling/resources/resources.py
 -   repo: https://github.com/rstcheck/rstcheck
     rev: v6.1.2
     hooks:
