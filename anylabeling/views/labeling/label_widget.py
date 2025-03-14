@@ -5,12 +5,15 @@ import os
 import os.path as osp
 import re
 import webbrowser
+from enum import Enum
 
 import darkdetect
 import imgviz
 import natsort
+import numpy as np
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import Qt, pyqtSlot
+from PyQt5.QtGui import QCursor, QPixmap
 from PyQt5.QtWidgets import (
     QDockWidget,
     QHBoxLayout,
@@ -19,6 +22,11 @@ from PyQt5.QtWidgets import (
     QVBoxLayout,
     QWhatsThis,
     QMessageBox,
+    QFileDialog,
+    QListWidget,
+    QListWidgetItem,
+    QMenu,
+    QWidget,
 )
 
 from anylabeling.services.auto_labeling.types import AutoLabelingMode
@@ -41,6 +49,8 @@ from .widgets import (
     UniqueLabelQListWidget,
     ZoomWidget,
 )
+from .utils import new_action as action
+from .widgets.export_dialog import ExportDialog
 
 LABEL_COLORMAP = imgviz.label_colormap()
 
@@ -147,7 +157,7 @@ class LabelingWidget(LabelDialog):
         self.flag_dock.setObjectName("Flags")
         self.flag_widget = QtWidgets.QListWidget()
         if config["flags"]:
-            self.load_flags({k: False for k in config["flags"]})
+            self.load_flags(dict.fromkeys(config["flags"], False))
         else:
             self.flag_dock.hide()
         self.flag_dock.setWidget(self.flag_widget)
@@ -248,23 +258,23 @@ class LabelingWidget(LabelDialog):
                 getattr(self, dock).setVisible(False)
 
         # Actions
-        action = functools.partial(utils.new_action, self)
+        create_action = functools.partial(utils.new_action, self)
         shortcuts = self._config["shortcuts"]
-        open_ = action(
+        open_ = create_action(
             self.tr("&Open"),
             self.open_file,
             shortcuts["open"],
             "open",
             self.tr("Open image or label file"),
         )
-        opendir = action(
+        opendir = create_action(
             self.tr("&Open Dir"),
             self.open_folder_dialog,
             shortcuts["open_dir"],
             "open",
             self.tr("Open Dir"),
         )
-        open_next_image = action(
+        open_next_image = create_action(
             self.tr("&Next Image"),
             self.open_next_image,
             shortcuts["open_next"],
@@ -272,7 +282,7 @@ class LabelingWidget(LabelDialog):
             self.tr("Open next (hold Ctrl+Shift to copy labels)"),
             enabled=False,
         )
-        open_prev_image = action(
+        open_prev_image = create_action(
             self.tr("&Prev Image"),
             self.open_prev_image,
             shortcuts["open_prev"],
@@ -280,7 +290,7 @@ class LabelingWidget(LabelDialog):
             self.tr("Open prev (hold Ctrl+Shift to copy labels)"),
             enabled=False,
         )
-        save = action(
+        save = create_action(
             self.tr("&Save"),
             self.save_file,
             shortcuts["save"],
@@ -288,7 +298,7 @@ class LabelingWidget(LabelDialog):
             self.tr("Save labels to file"),
             enabled=False,
         )
-        save_as = action(
+        save_as = create_action(
             self.tr("&Save As"),
             self.save_file_as,
             shortcuts["save_as"],
@@ -297,7 +307,7 @@ class LabelingWidget(LabelDialog):
             enabled=False,
         )
 
-        delete_file = action(
+        delete_file = create_action(
             self.tr("&Delete File"),
             self.delete_file,
             shortcuts["delete_file"],
@@ -306,7 +316,7 @@ class LabelingWidget(LabelDialog):
             enabled=False,
         )
 
-        change_output_dir = action(
+        change_output_dir = create_action(
             self.tr("&Change Output Dir"),
             slot=self.change_output_dir_dialog,
             shortcut=shortcuts["save_to"],
@@ -314,7 +324,7 @@ class LabelingWidget(LabelDialog):
             tip=self.tr("Change where annotations are loaded/saved"),
         )
 
-        save_auto = action(
+        save_auto = create_action(
             text=self.tr("Save &Automatically"),
             slot=lambda x: self.actions.save_auto.setChecked(x),
             icon="save",
@@ -324,7 +334,7 @@ class LabelingWidget(LabelDialog):
         )
         save_auto.setChecked(self._config["auto_save"])
 
-        save_with_image_data = action(
+        save_with_image_data = create_action(
             text=self.tr("Save With Image Data"),
             slot=self.enable_save_image_with_data,
             icon="save",
@@ -333,7 +343,7 @@ class LabelingWidget(LabelDialog):
             checked=self._config["store_data"],
         )
 
-        close = action(
+        close = create_action(
             self.tr("&Close"),
             self.close_file,
             shortcuts["close"],
@@ -341,7 +351,7 @@ class LabelingWidget(LabelDialog):
             self.tr("Close current file"),
         )
 
-        toggle_keep_prev_mode = action(
+        toggle_keep_prev_mode = create_action(
             self.tr("Keep Previous Annotation"),
             self.toggle_keep_prev_mode,
             shortcuts["toggle_keep_prev_mode"],
@@ -351,7 +361,7 @@ class LabelingWidget(LabelDialog):
         )
         toggle_keep_prev_mode.setChecked(self._config["keep_prev"])
 
-        toggle_auto_use_last_label_mode = action(
+        toggle_auto_use_last_label_mode = create_action(
             self.tr("Auto Use Last Label"),
             self.toggle_auto_use_last_label,
             shortcuts["toggle_auto_use_last_label"],
@@ -363,7 +373,7 @@ class LabelingWidget(LabelDialog):
             self._config["auto_use_last_label"]
         )
 
-        create_mode = action(
+        create_mode = create_action(
             self.tr("Create Polygons"),
             lambda: self.toggle_draw_mode(False, create_mode="polygon"),
             shortcuts["create_polygon"],
@@ -371,7 +381,7 @@ class LabelingWidget(LabelDialog):
             self.tr("Start drawing polygons"),
             enabled=False,
         )
-        create_rectangle_mode = action(
+        create_rectangle_mode = create_action(
             self.tr("Create Rectangle"),
             lambda: self.toggle_draw_mode(False, create_mode="rectangle"),
             shortcuts["create_rectangle"],
@@ -379,7 +389,7 @@ class LabelingWidget(LabelDialog):
             self.tr("Start drawing rectangles"),
             enabled=False,
         )
-        create_cirle_mode = action(
+        create_cirle_mode = create_action(
             self.tr("Create Circle"),
             lambda: self.toggle_draw_mode(False, create_mode="circle"),
             shortcuts["create_circle"],
@@ -387,7 +397,7 @@ class LabelingWidget(LabelDialog):
             self.tr("Start drawing circles"),
             enabled=False,
         )
-        create_line_mode = action(
+        create_line_mode = create_action(
             self.tr("Create Line"),
             lambda: self.toggle_draw_mode(False, create_mode="line"),
             shortcuts["create_line"],
@@ -395,7 +405,7 @@ class LabelingWidget(LabelDialog):
             self.tr("Start drawing lines"),
             enabled=False,
         )
-        create_point_mode = action(
+        create_point_mode = create_action(
             self.tr("Create Point"),
             lambda: self.toggle_draw_mode(False, create_mode="point"),
             shortcuts["create_point"],
@@ -403,7 +413,7 @@ class LabelingWidget(LabelDialog):
             self.tr("Start drawing points"),
             enabled=False,
         )
-        create_line_strip_mode = action(
+        create_line_strip_mode = create_action(
             self.tr("Create LineStrip"),
             lambda: self.toggle_draw_mode(False, create_mode="linestrip"),
             shortcuts["create_linestrip"],
@@ -411,7 +421,7 @@ class LabelingWidget(LabelDialog):
             self.tr("Start drawing linestrip. Ctrl+LeftClick ends creation."),
             enabled=False,
         )
-        edit_mode = action(
+        edit_mode = create_action(
             self.tr("Edit Object"),
             self.set_edit_mode,
             shortcuts["edit_polygon"],
@@ -419,7 +429,7 @@ class LabelingWidget(LabelDialog):
             self.tr("Move and edit the selected polygons"),
             enabled=False,
         )
-        group_selected_shapes = action(
+        group_selected_shapes = create_action(
             self.tr("Group Selected Shapes"),
             self.canvas.group_selected_shapes,
             shortcuts["group_selected_shapes"],
@@ -427,7 +437,7 @@ class LabelingWidget(LabelDialog):
             self.tr("Group shapes by assigning a same group_id"),
             enabled=True,
         )
-        ungroup_selected_shapes = action(
+        ungroup_selected_shapes = create_action(
             self.tr("Ungroup Selected Shapes"),
             self.canvas.ungroup_selected_shapes,
             shortcuts["ungroup_selected_shapes"],
@@ -436,7 +446,7 @@ class LabelingWidget(LabelDialog):
             enabled=True,
         )
 
-        delete = action(
+        delete = create_action(
             self.tr("Delete"),
             self.delete_selected_shape,
             shortcuts["delete_polygon"],
@@ -444,7 +454,7 @@ class LabelingWidget(LabelDialog):
             self.tr("Delete the selected polygons"),
             enabled=False,
         )
-        duplicate = action(
+        duplicate = create_action(
             self.tr("Duplicate Polygons"),
             self.duplicate_selected_shape,
             shortcuts["duplicate_polygon"],
@@ -452,7 +462,7 @@ class LabelingWidget(LabelDialog):
             self.tr("Create a duplicate of the selected polygons"),
             enabled=False,
         )
-        copy = action(
+        copy = create_action(
             self.tr("Copy Object"),
             self.copy_selected_shape,
             shortcuts["copy_polygon"],
@@ -460,7 +470,7 @@ class LabelingWidget(LabelDialog):
             self.tr("Copy selected polygons to clipboard"),
             enabled=False,
         )
-        paste = action(
+        paste = create_action(
             self.tr("Paste Object"),
             self.paste_selected_shape,
             shortcuts["paste_polygon"],
@@ -468,7 +478,7 @@ class LabelingWidget(LabelDialog):
             self.tr("Paste copied polygons"),
             enabled=False,
         )
-        undo_last_point = action(
+        undo_last_point = create_action(
             self.tr("Undo last point"),
             self.canvas.undo_last_point,
             shortcuts["undo_last_point"],
@@ -476,7 +486,7 @@ class LabelingWidget(LabelDialog):
             self.tr("Undo last drawn point"),
             enabled=False,
         )
-        remove_point = action(
+        remove_point = create_action(
             text=self.tr("Remove Selected Point"),
             slot=self.remove_selected_point,
             shortcut=shortcuts["remove_selected_point"],
@@ -485,7 +495,7 @@ class LabelingWidget(LabelDialog):
             enabled=False,
         )
 
-        undo = action(
+        undo = create_action(
             self.tr("Undo"),
             self.undo_shape_edit,
             shortcuts["undo"],
@@ -494,14 +504,14 @@ class LabelingWidget(LabelDialog):
             enabled=False,
         )
 
-        hide_all = action(
+        hide_all = create_action(
             self.tr("&Hide\nPolygons"),
             functools.partial(self.toggle_polygons, False),
             icon="eye",
             tip=self.tr("Hide all polygons"),
             enabled=False,
         )
-        show_all = action(
+        show_all = create_action(
             self.tr("&Show\nPolygons"),
             functools.partial(self.toggle_polygons, True),
             icon="eye",
@@ -509,14 +519,14 @@ class LabelingWidget(LabelDialog):
             enabled=False,
         )
 
-        documentation = action(
+        documentation = create_action(
             self.tr("&Documentation"),
             self.documentation,
             icon="help",
             tip=self.tr("Show documentation"),
         )
 
-        contact = action(
+        contact = create_action(
             self.tr("&Contact me"),
             self.contact,
             icon="help",
@@ -540,7 +550,7 @@ class LabelingWidget(LabelDialog):
         )
         self.zoom_widget.setEnabled(False)
 
-        zoom_in = action(
+        zoom_in = create_action(
             self.tr("Zoom &In"),
             functools.partial(self.add_zoom, 1.1),
             shortcuts["zoom_in"],
@@ -548,7 +558,7 @@ class LabelingWidget(LabelDialog):
             self.tr("Increase zoom level"),
             enabled=False,
         )
-        zoom_out = action(
+        zoom_out = create_action(
             self.tr("&Zoom Out"),
             functools.partial(self.add_zoom, 0.9),
             shortcuts["zoom_out"],
@@ -556,7 +566,7 @@ class LabelingWidget(LabelDialog):
             self.tr("Decrease zoom level"),
             enabled=False,
         )
-        zoom_org = action(
+        zoom_org = create_action(
             self.tr("&Original size"),
             functools.partial(self.set_zoom, 100),
             shortcuts["zoom_to_original"],
@@ -564,7 +574,7 @@ class LabelingWidget(LabelDialog):
             self.tr("Zoom to original size"),
             enabled=False,
         )
-        keep_prev_scale = action(
+        keep_prev_scale = create_action(
             self.tr("&Keep Previous Scale"),
             self.enable_keep_prev_scale,
             tip=self.tr("Keep previous zoom scale"),
@@ -572,7 +582,7 @@ class LabelingWidget(LabelDialog):
             checked=self._config["keep_prev_scale"],
             enabled=True,
         )
-        fit_window = action(
+        fit_window = create_action(
             self.tr("&Fit Window"),
             self.set_fit_window,
             shortcuts["fit_window"],
@@ -581,7 +591,7 @@ class LabelingWidget(LabelDialog):
             checkable=True,
             enabled=False,
         )
-        fit_width = action(
+        fit_width = create_action(
             self.tr("Fit &Width"),
             self.set_fit_width,
             shortcuts["fit_width"],
@@ -590,7 +600,7 @@ class LabelingWidget(LabelDialog):
             checkable=True,
             enabled=False,
         )
-        brightness_contrast = action(
+        brightness_contrast = create_action(
             self.tr("&Brightness Contrast"),
             self.brightness_contrast,
             None,
@@ -598,7 +608,7 @@ class LabelingWidget(LabelDialog):
             "Adjust brightness and contrast",
             enabled=False,
         )
-        show_cross_line = action(
+        show_cross_line = create_action(
             self.tr("&Show Cross Line"),
             self.enable_show_cross_line,
             tip=self.tr("Show cross line for mouse position"),
@@ -607,7 +617,7 @@ class LabelingWidget(LabelDialog):
             checked=self._config["show_cross_line"],
             enabled=True,
         )
-        show_groups = action(
+        show_groups = create_action(
             self.tr("&Show Groups"),
             self.enable_show_groups,
             tip=self.tr("Show shape groups"),
@@ -616,7 +626,7 @@ class LabelingWidget(LabelDialog):
             checked=self._config["show_groups"],
             enabled=True,
         )
-        show_texts = action(
+        show_texts = create_action(
             self.tr("&Show Texts"),
             self.enable_show_texts,
             tip=self.tr("Show text above shapes"),
@@ -627,7 +637,7 @@ class LabelingWidget(LabelDialog):
         )
 
         # Languages
-        select_lang_en = action(
+        select_lang_en = create_action(
             "English",
             functools.partial(self.set_language, "en_US"),
             icon="us",
@@ -635,7 +645,7 @@ class LabelingWidget(LabelDialog):
             checked=self._config["language"] == "en_US",
             enabled=self._config["language"] != "en_US",
         )
-        select_lang_vi = action(
+        select_lang_vi = create_action(
             "Tiếng Việt",
             functools.partial(self.set_language, "vi_VN"),
             icon="vn",
@@ -643,7 +653,7 @@ class LabelingWidget(LabelDialog):
             checked=self._config["language"] == "vi_VN",
             enabled=self._config["language"] != "vi_VN",
         )
-        select_lang_zh = action(
+        select_lang_zh = create_action(
             "中文",
             functools.partial(self.set_language, "zh_CN"),
             icon="cn",
@@ -670,7 +680,7 @@ class LabelingWidget(LabelDialog):
             self.MANUAL_ZOOM: lambda: 1,
         }
 
-        edit = action(
+        edit = create_action(
             self.tr("&Edit Label"),
             self.edit_label,
             shortcuts["edit_label"],
@@ -679,7 +689,7 @@ class LabelingWidget(LabelDialog):
             enabled=False,
         )
 
-        fill_drawing = action(
+        fill_drawing = create_action(
             self.tr("Fill Drawing Polygon"),
             self.canvas.set_fill_drawing,
             None,
@@ -691,7 +701,7 @@ class LabelingWidget(LabelDialog):
         fill_drawing.trigger()
 
         # AI Actions
-        toggle_auto_labeling_widget = action(
+        toggle_auto_labeling_widget = create_action(
             self.tr("&Auto Labeling"),
             self.toggle_auto_labeling_widget,
             shortcuts["auto_label"],
@@ -802,11 +812,30 @@ class LabelingWidget(LabelDialog):
             self.actions.remove_point.setEnabled
         )
 
+        # Tools
+        tools = create_action(
+            self.tr("Tools"),
+            self.toggle_tools,
+            None,
+            "tools",
+            self.tr("Toggle tools panel"),
+            checkable=True,
+        )
+
+        export_annotations = create_action(
+            self.tr("Export Annotations"),
+            self.export_annotations,
+            None,
+            "export",
+            self.tr("Export annotations to other formats"),
+        )
+
         self.menus = utils.Struct(
             file=self.menu(self.tr("&File")),
             edit=self.menu(self.tr("&Edit")),
             view=self.menu(self.tr("&View")),
             language=self.menu(self.tr("&Language")),
+            tools=self.menu(self.tr("&Tools")),
             help=self.menu(self.tr("&Help")),
             recent_files=QtWidgets.QMenu(self.tr("Open &Recent")),
             label_list=label_menu,
@@ -835,6 +864,12 @@ class LabelingWidget(LabelDialog):
             (
                 documentation,
                 contact,
+            ),
+        )
+        utils.add_actions(
+            self.menus.tools,
+            (
+                export_annotations,
             ),
         )
         utils.add_actions(
@@ -882,8 +917,8 @@ class LabelingWidget(LabelDialog):
         utils.add_actions(
             self.canvas.menus[1],
             (
-                action("&Copy here", self.copy_shape),
-                action("&Move here", self.move_shape),
+                utils.new_action(self, "&Copy here", self.copy_shape),
+                utils.new_action(self, "&Move here", self.move_shape),
             ),
         )
 
@@ -1195,10 +1230,10 @@ class LabelingWidget(LabelDialog):
 
     def toggle_actions(self, value=True):
         """Enable/Disable widgets which depend on an opened image."""
-        for action in self.actions.zoom_actions:
-            action.setEnabled(value)
-        for action in self.actions.on_load_active:
-            action.setEnabled(value)
+        for act in self.actions.zoom_actions:
+            act.setEnabled(value)
+        for act in self.actions.on_load_active:
+            act.setEnabled(value)
 
     def queue_event(self, function):
         QtCore.QTimer.singleShot(0, function)
@@ -1345,11 +1380,13 @@ class LabelingWidget(LabelDialog):
         files = [f for f in self.recent_files if f != current and exists(f)]
         for i, f in enumerate(files):
             icon = utils.new_icon("labels")
-            action = QtWidgets.QAction(
+            menu_action = QtWidgets.QAction(
                 icon, "&%d %s" % (i + 1, QtCore.QFileInfo(f).fileName()), self
             )
-            action.triggered.connect(functools.partial(self.load_recent, f))
-            menu.addAction(action)
+            menu_action.triggered.connect(
+                functools.partial(self.load_recent, f)
+            )
+            menu.addAction(menu_action)
 
     def pop_label_list_menu(self, point):
         self.menus.label_list.exec_(self.label_list.mapToGlobal(point))
@@ -1989,7 +2026,7 @@ class LabelingWidget(LabelDialog):
         if self._config["keep_prev"]:
             prev_shapes = self.canvas.shapes
         self.canvas.load_pixmap(QtGui.QPixmap.fromImage(image))
-        flags = {k: False for k in self._config["flags"] or []}
+        flags = dict.fromkeys(self._config["flags"] or [], False)
         if self.label_file:
             self.load_labels(self.label_file.shapes)
             if self.label_file.flags is not None:
@@ -2402,8 +2439,8 @@ class LabelingWidget(LabelDialog):
             self.remove_labels([self.canvas.h_hape])
             self.set_dirty()
             if self.no_shape():
-                for action in self.actions.on_shapes_present:
-                    action.setEnabled(False)
+                for act in self.actions.on_shapes_present:
+                    act.setEnabled(False)
 
     def delete_selected_shape(self):
         yes, no = QtWidgets.QMessageBox.Yes, QtWidgets.QMessageBox.No
@@ -2416,8 +2453,8 @@ class LabelingWidget(LabelDialog):
             self.remove_labels(self.canvas.delete_selected())
             self.set_dirty()
             if self.no_shape():
-                for action in self.actions.on_shapes_present:
-                    action.setEnabled(False)
+                for act in self.actions.on_shapes_present:
+                    act.setEnabled(False)
 
     def copy_shape(self):
         self.canvas.end_move(copy=True)
@@ -2750,3 +2787,21 @@ class LabelingWidget(LabelDialog):
             self.shape_text_edit.textChanged.disconnect()
             self.shape_text_edit.setPlainText("")
             self.shape_text_edit.textChanged.connect(self.shape_text_changed)
+
+    def export_annotations(self):
+        """Open export dialog to export annotations to different formats."""
+        # Get the current directory
+        current_dir = None
+        if self.filename:
+            current_dir = osp.dirname(self.filename)
+        elif self.output_dir:
+            current_dir = self.output_dir
+
+        # Create and show export dialog
+        dialog = ExportDialog(self, current_dir)
+        dialog.exec_()
+
+    def toggle_tools(self):
+        """Toggle the tools panel visibility."""
+        if hasattr(self.parent, "toggle_tools_panel"):
+            self.parent.toggle_tools_panel()

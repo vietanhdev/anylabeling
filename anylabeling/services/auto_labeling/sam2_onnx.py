@@ -1,4 +1,5 @@
-# Code from: https://github.com/vietanhdev/samexporter/blob/main/samexporter/sam2_onnx.py
+# Code from:
+# https://github.com/vietanhdev/samexporter/blob/main/samexporter/sam2_onnx.py
 import time
 from typing import Any
 
@@ -19,7 +20,9 @@ class SegmentAnything2ONNX:
 
     def encode(self, cv_image: np.ndarray) -> list[np.ndarray]:
         original_size = cv_image.shape[:2]
-        high_res_feats_0, high_res_feats_1, image_embed = self.encoder(cv_image)
+        high_res_feats_0, high_res_feats_1, image_embed = self.encoder(
+            cv_image
+        )
         return {
             "high_res_feats_0": high_res_feats_0,
             "high_res_feats_1": high_res_feats_1,
@@ -35,7 +38,8 @@ class SegmentAnything2ONNX:
                 points.append(mark["data"])
                 labels.append(mark["label"])
             elif mark["type"] == "rectangle":
-                points.append([mark["data"][0], mark["data"][1]])  # top left
+                # Add top left point
+                points.append([mark["data"][0], mark["data"][1]])
                 points.append(
                     [mark["data"][2], mark["data"][3]]
                 )  # bottom right
@@ -105,7 +109,9 @@ class SAM2ImageEncoder:
         self.img_height, self.img_width = image.shape[:2]
 
         input_img = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        input_img = cv2.resize(input_img, (self.input_width, self.input_height))
+        input_img = cv2.resize(
+            input_img, (self.input_width, self.input_height)
+        )
 
         mean = np.array([0.485, 0.456, 0.406])
         std = np.array([0.229, 0.224, 0.225])
@@ -178,7 +184,6 @@ class SAM2ImageDecoder:
         point_coords: list[np.ndarray] | np.ndarray,
         point_labels: list[np.ndarray] | np.ndarray,
     ) -> tuple[list[np.ndarray], ndarray]:
-
         return self.predict(
             image_embed,
             high_res_feats_0,
@@ -195,7 +200,6 @@ class SAM2ImageDecoder:
         point_coords: list[np.ndarray] | np.ndarray,
         point_labels: list[np.ndarray] | np.ndarray,
     ) -> tuple[list[np.ndarray], ndarray]:
-
         inputs = self.prepare_inputs(
             image_embed,
             high_res_feats_0,
@@ -216,7 +220,6 @@ class SAM2ImageDecoder:
         point_coords: list[np.ndarray] | np.ndarray,
         point_labels: list[np.ndarray] | np.ndarray,
     ):
-
         input_point_coords, input_point_labels = self.prepare_points(
             point_coords, point_labels
         )
@@ -248,11 +251,11 @@ class SAM2ImageDecoder:
         point_coords: list[np.ndarray] | np.ndarray,
         point_labels: list[np.ndarray] | np.ndarray,
     ) -> tuple[np.ndarray, np.ndarray]:
-
         if isinstance(point_coords, np.ndarray):
             input_point_coords = point_coords[np.newaxis, ...]
             input_point_labels = point_labels[np.newaxis, ...]
         else:
+            # Find the maximum number of points across all inputs
             max_num_points = max([coords.shape[0] for coords in point_coords])
             # We need to make sure that all inputs have the same number of points
             # Add invalid points to pad the input (0, 0) with -1 value for labels
@@ -281,9 +284,9 @@ class SAM2ImageDecoder:
             * self.encoder_input_size[0]
         )  # Normalize y
 
-        return input_point_coords.astype(np.float32), input_point_labels.astype(
+        return input_point_coords.astype(
             np.float32
-        )
+        ), input_point_labels.astype(np.float32)
 
     def infer(self, inputs) -> list[np.ndarray]:
         start = time.perf_counter()
@@ -302,7 +305,6 @@ class SAM2ImageDecoder:
     def process_output(
         self, outputs: list[np.ndarray]
     ) -> tuple[list[ndarray | Any], ndarray[Any, Any]]:
-
         scores = outputs[1].squeeze()
         masks = outputs[0][0]
 
