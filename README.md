@@ -143,3 +143,6 @@ If you want to contribute to **AnyLabeling**, please read [Contribution Guidelin
 - Labeling UI built with ideas and components from [LabelImg](https://github.com/heartexlabs/labelImg), [LabelMe](https://github.com/wkentaro/labelme).
 - Auto-labeling with [Segment Anything Models](https://segment-anything.com/), [MobileSAM](https://github.com/ChaoningZhang/MobileSAM).
 - Auto-labeling with [YOLOv8](https://github.com/ultralytics/ultralytics).
+
+I've built the Windows .exe for version v0.4.16
+You can find it here: [https://github.com/danilobirbiglia/anylabeling/releases/tag/v0.4.16]
