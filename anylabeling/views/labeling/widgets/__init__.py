@@ -10,3 +10,5 @@ from .label_list_widget import LabelListWidget, LabelListWidgetItem
 from .toolbar import ToolBar
 from .unique_label_qlist_widget import UniqueLabelQListWidget
 from .zoom_widget import ZoomWidget
+
+# Package widgets
