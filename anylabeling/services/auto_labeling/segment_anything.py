@@ -57,9 +57,7 @@ class SegmentAnything(Model):
         encoder_model_abs_path = self.get_model_abs_path(
             self.config, "encoder_model_path"
         )
-        if not encoder_model_abs_path or not os.path.isfile(
-            encoder_model_abs_path
-        ):
+        if not encoder_model_abs_path or not os.path.isfile(encoder_model_abs_path):
             raise FileNotFoundError(
                 QCoreApplication.translate(
                     "Model",
@@ -69,9 +67,7 @@ class SegmentAnything(Model):
         decoder_model_abs_path = self.get_model_abs_path(
             self.config, "decoder_model_path"
         )
-        if not decoder_model_abs_path or not os.path.isfile(
-            decoder_model_abs_path
-        ):
+        if not decoder_model_abs_path or not os.path.isfile(decoder_model_abs_path):
             raise FileNotFoundError(
                 QCoreApplication.translate(
                     "Model",
@@ -123,9 +119,7 @@ class SegmentAnything(Model):
         masks[masks > 0.0] = 255
         masks[masks <= 0.0] = 0
         masks = masks.astype(np.uint8)
-        contours, _ = cv2.findContours(
-            masks, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE
-        )
+        contours, _ = cv2.findContours(masks, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
         # Refine contours
         approx_contours = []
@@ -294,14 +288,8 @@ class SegmentAnything(Model):
             or not self.pre_inference_thread.isRunning()
         ):
             self.pre_inference_thread = QThread()
-            self.pre_inference_worker = GenericWorker(
-                self.preload_worker, next_files
-            )
-            self.pre_inference_worker.finished.connect(
-                self.pre_inference_thread.quit
-            )
+            self.pre_inference_worker = GenericWorker(self.preload_worker, next_files)
+            self.pre_inference_worker.finished.connect(self.pre_inference_thread.quit)
             self.pre_inference_worker.moveToThread(self.pre_inference_thread)
-            self.pre_inference_thread.started.connect(
-                self.pre_inference_worker.run
-            )
+            self.pre_inference_thread.started.connect(self.pre_inference_worker.run)
             self.pre_inference_thread.start()

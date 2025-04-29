@@ -1,8 +1,7 @@
 """Export dialog widget for exporting annotations to different formats."""
 
 import os
-import uuid
-from PyQt5.QtCore import Qt, QThreadPool
+from PyQt5.QtCore import QThreadPool
 from PyQt5.QtWidgets import (
     QDialog,
     QVBoxLayout,
@@ -18,7 +17,6 @@ from PyQt5.QtWidgets import (
     QProgressBar,
     QSpinBox,
     QMessageBox,
-    QSizePolicy,
     QLineEdit,
 )
 
@@ -86,9 +84,7 @@ class ExportDialog(QDialog):
         source_layout.addLayout(select_folder_layout)
 
         # Add recursive search option
-        self.recursive_check = QCheckBox(
-            self.tr("Search recursively in subfolders")
-        )
+        self.recursive_check = QCheckBox(self.tr("Search recursively in subfolders"))
         self.recursive_check.setChecked(True)
         source_layout.addWidget(self.recursive_check)
 
@@ -128,9 +124,7 @@ class ExportDialog(QDialog):
         split_layout = QVBoxLayout()
         split_group.setLayout(split_layout)
 
-        self.split_check = QCheckBox(
-            self.tr("Split data into train/val/test sets")
-        )
+        self.split_check = QCheckBox(self.tr("Split data into train/val/test sets"))
         split_layout.addWidget(self.split_check)
 
         # Split ratio layout
@@ -205,14 +199,10 @@ class ExportDialog(QDialog):
         """Connect signals to slots."""
         # Source folder selection
         self.select_folder_radio.toggled.connect(self.on_source_radio_toggled)
-        self.source_browse_button.clicked.connect(
-            self.on_source_browse_clicked
-        )
+        self.source_browse_button.clicked.connect(self.on_source_browse_clicked)
 
         # Output folder selection
-        self.output_browse_button.clicked.connect(
-            self.on_output_browse_clicked
-        )
+        self.output_browse_button.clicked.connect(self.on_output_browse_clicked)
 
         # Data split options
         self.split_check.toggled.connect(self.on_split_check_toggled)
@@ -264,9 +254,7 @@ class ExportDialog(QDialog):
         if self.sender() == self.train_spin:
             # Adjust val and test to maintain 100%
             total = (
-                self.train_spin.value()
-                + self.val_spin.value()
-                + self.test_spin.value()
+                self.train_spin.value() + self.val_spin.value() + self.test_spin.value()
             )
             if total != 100:
                 # Keep val and test proportional to each other
@@ -283,16 +271,12 @@ class ExportDialog(QDialog):
         elif self.sender() == self.val_spin:
             # Adjust train and test to maintain 100%
             total = (
-                self.train_spin.value()
-                + self.val_spin.value()
-                + self.test_spin.value()
+                self.train_spin.value() + self.val_spin.value() + self.test_spin.value()
             )
             if total != 100:
                 # Prioritize reducing tes
                 self.test_spin.blockSignals(True)
-                test_value = (
-                    100 - self.train_spin.value() - self.val_spin.value()
-                )
+                test_value = 100 - self.train_spin.value() - self.val_spin.value()
                 if test_value < 0:
                     # If test would go negative, reduce train instead
                     self.train_spin.blockSignals(True)
@@ -305,16 +289,12 @@ class ExportDialog(QDialog):
         elif self.sender() == self.test_spin:
             # Adjust train and val to maintain 100%
             total = (
-                self.train_spin.value()
-                + self.val_spin.value()
-                + self.test_spin.value()
+                self.train_spin.value() + self.val_spin.value() + self.test_spin.value()
             )
             if total != 100:
                 # Prioritize reducing val
                 self.val_spin.blockSignals(True)
-                val_value = (
-                    100 - self.train_spin.value() - self.test_spin.value()
-                )
+                val_value = 100 - self.train_spin.value() - self.test_spin.value()
                 if val_value < 0:
                     # If val would go negative, reduce train instead
                     self.train_spin.blockSignals(True)
@@ -367,9 +347,7 @@ class ExportDialog(QDialog):
         # Check split ratios
         if self.split_check.isChecked():
             total = (
-                self.train_spin.value()
-                + self.val_spin.value()
-                + self.test_spin.value()
+                self.train_spin.value() + self.val_spin.value() + self.test_spin.value()
             )
             if total != 100:
                 QMessageBox.warning(
@@ -432,9 +410,7 @@ class ExportDialog(QDialog):
             result = QMessageBox.question(
                 self,
                 self.tr("Cancel Export"),
-                self.tr(
-                    "Export is in progress. Are you sure you want to cancel?"
-                ),
+                self.tr("Export is in progress. Are you sure you want to cancel?"),
                 QMessageBox.Yes | QMessageBox.No,
                 QMessageBox.No,
             )
@@ -458,9 +434,7 @@ class ExportDialog(QDialog):
         QMessageBox.information(
             self,
             self.tr("Export Completed"),
-            self.tr("Annotations have been exported to {}").format(
-                self.output_folder
-            ),
+            self.tr("Annotations have been exported to {}").format(self.output_folder),
         )
 
     def on_export_progress(self, progress, message):
@@ -476,9 +450,7 @@ class ExportDialog(QDialog):
         QMessageBox.critical(
             self,
             self.tr("Export Error"),
-            self.tr("An error occurred during export:\n{}").format(
-                error_message
-            ),
+            self.tr("An error occurred during export:\n{}").format(error_message),
         )
 
     def set_controls_enabled(self, enabled):
@@ -513,6 +485,4 @@ class ExportDialog(QDialog):
 
         # Dialog buttons
         self.export_button.setEnabled(enabled)
-        self.cancel_button.setText(
-            self.tr("Close") if enabled else self.tr("Cancel")
-        )
+        self.cancel_button.setText(self.tr("Close") if enabled else self.tr("Cancel"))

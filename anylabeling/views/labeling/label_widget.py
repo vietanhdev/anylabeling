@@ -5,15 +5,12 @@ import os
 import os.path as osp
 import re
 import webbrowser
-from enum import Enum
 
 import darkdetect
 import imgviz
 import natsort
-import numpy as np
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import Qt, pyqtSlot
-from PyQt5.QtGui import QCursor, QPixmap
 from PyQt5.QtWidgets import (
     QDockWidget,
     QHBoxLayout,
@@ -22,11 +19,6 @@ from PyQt5.QtWidgets import (
     QVBoxLayout,
     QWhatsThis,
     QMessageBox,
-    QFileDialog,
-    QListWidget,
-    QListWidgetItem,
-    QMenu,
-    QWidget,
 )
 
 from anylabeling.services.auto_labeling.types import AutoLabelingMode
@@ -49,7 +41,6 @@ from .widgets import (
     UniqueLabelQListWidget,
     ZoomWidget,
 )
-from .utils import new_action as action
 from .widgets.export_dialog import ExportDialog
 
 LABEL_COLORMAP = imgviz.label_colormap()
@@ -76,9 +67,7 @@ class LabelingWidget(LabelDialog):
     ):
         self.parent = parent
         if output is not None:
-            logger.warning(
-                "argument output is deprecated, use output_file instead"
-            )
+            logger.warning("argument output is deprecated, use output_file instead")
             if output_file is None:
                 output_file = output
 
@@ -170,9 +159,7 @@ class LabelingWidget(LabelDialog):
             "}"
         )
 
-        self.label_list.item_selection_changed.connect(
-            self.label_selection_changed
-        )
+        self.label_list.item_selection_changed.connect(self.label_selection_changed)
         self.label_list.item_double_clicked.connect(self.edit_label)
         self.label_list.item_changed.connect(self.label_item_changed)
         self.label_list.item_dropped.connect(self.label_order_changed)
@@ -183,10 +170,7 @@ class LabelingWidget(LabelDialog):
 
         self.unique_label_list = UniqueLabelQListWidget()
         self.unique_label_list.setToolTip(
-            self.tr(
-                "Select label to start annotating for it. "
-                "Press 'Esc' to deselect."
-            )
+            self.tr("Select label to start annotating for it. Press 'Esc' to deselect.")
         )
         if self._config["labels"]:
             for label in self._config["labels"]:
@@ -203,9 +187,7 @@ class LabelingWidget(LabelDialog):
         self.file_search.setPlaceholderText(self.tr("Search Filename"))
         self.file_search.textChanged.connect(self.file_search_changed)
         self.file_list_widget = QtWidgets.QListWidget()
-        self.file_list_widget.itemSelectionChanged.connect(
-            self.file_selection_changed
-        )
+        self.file_list_widget.itemSelectionChanged.connect(self.file_selection_changed)
         file_list_layout = QtWidgets.QVBoxLayout()
         file_list_layout.setContentsMargins(0, 0, 0, 0)
         file_list_layout.setSpacing(0)
@@ -369,9 +351,7 @@ class LabelingWidget(LabelDialog):
             self.tr('Toggle "Auto Use Last Label" mode'),
             checkable=True,
         )
-        toggle_auto_use_last_label_mode.setChecked(
-            self._config["auto_use_last_label"]
-        )
+        toggle_auto_use_last_label_mode.setChecked(self._config["auto_use_last_label"])
 
         create_mode = create_action(
             self.tr("Create Polygons"),
@@ -542,9 +522,7 @@ class LabelingWidget(LabelDialog):
                     "{} and {} from the canvas."
                 )
             ).format(
-                utils.fmt_shortcut(
-                    f"{shortcuts['zoom_in']},{shortcuts['zoom_out']}"
-                ),
+                utils.fmt_shortcut(f"{shortcuts['zoom_in']},{shortcuts['zoom_out']}"),
                 utils.fmt_shortcut(self.tr("Ctrl+Wheel")),
             )
         )
@@ -713,9 +691,7 @@ class LabelingWidget(LabelDialog):
         label_menu = QtWidgets.QMenu()
         utils.add_actions(label_menu, (edit, delete))
         self.label_list.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.label_list.customContextMenuRequested.connect(
-            self.pop_label_list_menu
-        )
+        self.label_list.customContextMenuRequested.connect(self.pop_label_list_menu)
 
         # Store actions for further handling.
         self.actions = utils.Struct(
@@ -808,18 +784,16 @@ class LabelingWidget(LabelDialog):
             ungroup_selected_shapes=ungroup_selected_shapes,
         )
 
-        self.canvas.vertex_selected.connect(
-            self.actions.remove_point.setEnabled
-        )
+        self.canvas.vertex_selected.connect(self.actions.remove_point.setEnabled)
 
         # Tools
-        tools = create_action(
+        create_action(
             self.tr("Tools"),
             self.toggle_tools,
-            None,
             "tools",
-            self.tr("Toggle tools panel"),
-            checkable=True,
+            "tools",
+            self.tr("Tools"),
+            enabled=False,
         )
 
         export_annotations = create_action(
@@ -1008,9 +982,7 @@ class LabelingWidget(LabelDialog):
             "}"
         )
         self.shape_text_edit = QPlainTextEdit()
-        right_sidebar_layout.addWidget(
-            self.shape_text_label, 0, Qt.AlignCenter
-        )
+        right_sidebar_layout.addWidget(self.shape_text_label, 0, Qt.AlignCenter)
         right_sidebar_layout.addWidget(self.shape_text_edit)
         right_sidebar_layout.addWidget(self.flag_dock)
         right_sidebar_layout.addWidget(self.label_dock)
@@ -1023,18 +995,10 @@ class LabelingWidget(LabelDialog):
             | ~QDockWidget.DockWidgetClosable
         )
         rev_dock_features = ~dock_features
-        self.label_dock.setFeatures(
-            self.label_dock.features() & rev_dock_features
-        )
-        self.file_dock.setFeatures(
-            self.file_dock.features() & rev_dock_features
-        )
-        self.flag_dock.setFeatures(
-            self.flag_dock.features() & rev_dock_features
-        )
-        self.shape_dock.setFeatures(
-            self.shape_dock.features() & rev_dock_features
-        )
+        self.label_dock.setFeatures(self.label_dock.features() & rev_dock_features)
+        self.file_dock.setFeatures(self.file_dock.features() & rev_dock_features)
+        self.flag_dock.setFeatures(self.flag_dock.features() & rev_dock_features)
+        self.shape_dock.setFeatures(self.shape_dock.features() & rev_dock_features)
 
         self.shape_text_edit.textChanged.connect(self.shape_text_changed)
 
@@ -1113,9 +1077,7 @@ class LabelingWidget(LabelDialog):
 
         # Show dialog to restart application
         msg_box = QMessageBox()
-        msg_box.setText(
-            self.tr("Please restart the application to apply changes.")
-        )
+        msg_box.setText(self.tr("Please restart the application to apply changes."))
         msg_box.exec_()
         self.parent.parent.close()
 
@@ -1293,8 +1255,7 @@ class LabelingWidget(LabelDialog):
         # Disable auto labeling if needed
         if (
             disable_auto_labeling
-            and self.auto_labeling_widget.auto_labeling_mode
-            != AutoLabelingMode.NONE
+            and self.auto_labeling_widget.auto_labeling_mode != AutoLabelingMode.NONE
         ):
             self.clear_auto_labeling_marks()
             self.auto_labeling_widget.set_auto_labeling_mode(None)
@@ -1381,9 +1342,7 @@ class LabelingWidget(LabelDialog):
             menu_action = QtWidgets.QAction(
                 icon, "&%d %s" % (i + 1, QtCore.QFileInfo(f).fileName()), self
             )
-            menu_action.triggered.connect(
-                functools.partial(self.load_recent, f)
-            )
+            menu_action.triggered.connect(functools.partial(self.load_recent, f))
             menu.addAction(menu_action)
 
     def pop_label_list_menu(self, point):
@@ -1443,9 +1402,7 @@ class LabelingWidget(LabelDialog):
             )
             self.unique_label_list.addItem(unique_label_item)
             rgb = self._get_rgb_by_label(shape.label)
-            self.unique_label_list.set_item_label(
-                unique_label_item, shape.label, rgb
-            )
+            self.unique_label_list.set_item_label(unique_label_item, shape.label, rgb)
 
         self._update_shape_color(shape)
         if shape.group_id is None:
@@ -1667,9 +1624,7 @@ class LabelingWidget(LabelDialog):
             flags[key] = flag
         try:
             image_path = osp.relpath(self.image_path, osp.dirname(filename))
-            image_data = (
-                self.image_data if self._config["store_data"] else None
-            )
+            image_data = self.image_data if self._config["store_data"] else None
             if osp.dirname(filename) and not osp.exists(osp.dirname(filename)):
                 os.makedirs(osp.dirname(filename))
             label_file.save(
@@ -1683,9 +1638,7 @@ class LabelingWidget(LabelDialog):
                 flags=flags,
             )
             self.label_file = label_file
-            items = self.file_list_widget.findItems(
-                self.image_path, Qt.MatchExactly
-            )
+            items = self.file_list_widget.findItems(self.image_path, Qt.MatchExactly)
             if len(items) > 0:
                 if len(items) != 1:
                     raise RuntimeError("There are duplicate files.")
@@ -1875,9 +1828,7 @@ class LabelingWidget(LabelDialog):
         save_config(self._config)
 
     def on_new_brightness_contrast(self, qimage):
-        self.canvas.load_pixmap(
-            QtGui.QPixmap.fromImage(qimage), clear_shapes=False
-        )
+        self.canvas.load_pixmap(QtGui.QPixmap.fromImage(qimage), clear_shapes=False)
 
     def brightness_contrast(self, _):
         dialog = BrightnessContrastDialog(
@@ -1942,12 +1893,9 @@ class LabelingWidget(LabelDialog):
 
         # Changing file_list_widget loads file
         if filename in self.image_list and (
-            self.file_list_widget.currentRow()
-            != self.image_list.index(filename)
+            self.file_list_widget.currentRow() != self.image_list.index(filename)
         ):
-            self.file_list_widget.setCurrentRow(
-                self.image_list.index(filename)
-            )
+            self.file_list_widget.setCurrentRow(self.image_list.index(filename))
             self.file_list_widget.repaint()
             return False
 
@@ -1964,24 +1912,19 @@ class LabelingWidget(LabelDialog):
             return False
 
         # assumes same name, but json extension
-        self.status(
-            str(self.tr("Loading %s...")) % osp.basename(str(filename))
-        )
+        self.status(str(self.tr("Loading %s...")) % osp.basename(str(filename)))
         label_file = osp.splitext(filename)[0] + ".json"
         if self.output_dir:
             label_file_without_path = osp.basename(label_file)
             label_file = osp.join(self.output_dir, label_file_without_path)
-        if QtCore.QFile.exists(label_file) and LabelFile.is_label_file(
-            label_file
-        ):
+        if QtCore.QFile.exists(label_file) and LabelFile.is_label_file(label_file):
             try:
                 self.label_file = LabelFile(label_file)
             except LabelFileError as e:
                 self.error_message(
                     self.tr("Error opening file"),
                     self.tr(
-                        "<p><b>%s</b></p>"
-                        "<p>Make sure <i>%s</i> is a valid label file."
+                        "<p><b>%s</b></p><p>Make sure <i>%s</i> is a valid label file."
                     )
                     % (e, label_file),
                 )
@@ -1994,9 +1937,7 @@ class LabelingWidget(LabelDialog):
             )
             self.other_data = self.label_file.other_data
             self.shape_text_edit.textChanged.disconnect()
-            self.shape_text_edit.setPlainText(
-                self.other_data.get("image_text", "")
-            )
+            self.shape_text_edit.setPlainText(self.other_data.get("image_text", ""))
             self.shape_text_edit.textChanged.connect(self.shape_text_changed)
         else:
             self.image_data = LabelFile.load_image_file(filename)
@@ -2126,9 +2067,7 @@ class LabelingWidget(LabelDialog):
     def closeEvent(self, event):
         if not self.may_continue():
             event.ignore()
-        self.settings.setValue(
-            "filename", self.filename if self.filename else ""
-        )
+        self.settings.setValue("filename", self.filename if self.filename else "")
         self.settings.setValue("window/size", self.size())
         self.settings.setValue("window/position", self.pos())
         self.settings.setValue("window/state", self.parent.parent.saveState())
@@ -2274,9 +2213,7 @@ class LabelingWidget(LabelDialog):
 
         if current_filename in self.image_list:
             # retain currently selected file
-            self.file_list_widget.setCurrentRow(
-                self.image_list.index(current_filename)
-            )
+            self.file_list_widget.setCurrentRow(self.image_list.index(current_filename))
             self.file_list_widget.repaint()
 
     def save_file(self, _value=False):
@@ -2298,18 +2235,14 @@ class LabelingWidget(LabelDialog):
         caption = self.tr("%s - Choose File") % __appname__
         filters = self.tr("Label files (*%s)") % LabelFile.suffix
         if self.output_dir:
-            file_dialog = QtWidgets.QFileDialog(
-                self, caption, self.output_dir, filters
-            )
+            file_dialog = QtWidgets.QFileDialog(self, caption, self.output_dir, filters)
         else:
             file_dialog = QtWidgets.QFileDialog(
                 self, caption, self.current_path(), filters
             )
         file_dialog.setDefaultSuffix(LabelFile.suffix[1:])
         file_dialog.setAcceptMode(QtWidgets.QFileDialog.AcceptSave)
-        file_dialog.setOption(
-            QtWidgets.QFileDialog.DontConfirmOverwrite, False
-        )
+        file_dialog.setOption(QtWidgets.QFileDialog.DontConfirmOverwrite, False)
         file_dialog.setOption(QtWidgets.QFileDialog.DontUseNativeDialog, False)
         basename = osp.basename(osp.splitext(self.filename)[0])
         if self.output_dir:
@@ -2355,8 +2288,7 @@ class LabelingWidget(LabelDialog):
     def delete_file(self):
         mb = QtWidgets.QMessageBox
         msg = self.tr(
-            "You are about to permanently delete this label file, "
-            "proceed anyway?"
+            "You are about to permanently delete this label file, proceed anyway?"
         )
         answer = mb.warning(self, self.tr("Attention"), msg, mb.Yes | mb.No)
         if answer != mb.Yes:
@@ -2393,9 +2325,7 @@ class LabelingWidget(LabelDialog):
         if not self.dirty:
             return True
         mb = QtWidgets.QMessageBox
-        msg = self.tr(
-            f'Save annotations to "{self.filename!r}" before closing?'
-        )
+        msg = self.tr(f'Save annotations to "{self.filename!r}" before closing?')
         answer = mb.question(
             self,
             self.tr("Save annotations?"),
@@ -2424,9 +2354,7 @@ class LabelingWidget(LabelDialog):
         save_config(self._config)
 
     def toggle_auto_use_last_label(self):
-        self._config["auto_use_last_label"] = not self._config[
-            "auto_use_last_label"
-        ]
+        self._config["auto_use_last_label"] = not self._config["auto_use_last_label"]
         save_config(self._config)
 
     def remove_selected_point(self):
@@ -2473,9 +2401,7 @@ class LabelingWidget(LabelDialog):
         if self.last_open_dir and osp.exists(self.last_open_dir):
             default_open_dir_path = self.last_open_dir
         else:
-            default_open_dir_path = (
-                osp.dirname(self.filename) if self.filename else "."
-            )
+            default_open_dir_path = osp.dirname(self.filename) if self.filename else "."
 
         target_dir_path = str(
             QtWidgets.QFileDialog.getExistingDirectory(
@@ -2504,9 +2430,7 @@ class LabelingWidget(LabelDialog):
 
         self.filename = None
         for file in image_files:
-            if file in self.image_list or not file.lower().endswith(
-                tuple(extensions)
-            ):
+            if file in self.image_list or not file.lower().endswith(tuple(extensions)):
                 continue
             label_file = osp.splitext(file)[0] + ".json"
             if self.output_dir:
@@ -2514,9 +2438,7 @@ class LabelingWidget(LabelDialog):
                 label_file = osp.join(self.output_dir, label_file_without_path)
             item = QtWidgets.QListWidgetItem(file)
             item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
-            if QtCore.QFile.exists(label_file) and LabelFile.is_label_file(
-                label_file
-            ):
+            if QtCore.QFile.exists(label_file) and LabelFile.is_label_file(label_file):
                 item.setCheckState(Qt.Checked)
             else:
                 item.setCheckState(Qt.Unchecked)
@@ -2547,9 +2469,7 @@ class LabelingWidget(LabelDialog):
                 label_file = osp.join(self.output_dir, label_file_without_path)
             item = QtWidgets.QListWidgetItem(filename)
             item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsSelectable)
-            if QtCore.QFile.exists(label_file) and LabelFile.is_label_file(
-                label_file
-            ):
+            if QtCore.QFile.exists(label_file) and LabelFile.is_label_file(label_file):
                 item.setCheckState(Qt.Checked)
             else:
                 item.setCheckState(Qt.Unchecked)
@@ -2620,12 +2540,8 @@ class LabelingWidget(LabelDialog):
             AutoLabelingMode.ADD,
             AutoLabelingMode.REMOVE,
         ]:
-            for item in self.unique_label_list.find_items_by_label(
-                shape_label
-            ):
-                self.unique_label_list.takeItem(
-                    self.unique_label_list.row(item)
-                )
+            for item in self.unique_label_list.find_items_by_label(shape_label):
+                self.unique_label_list.takeItem(self.unique_label_list.row(item))
 
         # Remove shapes from the canvas
         self.canvas.shapes = [
@@ -2720,10 +2636,8 @@ class LabelingWidget(LabelDialog):
                 shape.group_id = group_id
                 # Update unique label list
                 if not self.unique_label_list.find_items_by_label(shape.label):
-                    unique_label_item = (
-                        self.unique_label_list.create_item_from_label(
-                            shape.label
-                        )
+                    unique_label_item = self.unique_label_list.create_item_from_label(
+                        shape.label
                     )
                     self.unique_label_list.addItem(unique_label_item)
                     rgb = self._get_rgb_by_label(shape.label)
@@ -2761,21 +2675,13 @@ class LabelingWidget(LabelDialog):
             if len(self.canvas.selected_shapes) == 1:
                 self.shape_text_label.setText(self.tr("Object Text"))
                 self.shape_text_edit.textChanged.disconnect()
-                self.shape_text_edit.setPlainText(
-                    self.canvas.selected_shapes[0].text
-                )
-                self.shape_text_edit.textChanged.connect(
-                    self.shape_text_changed
-                )
+                self.shape_text_edit.setPlainText(self.canvas.selected_shapes[0].text)
+                self.shape_text_edit.textChanged.connect(self.shape_text_changed)
             else:
                 self.shape_text_label.setText(self.tr("Image Text"))
                 self.shape_text_edit.textChanged.disconnect()
-                self.shape_text_edit.setPlainText(
-                    self.other_data.get("image_text", "")
-                )
-                self.shape_text_edit.textChanged.connect(
-                    self.shape_text_changed
-                )
+                self.shape_text_edit.setPlainText(self.other_data.get("image_text", ""))
+                self.shape_text_edit.textChanged.connect(self.shape_text_changed)
             self.shape_text_edit.setDisabled(False)
         else:
             self.shape_text_edit.setDisabled(True)

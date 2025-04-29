@@ -68,26 +68,14 @@ class ExportWorker(QRunnable):
 
             if self.export_format == "yolo":
                 # Create label directories for YOLO forma
-                os.makedirs(
-                    osp.join(self.output_dir, "train", "labels"), exist_ok=True
-                )
-                os.makedirs(
-                    osp.join(self.output_dir, "val", "labels"), exist_ok=True
-                )
-                os.makedirs(
-                    osp.join(self.output_dir, "test", "labels"), exist_ok=True
-                )
+                os.makedirs(osp.join(self.output_dir, "train", "labels"), exist_ok=True)
+                os.makedirs(osp.join(self.output_dir, "val", "labels"), exist_ok=True)
+                os.makedirs(osp.join(self.output_dir, "test", "labels"), exist_ok=True)
 
                 # Create image directories for YOLO forma
-                os.makedirs(
-                    osp.join(self.output_dir, "train", "images"), exist_ok=True
-                )
-                os.makedirs(
-                    osp.join(self.output_dir, "val", "images"), exist_ok=True
-                )
-                os.makedirs(
-                    osp.join(self.output_dir, "test", "images"), exist_ok=True
-                )
+                os.makedirs(osp.join(self.output_dir, "train", "images"), exist_ok=True)
+                os.makedirs(osp.join(self.output_dir, "val", "images"), exist_ok=True)
+                os.makedirs(osp.join(self.output_dir, "test", "images"), exist_ok=True)
         else:
             if self.export_format == "yolo":
                 os.makedirs(osp.join(self.output_dir, "labels"), exist_ok=True)
@@ -162,7 +150,6 @@ class ExportWorker(QRunnable):
 
         n_train = int(n_files * self.train_ratio)
         n_val = int(n_files * self.val_ratio)
-        n_test = n_files - n_train - n_val
 
         train_files = json_files[:n_train]
         val_files = json_files[n_train : n_train + n_val]
@@ -187,18 +174,12 @@ class ExportWorker(QRunnable):
         if self.split_data:
             if self.export_format == "yolo":
                 # For YOLO, we don't preserve subdirectories since it uses a flat structure
-                return osp.join(
-                    self.output_dir, split, "labels", base_name + ".txt"
-                )
+                return osp.join(self.output_dir, split, "labels", base_name + ".txt")
             elif self.export_format == "pascal_voc":
                 # For Pascal VOC, preserve subdirectories
                 if subdir:
-                    os.makedirs(
-                        osp.join(self.output_dir, split, subdir), exist_ok=True
-                    )
-                    return osp.join(
-                        self.output_dir, split, subdir, base_name + ".xml"
-                    )
+                    os.makedirs(osp.join(self.output_dir, split, subdir), exist_ok=True)
+                    return osp.join(self.output_dir, split, subdir, base_name + ".xml")
                 else:
                     return osp.join(self.output_dir, split, base_name + ".xml")
             else:
@@ -210,12 +191,8 @@ class ExportWorker(QRunnable):
             elif self.export_format == "pascal_voc":
                 # For Pascal VOC, preserve subdirectories
                 if subdir:
-                    os.makedirs(
-                        osp.join(self.output_dir, subdir), exist_ok=True
-                    )
-                    return osp.join(
-                        self.output_dir, subdir, base_name + ".xml"
-                    )
+                    os.makedirs(osp.join(self.output_dir, subdir), exist_ok=True)
+                    return osp.join(self.output_dir, subdir, base_name + ".xml")
                 else:
                     return osp.join(self.output_dir, base_name + ".xml")
             else:
@@ -247,7 +224,7 @@ class ExportWorker(QRunnable):
 
                 self.signals.progress.emit(
                     int((i / len(json_files)) * 100),
-                    f"Exporting YOLO annotations ({split}): {i+1}/{len(json_files)}",
+                    f"Exporting YOLO annotations ({split}): {i + 1}/{len(json_files)}",
                 )
 
                 json_data = self._load_json_file(json_file)
@@ -276,9 +253,7 @@ class ExportWorker(QRunnable):
                 )
 
                 # Copy image file
-                image_path = self._get_corresponding_image_file(
-                    json_data, json_file
-                )
+                image_path = self._get_corresponding_image_file(json_data, json_file)
                 if image_path:
                     import shutil
 
@@ -289,9 +264,7 @@ class ExportWorker(QRunnable):
                     output_img_name = osp.basename(image_path)
                     if self.use_random_names:
                         # Extract base_name from the output_path
-                        random_base = osp.splitext(osp.basename(output_path))[
-                            0
-                        ]
+                        random_base = osp.splitext(osp.basename(output_path))[0]
                         output_img_name = random_base + img_ext
 
                     if self.split_data:
@@ -313,9 +286,7 @@ class ExportWorker(QRunnable):
         """Export annotations to Pascal VOC format."""
         for split, json_files in json_files_by_split.items():
             split_dir = (
-                osp.join(self.output_dir, split)
-                if self.split_data
-                else self.output_dir
+                osp.join(self.output_dir, split) if self.split_data else self.output_dir
             )
             os.makedirs(split_dir, exist_ok=True)
 
@@ -325,7 +296,7 @@ class ExportWorker(QRunnable):
 
                 self.signals.progress.emit(
                     int((i / len(json_files)) * 100),
-                    f"Exporting Pascal VOC annotations ({split}): {i+1}/{len(json_files)}",
+                    f"Exporting Pascal VOC annotations ({split}): {i + 1}/{len(json_files)}",
                 )
 
                 json_data = self._load_json_file(json_file)
@@ -333,9 +304,7 @@ class ExportWorker(QRunnable):
                     continue
 
                 # Get image path and dimensions
-                image_path = self._get_corresponding_image_file(
-                    json_data, json_file
-                )
+                image_path = self._get_corresponding_image_file(json_data, json_file)
                 if not image_path:
                     continue
 
@@ -369,9 +338,7 @@ class ExportWorker(QRunnable):
                     output_img_name = osp.basename(image_path)
                     if self.use_random_names:
                         # Extract base_name from the output_path
-                        random_base = osp.splitext(osp.basename(output_path))[
-                            0
-                        ]
+                        random_base = osp.splitext(osp.basename(output_path))[0]
                         output_img_name = random_base + img_ext
 
                     image_output_path = osp.join(split_dir, output_img_name)
@@ -384,9 +351,7 @@ class ExportWorker(QRunnable):
                 continue
 
             split_dir = (
-                osp.join(self.output_dir, split)
-                if self.split_data
-                else self.output_dir
+                osp.join(self.output_dir, split) if self.split_data else self.output_dir
             )
             os.makedirs(split_dir, exist_ok=True)
 
@@ -409,7 +374,7 @@ class ExportWorker(QRunnable):
                     int(
                         (i / len(json_files)) * 50
                     ),  # Use first half of progress for loading
-                    f"Loading annotations for COCO export ({split}): {i+1}/{len(json_files)}",
+                    f"Loading annotations for COCO export ({split}): {i + 1}/{len(json_files)}",
                 )
 
                 json_data = self._load_json_file(json_file)
@@ -417,9 +382,7 @@ class ExportWorker(QRunnable):
                     continue
 
                 # Get image path and dimensions
-                image_path = self._get_corresponding_image_file(
-                    json_data, json_file
-                )
+                image_path = self._get_corresponding_image_file(json_data, json_file)
                 if not image_path:
                     continue
 
@@ -454,7 +417,7 @@ class ExportWorker(QRunnable):
             )
 
             # Export to COCO forma
-            output_path = osp.join(split_dir, f"annotations.json")
+            output_path = osp.join(split_dir, "annotations.json")
             FormatExporter.export_to_coco(
                 all_shapes,
                 all_image_paths,
@@ -472,9 +435,7 @@ class ExportWorker(QRunnable):
                 continue
 
             split_dir = (
-                osp.join(self.output_dir, split)
-                if self.split_data
-                else self.output_dir
+                osp.join(self.output_dir, split) if self.split_data else self.output_dir
             )
             os.makedirs(split_dir, exist_ok=True)
 
@@ -497,7 +458,7 @@ class ExportWorker(QRunnable):
                     int(
                         (i / len(json_files)) * 50
                     ),  # Use first half of progress for loading
-                    f"Loading annotations for CreateML export ({split}): {i+1}/{len(json_files)}",
+                    f"Loading annotations for CreateML export ({split}): {i + 1}/{len(json_files)}",
                 )
 
                 json_data = self._load_json_file(json_file)
@@ -505,9 +466,7 @@ class ExportWorker(QRunnable):
                     continue
 
                 # Get image path and dimensions
-                image_path = self._get_corresponding_image_file(
-                    json_data, json_file
-                )
+                image_path = self._get_corresponding_image_file(json_data, json_file)
                 if not image_path:
                     continue
 
@@ -542,7 +501,7 @@ class ExportWorker(QRunnable):
             )
 
             # Export to CreateML forma
-            output_path = osp.join(split_dir, f"annotations.json")
+            output_path = osp.join(split_dir, "annotations.json")
             FormatExporter.export_to_createml(
                 all_shapes,
                 all_image_paths,
@@ -551,9 +510,7 @@ class ExportWorker(QRunnable):
                 output_path,
             )
 
-            self.signals.progress.emit(
-                100, f"Completed CreateML export ({split})"
-            )
+            self.signals.progress.emit(100, f"Completed CreateML export ({split})")
 
     @pyqtSlot()
     def run(self):

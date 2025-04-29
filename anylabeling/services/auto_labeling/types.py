@@ -39,10 +39,7 @@ class AutoLabelingMode:
     def __eq__(self, other):
         if not isinstance(other, AutoLabelingMode):
             return False
-        return (
-            self.edit_mode == other.edit_mode
-            and self.shape_type == other.shape_type
-        )
+        return self.edit_mode == other.edit_mode and self.shape_type == other.shape_type
 
 
 AutoLabelingMode.NONE = AutoLabelingMode(None, None)

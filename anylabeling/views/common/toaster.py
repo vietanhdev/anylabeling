@@ -14,9 +14,7 @@ class QToaster(QtWidgets.QFrame):
         super().__init__(*args, **kwargs)
         QtWidgets.QHBoxLayout(self)
 
-        self.setSizePolicy(
-            QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum
-        )
+        self.setSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
 
         self.setStyleSheet(
             """
@@ -48,9 +46,7 @@ class QToaster(QtWidgets.QFrame):
             # the window manager supports it; if it doesn't, this won'd do
             # anything (besides making the hiding a bit longer by half a
             # second)
-            self.opacity_ani = QtCore.QPropertyAnimation(
-                self, b"windowOpacity"
-            )
+            self.opacity_ani = QtCore.QPropertyAnimation(self, b"windowOpacity")
         self.opacity_ani.setStartValue(0.0)
         self.opacity_ani.setEndValue(1.0)
         self.opacity_ani.setDuration(100)
@@ -93,9 +89,7 @@ class QToaster(QtWidgets.QFrame):
             geo = self.geometry()
             margin = int(self.margin)
             if self.corner == QtCore.Qt.TopLeftCorner:
-                geo.moveTopLeft(
-                    parent_rect.topLeft() + QtCore.QPoint(margin, margin)
-                )
+                geo.moveTopLeft(parent_rect.topLeft() + QtCore.QPoint(margin, margin))
             elif self.corner == QtCore.Qt.TopRightCorner:
                 geo.moveTopRight(
                     parent_rect.topRight() + QtCore.QPoint(-margin, margin)
@@ -139,13 +133,9 @@ class QToaster(QtWidgets.QFrame):
         if not self.parent():
             # there's no parent, so we need to update the mask
             path = QtGui.QPainterPath()
-            path.addRoundedRect(
-                QtCore.QRectF(self.rect()).translated(-0.5, -0.5), 4, 4
-            )
+            path.addRoundedRect(QtCore.QRectF(self.rect()).translated(-0.5, -0.5), 4, 4)
             self.setMask(
-                QtGui.QRegion(
-                    path.toFillPolygon(QtGui.QTransform()).toPolygon()
-                )
+                QtGui.QRegion(path.toFillPolygon(QtGui.QTransform()).toPolygon())
             )
         else:
             self.clearMask()
@@ -241,13 +231,9 @@ class QToaster(QtWidgets.QFrame):
         # now the widget should have the correct size hints, let's move it to the
         # right place
         if corner == QtCore.Qt.TopLeftCorner:
-            geo.moveTopLeft(
-                parent_rect.topLeft() + QtCore.QPoint(margin, margin)
-            )
+            geo.moveTopLeft(parent_rect.topLeft() + QtCore.QPoint(margin, margin))
         elif corner == QtCore.Qt.TopRightCorner:
-            geo.moveTopRight(
-                parent_rect.topRight() + QtCore.QPoint(-margin, margin)
-            )
+            geo.moveTopRight(parent_rect.topRight() + QtCore.QPoint(-margin, margin))
         elif corner == QtCore.Qt.BottomRightCorner:
             geo.moveBottomRight(
                 parent_rect.bottomRight() + QtCore.QPoint(-margin, -margin)

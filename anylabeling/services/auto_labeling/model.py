@@ -1,37 +1,29 @@
 import logging
 import os
-import pathlib
 import yaml
-import onnx
-import urllib.request
-from urllib.parse import urlparse
-
-from PyQt5.QtCore import QCoreApplication
-
-import ssl
-
-ssl._create_default_https_context = (
-    ssl._create_unverified_context
-)  # Prevent issue when downloading models behind a proxy
-
 import socket
-
-socket.setdefaulttimeout(240)  # Prevent timeout when downloading models
-
+import ssl
 from abc import abstractmethod
 
-
-from PyQt5.QtCore import QFile, QObject
+from PyQt5.QtCore import QCoreApplication, QFile, QObject
 from PyQt5.QtGui import QImage
 
 from .types import AutoLabelingResult
 from anylabeling.views.labeling.label_file import LabelFile, LabelFileError
 
+# Prevent issue when downloading models behind a proxy
+os.environ["no_proxy"] = "*"
+
+socket.setdefaulttimeout(240)  # Prevent timeout when downloading models
+
+
+ssl._create_default_https_context = (
+    ssl._create_unverified_context
+)  # Prevent issue when downloading models behind a proxy
+
 
 class Model(QObject):
-    BASE_DOWNLOAD_URL = (
-        "https://github.com/vietanhdev/anylabeling-assets/raw/main/"
-    )
+    BASE_DOWNLOAD_URL = "https://github.com/vietanhdev/anylabeling-assets/raw/main/"
 
     class Meta(QObject):
         required_config_names = []
@@ -82,9 +74,7 @@ class Model(QObject):
         config_folder = os.path.dirname(model_config["config_file"])
         model_path = model_config[model_path_field_name]
         if os.path.isfile(os.path.join(config_folder, model_path)):
-            model_abs_path = os.path.abspath(
-                os.path.join(config_folder, model_path)
-            )
+            model_abs_path = os.path.abspath(os.path.join(config_folder, model_path))
             return model_abs_path
 
         # Try getting model from assets folder

@@ -30,9 +30,7 @@ class AutoLabelingWidget(QWidget):
         )
         self.model_manager.new_model_status.connect(self.on_new_model_status)
         self.new_model_selected.connect(self.model_manager.load_model)
-        self.new_custom_model_selected.connect(
-            self.model_manager.load_custom_model
-        )
+        self.new_custom_model_selected.connect(self.model_manager.load_custom_model)
         self.model_manager.model_loaded.connect(self.update_visible_widgets)
         self.model_manager.model_loaded.connect(self.on_new_model_loaded)
         self.model_manager.new_auto_labeling_result.connect(
@@ -46,9 +44,7 @@ class AutoLabelingWidget(QWidget):
         self.model_manager.auto_segmentation_model_unselected.connect(
             self.auto_segmentation_disabled
         )
-        self.model_manager.output_modes_changed.connect(
-            self.on_output_modes_changed
-        )
+        self.model_manager.output_modes_changed.connect(self.on_output_modes_changed)
         self.output_select_combobox.currentIndexChanged.connect(
             lambda: self.model_manager.set_output_mode(
                 self.output_select_combobox.currentData()
@@ -67,12 +63,8 @@ class AutoLabelingWidget(QWidget):
             self.button_clear.setEnabled(enable)
             self.button_finish_object.setEnabled(enable)
 
-        self.model_manager.prediction_started.connect(
-            lambda: set_enable_tools(False)
-        )
-        self.model_manager.prediction_finished.connect(
-            lambda: set_enable_tools(True)
-        )
+        self.model_manager.prediction_started.connect(lambda: set_enable_tools(False))
+        self.model_manager.prediction_finished.connect(lambda: set_enable_tools(True))
 
         # Auto labeling buttons
         self.button_run.setShortcut("I")
@@ -94,9 +86,7 @@ class AutoLabelingWidget(QWidget):
                 AutoLabelingMode.ADD, AutoLabelingMode.RECTANGLE
             )
         )
-        self.button_clear.clicked.connect(
-            self.clear_auto_labeling_action_requested
-        )
+        self.button_clear.clicked.connect(self.clear_auto_labeling_action_requested)
         self.button_finish_object.clicked.connect(
             self.finish_auto_labeling_object_action_requested
         )
@@ -154,9 +144,7 @@ class AutoLabelingWidget(QWidget):
             self.button_clear,
             self.button_finish_object,
         ]:
-            button.setStyleSheet(
-                style_sheet + f"background-color: {normal_color};"
-            )
+            button.setStyleSheet(style_sheet + f"background-color: {normal_color};")
         if self.auto_labeling_mode == AutoLabelingMode.NONE:
             return
         if self.auto_labeling_mode.edit_mode == AutoLabelingMode.ADD:
@@ -164,10 +152,7 @@ class AutoLabelingWidget(QWidget):
                 self.button_add_point.setStyleSheet(
                     style_sheet + "background-color: #00c100; color: #555555;"
                 )
-            elif (
-                self.auto_labeling_mode.shape_type
-                == AutoLabelingMode.RECTANGLE
-            ):
+            elif self.auto_labeling_mode.shape_type == AutoLabelingMode.RECTANGLE:
                 self.button_add_rect.setStyleSheet(
                     style_sheet + "background-color: #00c100; color: #555555;"
                 )
@@ -223,9 +208,7 @@ class AutoLabelingWidget(QWidget):
 
         self.output_select_combobox.clear()
         for output_mode, display_name in output_modes.items():
-            self.output_select_combobox.addItem(
-                display_name, userData=output_mode
-            )
+            self.output_select_combobox.addItem(display_name, userData=output_mode)
         self.output_select_combobox.setCurrentIndex(
             self.output_select_combobox.findData(default_output_mode)
         )

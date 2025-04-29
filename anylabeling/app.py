@@ -23,12 +23,12 @@ from anylabeling.views.labeling.logger import logger
 from anylabeling.views.labeling.utils import new_icon
 from anylabeling.resources import resources
 
+__all__ = ["resources"]
+
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--reset-config", action="store_true", help="reset qt config"
-    )
+    parser.add_argument("--reset-config", action="store_true", help="reset qt config")
     parser.add_argument(
         "--logger-level",
         default="info",
@@ -45,16 +45,11 @@ def main():
             "recognized as file, else as directory)"
         ),
     )
-    default_config_file = os.path.join(
-        os.path.expanduser("~"), ".anylabelingrc"
-    )
+    default_config_file = os.path.join(os.path.expanduser("~"), ".anylabelingrc")
     parser.add_argument(
         "--config",
         dest="config",
-        help=(
-            "config file or yaml-format string (default:"
-            f" {default_config_file})"
-        ),
+        help=(f"config file or yaml-format string (default: {default_config_file})"),
         default=default_config_file,
     )
     # config for the gui
@@ -167,9 +162,7 @@ def main():
 
     language = config.get("language", QtCore.QLocale.system().name())
     translator = QtCore.QTranslator()
-    loaded_language = translator.load(
-        ":/languages/translations/" + language + ".qm"
-    )
+    loaded_language = translator.load(":/languages/translations/" + language + ".qm")
 
     # Enable scaling for high dpi screens
     QtWidgets.QApplication.setAttribute(

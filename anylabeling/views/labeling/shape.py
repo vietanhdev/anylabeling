@@ -148,9 +148,7 @@ class Shape:
     def paint(self, painter: QtGui.QPainter):  # noqa: max-complexity: 18
         """Paint shape using QPainter"""
         if self.points:
-            color = (
-                self.select_line_color if self.selected else self.line_color
-            )
+            color = self.select_line_color if self.selected else self.line_color
             pen = QtGui.QPen(color)
             # Try using integer sizes for smoother drawing(?)
             pen.setWidth(max(1, int(round(2.0 / self.scale))))
@@ -211,11 +209,7 @@ class Shape:
             if self._vertex_fill_color is not None:
                 painter.fillPath(vrtx_path, self._vertex_fill_color)
             if self.fill:
-                color = (
-                    self.select_fill_color
-                    if self.selected
-                    else self.fill_color
-                )
+                color = self.select_fill_color if self.selected else self.fill_color
                 painter.fillPath(line_path, color)
 
     def draw_vertex(self, path, i):

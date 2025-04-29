@@ -1,4 +1,3 @@
-import logging
 from copy import deepcopy
 
 import cv2
@@ -27,9 +26,7 @@ class SegmentAnythingONNX:
                 labels.append(mark["label"])
             elif mark["type"] == "rectangle":
                 points.append([mark["data"][0], mark["data"][1]])  # top left
-                points.append(
-                    [mark["data"][2], mark["data"][3]]
-                )  # bottom right
+                points.append([mark["data"][2], mark["data"][3]])  # bottom right
                 labels.append(2)
                 labels.append(3)
         points, labels = np.array(points), np.array(labels)
@@ -66,16 +63,14 @@ class SegmentAnythingONNX:
         coords[..., 1] = coords[..., 1] * (new_h / old_h)
         return coords
 
-    def run_decoder(
-        self, image_embedding, original_size, transform_matrix, prompt
-    ):
+    def run_decoder(self, image_embedding, original_size, transform_matrix, prompt):
         """Run decoder"""
         input_points, input_labels = self.get_input_points(prompt)
 
         # Add a batch index, concatenate a padding point, and transform.
-        onnx_coord = np.concatenate(
-            [input_points, np.array([[0.0, 0.0]])], axis=0
-        )[None, :, :]
+        onnx_coord = np.concatenate([input_points, np.array([[0.0, 0.0]])], axis=0)[
+            None, :, :
+        ]
         onnx_label = np.concatenate([input_labels, np.array([-1])], axis=0)[
             None, :
         ].astype(np.float32)

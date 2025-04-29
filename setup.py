@@ -8,9 +8,7 @@ def get_version():
     """Get package version from app_info.py file"""
     filename = "anylabeling/app_info.py"
     with open(filename, encoding="utf-8") as f:
-        match = re.search(
-            r"""^__version__ = ['"]([^'"]*)['"]""", f.read(), re.M
-        )
+        match = re.search(r"""^__version__ = ['"]([^'"]*)['"]""", f.read(), re.M)
     if not match:
         raise RuntimeError(f"{filename} doesn't contain __version__")
     version = match.groups()[0]

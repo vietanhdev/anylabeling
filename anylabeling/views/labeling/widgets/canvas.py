@@ -22,9 +22,7 @@ MOVE_SPEED = 5.0
 LABEL_COLORMAP = imgviz.label_colormap()
 
 
-class Canvas(
-    QtWidgets.QWidget
-):  # pylint: disable=too-many-public-methods, too-many-instance-attributes
+class Canvas(QtWidgets.QWidget):  # pylint: disable=too-many-public-methods, too-many-instance-attributes
     """Canvas widget to handle label drawing"""
 
     zoom_request = QtCore.pyqtSignal(int, QtCore.QPoint)
@@ -219,16 +217,11 @@ class Canvas(
         self.is_auto_labeling = value
         if self.auto_labeling_mode is None:
             self.auto_labeling_mode = AutoLabelingMode.NONE
-            self.parent.toggle_draw_mode(
-                False, "rectangle", disable_auto_labeling=True
-            )
+            self.parent.toggle_draw_mode(False, "rectangle", disable_auto_labeling=True)
 
     def get_mode(self):
         """Get current mode"""
-        if (
-            self.is_auto_labeling
-            and self.auto_labeling_mode != AutoLabelingMode.NONE
-        ):
+        if self.is_auto_labeling and self.auto_labeling_mode != AutoLabelingMode.NONE:
             return self.tr("Auto Labeling")
         if self.mode == self.CREATE:
             return self.tr("Drawing")
@@ -332,9 +325,7 @@ class Canvas(
                 self.bounded_move_shapes(self.selected_shapes_copy, pos)
                 self.repaint()
             elif self.selected_shapes:
-                self.selected_shapes_copy = [
-                    s.copy() for s in self.selected_shapes
-                ]
+                self.selected_shapes_copy = [s.copy() for s in self.selected_shapes]
                 self.repaint()
             return
 
@@ -479,20 +470,15 @@ class Canvas(
                     self.remove_selected_point()
 
                 group_mode = int(ev.modifiers()) == QtCore.Qt.ControlModifier
-                self.select_shape_point(
-                    pos, multiple_selection_mode=group_mode
-                )
+                self.select_shape_point(pos, multiple_selection_mode=group_mode)
                 self.prev_point = pos
                 self.repaint()
         elif ev.button() == QtCore.Qt.RightButton and self.editing():
             group_mode = int(ev.modifiers()) == QtCore.Qt.ControlModifier
             if not self.selected_shapes or (
-                self.h_hape is not None
-                and self.h_hape not in self.selected_shapes
+                self.h_hape is not None and self.h_hape not in self.selected_shapes
             ):
-                self.select_shape_point(
-                    pos, multiple_selection_mode=group_mode
-                )
+                self.select_shape_point(pos, multiple_selection_mode=group_mode)
                 self.repaint()
             self.prev_point = pos
 
@@ -504,10 +490,7 @@ class Canvas(
         if ev.button() == QtCore.Qt.RightButton:
             menu = self.menus[len(self.selected_shapes_copy) > 0]
             self.restore_cursor()
-            if (
-                not menu.exec_(self.mapToGlobal(ev.pos()))
-                and self.selected_shapes_copy
-            ):
+            if not menu.exec_(self.mapToGlobal(ev.pos())) and self.selected_shapes_copy:
                 # Cancel the move by deleting the shadow copy.
                 self.selected_shapes_copy = []
                 self.repaint()
@@ -524,10 +507,7 @@ class Canvas(
 
         if self.moving_shape and self.h_hape:
             index = self.shapes.index(self.h_hape)
-            if (
-                self.shapes_backups[-1][index].points
-                != self.shapes[index].points
-            ):
+            if self.shapes_backups[-1][index].points != self.shapes[index].points:
                 self.store_shapes()
                 self.shape_moved.emit()
 
@@ -599,9 +579,7 @@ class Canvas(
                     self.set_hiding()
                     if shape not in self.selected_shapes:
                         if multiple_selection_mode:
-                            self.selection_changed.emit(
-                                self.selected_shapes + [shape]
-                            )
+                            self.selection_changed.emit(self.selected_shapes + [shape])
                         else:
                             self.selection_changed.emit([shape])
                         self.h_shape_is_selected = False
@@ -700,9 +678,7 @@ class Canvas(
     def duplicate_selected_shapes(self):
         """Duplicate selected shapes"""
         if self.selected_shapes:
-            self.selected_shapes_copy = [
-                s.copy() for s in self.selected_shapes
-            ]
+            self.selected_shapes_copy = [s.copy() for s in self.selected_shapes]
             self.bounded_shift_shapes(self.selected_shapes_copy)
             self.end_move(copy=True)
         return self.selected_shapes
@@ -724,11 +700,7 @@ class Canvas(
     # QT Overload
     def paintEvent(self, event):  # noqa: C901
         """Paint event for canvas"""
-        if (
-            self.pixmap is None
-            or self.pixmap.width() == 0
-            or self.pixmap.height() == 0
-        ):
+        if self.pixmap is None or self.pixmap.width() == 0 or self.pixmap.height() == 0:
             super().paintEvent(event)
             return
 
@@ -799,9 +771,7 @@ class Canvas(
                     min_y = min(min_y, rect.y())
                     max_x = max(max_x, rect.x() + rect.width())
                     max_y = max(max_y, rect.y() + rect.height())
-                    group_color = LABEL_COLORMAP[
-                        int(group_id) % len(LABEL_COLORMAP)
-                    ]
+                    group_color = LABEL_COLORMAP[int(group_id) % len(LABEL_COLORMAP)]
                     pen.setStyle(Qt.SolidLine)
                     pen.setWidth(max(1, int(round(4.0 / Shape.scale))))
                     pen.setColor(QtGui.QColor(*group_color))
@@ -821,15 +791,11 @@ class Canvas(
                 pen.setWidth(max(1, int(round(1.0 / Shape.scale))))
                 pen.setColor(QtGui.QColor("#EEEEEE"))
                 p.setPen(pen)
-                wrap_rect = QtCore.QRectF(
-                    min_x, min_y, max_x - min_x, max_y - min_y
-                )
+                wrap_rect = QtCore.QRectF(min_x, min_y, max_x - min_x, max_y - min_y)
                 p.drawRect(wrap_rect)
 
         for shape in self.shapes:
-            if (
-                shape.selected or not self._hide_backround
-            ) and self.is_visible(shape):
+            if (shape.selected or not self._hide_backround) and self.is_visible(shape):
                 shape.fill = shape.selected or shape == self.h_hape
                 shape.paint(p)
         if self.current:
@@ -853,9 +819,7 @@ class Canvas(
         # Draw texts
         if self.show_texts:
             p.setFont(
-                QtGui.QFont(
-                    "Arial", int(max(6.0, int(round(8.0 / Shape.scale))))
-                )
+                QtGui.QFont("Arial", int(max(6.0, int(round(8.0 / Shape.scale)))))
             )
             pen = QtGui.QPen(QtGui.QColor("#00FF00"), 8, Qt.SolidLine)
             p.setPen(pen)
@@ -935,10 +899,7 @@ class Canvas(
     def finalise(self):
         """Finish drawing for a shape"""
         assert self.current
-        if (
-            self.is_auto_labeling
-            and self.auto_labeling_mode != AutoLabelingMode.NONE
-        ):
+        if self.is_auto_labeling and self.auto_labeling_mode != AutoLabelingMode.NONE:
             self.current.label = self.auto_labeling_mode.edit_mode
         # TODO(vietanhdev): Temporrally fix. Need to refactor
         if self.current.label is None:
@@ -1119,9 +1080,7 @@ class Canvas(
     def move_by_keyboard(self, offset):
         """Move selected shapes by an offset (using keyboard)"""
         if self.selected_shapes:
-            self.bounded_move_shapes(
-                self.selected_shapes, self.prev_point + offset
-            )
+            self.bounded_move_shapes(self.selected_shapes, self.prev_point + offset)
             self.repaint()
             self.moving_shape = True
 
@@ -1159,10 +1118,7 @@ class Canvas(
         elif self.editing():
             if self.moving_shape and self.selected_shapes:
                 index = self.shapes.index(self.selected_shapes[0])
-                if (
-                    self.shapes_backups[-1][index].points
-                    != self.shapes[index].points
-                ):
+                if self.shapes_backups[-1][index].points != self.shapes[index].points:
                     self.store_shapes()
                     self.shape_moved.emit()
 
@@ -1300,9 +1256,7 @@ class Canvas(
 
         # Merge group ids
         if len(group_ids) > 1:
-            self.merge_group_ids(
-                group_ids=group_ids, new_group_id=new_group_id
-            )
+            self.merge_group_ids(group_ids=group_ids, new_group_id=new_group_id)
         # Assign new_group_id to non-group shapes
         if has_non_group_shape:
             for shape in self.selected_shapes:

@@ -80,9 +80,7 @@ class LabelFile:
                 data = json.load(f)
             version = data.get("version")
             if version is None:
-                logger.warning(
-                    "Loading JSON file (%s) of unknown version", filename
-                )
+                logger.warning("Loading JSON file (%s) of unknown version", filename)
 
             if data["imageData"] is not None:
                 image_data = base64.b64decode(data["imageData"])
@@ -105,9 +103,7 @@ class LabelFile:
                     "shape_type": s.get("shape_type", "polygon"),
                     "flags": s.get("flags", {}),
                     "group_id": s.get("group_id"),
-                    "other_data": {
-                        k: v for k, v in s.items() if k not in shape_keys
-                    },
+                    "other_data": {k: v for k, v in s.items() if k not in shape_keys},
                 }
                 for s in data["shapes"]
             ]

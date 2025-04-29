@@ -54,17 +54,11 @@ def get_default_config():
 
 def validate_config_item(key, value):
     if key == "validate_label" and value not in [None, "exact"]:
-        raise ValueError(
-            f"Unexpected value for config key 'validate_label': {value}"
-        )
+        raise ValueError(f"Unexpected value for config key 'validate_label': {value}")
     if key == "shape_color" and value not in [None, "auto", "manual"]:
-        raise ValueError(
-            f"Unexpected value for config key 'shape_color': {value}"
-        )
+        raise ValueError(f"Unexpected value for config key 'shape_color': {value}")
     if key == "labels" and value is not None and len(value) != len(set(value)):
-        raise ValueError(
-            f"Duplicates are detected for config key 'labels': {value}"
-        )
+        raise ValueError(f"Duplicates are detected for config key 'labels': {value}")
 
 
 def get_config(config_file_or_yaml=None, config_from_args=None):
@@ -80,14 +74,10 @@ def get_config(config_file_or_yaml=None, config_from_args=None):
             with open(config_from_yaml) as f:
                 logger.info("Loading config file from: %s", config_from_yaml)
                 config_from_yaml = yaml.safe_load(f)
-        update_dict(
-            config, config_from_yaml, validate_item=validate_config_item
-        )
+        update_dict(config, config_from_yaml, validate_item=validate_config_item)
 
     # 3. command line argument or specified config file
     if config_from_args is not None:
-        update_dict(
-            config, config_from_args, validate_item=validate_config_item
-        )
+        update_dict(config, config_from_args, validate_item=validate_config_item)
 
     return config

@@ -1,15 +1,10 @@
 """Utilities for exporting annotations to different formats."""
 
-import base64
-import io
 import json
-import os
 import os.path as osp
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
 
-import numpy as np
-from PIL import Image
 
 from anylabeling.app_info import __version__
 
@@ -40,10 +35,7 @@ class FormatExporter:
 
         results = []
         for shape in shapes:
-            if (
-                shape["shape_type"] != "rectangle"
-                and shape["shape_type"] != "polygon"
-            ):
+            if shape["shape_type"] != "rectangle" and shape["shape_type"] != "polygon":
                 continue
 
             label = shape["label"]
@@ -61,9 +53,7 @@ class FormatExporter:
                 y_center = (y1 + y2) / (2 * image_height)
                 width = abs(x2 - x1) / image_width
                 height = abs(y2 - y1) / image_height
-                results.append(
-                    f"{class_idx} {x_center} {y_center} {width} {height}"
-                )
+                results.append(f"{class_idx} {x_center} {y_center} {width} {height}")
             elif shape["shape_type"] == "polygon":
                 # For polygons, convert to bbox firs
                 x_coords = [p[0] for p in points]
@@ -75,9 +65,7 @@ class FormatExporter:
                 y_center = (y_min + y_max) / (2 * image_height)
                 width = (x_max - x_min) / image_width
                 height = (y_max - y_min) / image_height
-                results.append(
-                    f"{class_idx} {x_center} {y_center} {width} {height}"
-                )
+                results.append(f"{class_idx} {x_center} {y_center} {width} {height}")
 
         result_text = "\n".join(results)
         if output_path:
@@ -122,10 +110,7 @@ class FormatExporter:
 
         # Add objects
         for shape in shapes:
-            if (
-                shape["shape_type"] != "rectangle"
-                and shape["shape_type"] != "polygon"
-            ):
+            if shape["shape_type"] != "rectangle" and shape["shape_type"] != "polygon":
                 continue
 
             obj = ET.SubElement(annotation, "object")
@@ -212,9 +197,7 @@ class FormatExporter:
             )
 
         # Map category names to ids
-        category_map = {
-            cat["name"]: cat["id"] for cat in coco_dict["categories"]
-        }
+        category_map = {cat["name"]: cat["id"] for cat in coco_dict["categories"]}
 
         annotation_id = 1
 
@@ -276,9 +259,7 @@ class FormatExporter:
 
                 elif shape["shape_type"] == "polygon":
                     # Flatten points for segmentation
-                    segmentation = [
-                        [coord for point in points for coord in point]
-                    ]
+                    segmentation = [[coord for point in points for coord in point]]
 
                     # Calculate bbox
                     x_coords = [p[0] for p in points]

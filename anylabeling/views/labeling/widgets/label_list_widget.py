@@ -32,9 +32,7 @@ class HTMLDelegate(QtWidgets.QStyledItemDelegate):
         if option.state & QStyle.State_Selected:
             ctx.palette.setColor(
                 QPalette.Text,
-                option.palette.color(
-                    QPalette.Active, QPalette.HighlightedText
-                ),
+                option.palette.color(QPalette.Active, QPalette.HighlightedText),
             )
         else:
             ctx.palette.setColor(
@@ -145,9 +143,7 @@ class LabelListWidget(QtWidgets.QListView):
 
     def item_selection_changed_event(self, selected, deselected):
         selected = [self.model().itemFromIndex(i) for i in selected.indexes()]
-        deselected = [
-            self.model().itemFromIndex(i) for i in deselected.indexes()
-        ]
+        deselected = [self.model().itemFromIndex(i) for i in deselected.indexes()]
         self.item_selection_changed.emit(selected, deselected)
 
     def item_double_clicked_event(self, index):

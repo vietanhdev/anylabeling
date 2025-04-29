@@ -39,9 +39,7 @@ class LabelDialog(QtWidgets.QDialog):
         flags=None,
     ):
         if text is None:
-            text = QCoreApplication.translate(
-                "LabelDialog", "Enter object label"
-            )
+            text = QCoreApplication.translate("LabelDialog", "Enter object label")
 
         if fit_to_content is None:
             fit_to_content = {"row": False, "column": True}
@@ -57,9 +55,7 @@ class LabelDialog(QtWidgets.QDialog):
         self.edit_group_id = QtWidgets.QLineEdit()
         self.edit_group_id.setPlaceholderText(self.tr("Group ID"))
         self.edit_group_id.setValidator(
-            QtGui.QRegularExpressionValidator(
-                QtCore.QRegularExpression(r"\d*"), None
-            )
+            QtGui.QRegularExpressionValidator(QtCore.QRegularExpression(r"\d*"), None)
         )
         layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins(10, 10, 10, 10)
@@ -82,22 +78,16 @@ class LabelDialog(QtWidgets.QDialog):
         # label_list
         self.label_list = QtWidgets.QListWidget()
         if self._fit_to_content["row"]:
-            self.label_list.setHorizontalScrollBarPolicy(
-                QtCore.Qt.ScrollBarAlwaysOff
-            )
+            self.label_list.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         if self._fit_to_content["column"]:
-            self.label_list.setVerticalScrollBarPolicy(
-                QtCore.Qt.ScrollBarAlwaysOff
-            )
+            self.label_list.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self._sort_labels = sort_labels
         if labels:
             self.label_list.addItems(labels)
         if self._sort_labels:
             self.label_list.sortItems()
         else:
-            self.label_list.setDragDropMode(
-                QtWidgets.QAbstractItemView.InternalMove
-            )
+            self.label_list.setDragDropMode(QtWidgets.QAbstractItemView.InternalMove)
         self.label_list.currentItemChanged.connect(self.label_selected)
         self.label_list.itemDoubleClicked.connect(self.label_double_clicked)
         self.edit.set_list_widget(self.label_list)
@@ -213,9 +203,7 @@ class LabelDialog(QtWidgets.QDialog):
                 self.label_list.sizeHintForRow(0) * self.label_list.count() + 2
             )
         if self._fit_to_content["column"]:
-            self.label_list.setMinimumWidth(
-                self.label_list.sizeHintForColumn(0) + 2
-            )
+            self.label_list.setMinimumWidth(self.label_list.sizeHintForColumn(0) + 2)
         # if text is None, the previous label in self.edit is kept
         if text is None:
             text = self.edit.text()

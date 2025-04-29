@@ -61,9 +61,7 @@ class ModelManager(QObject):
     def load_model_configs(self):
         """Load model configs"""
         # Load list of default models
-        with pkg_resources.open_text(
-            auto_labeling_configs, "models.yaml"
-        ) as f:
+        with pkg_resources.open_text(auto_labeling_configs, "models.yaml") as f:
             model_list = yaml.safe_load(f)
             for model in model_list:
                 model["is_custom_model"] = False
@@ -74,9 +72,7 @@ class ModelManager(QObject):
                 model_download_path = os.path.join(
                     home_dir, "anylabeling_data", "models", model["name"]
                 )
-                pathlib.Path(model_download_path).mkdir(
-                    parents=True, exist_ok=True
-                )
+                pathlib.Path(model_download_path).mkdir(parents=True, exist_ok=True)
                 config_file = os.path.join(model_download_path, "config.yaml")
                 model["config_file"] = config_file
 
@@ -126,9 +122,7 @@ class ModelManager(QObject):
             if not model_config.get("is_custom_model", False):
                 model_config["last_used"] = -i
             else:
-                model_config["last_used"] = model_config.get(
-                    "last_used", time.time()
-                )
+                model_config["last_used"] = model_config.get("last_used", time.time())
         model_configs.sort(key=lambda x: x.get("last_used", 0), reverse=True)
 
         self.model_configs = model_configs
@@ -147,9 +141,7 @@ class ModelManager(QObject):
     def on_model_download_finished(self):
         """Handle model download thread finished"""
         if self.loaded_model_config and self.loaded_model_config["model"]:
-            self.new_model_status.emit(
-                self.tr("Model loaded. Ready for labeling.")
-            )
+            self.new_model_status.emit(self.tr("Model loaded. Ready for labeling."))
             self.model_loaded.emit(self.loaded_model_config)
             self.output_modes_changed.emit(
                 self.loaded_model_config["model"].Meta.output_modes,
@@ -165,9 +157,7 @@ class ModelManager(QObject):
             self.model_download_thread is not None
             and self.model_download_thread.isRunning()
         ):
-            print(
-                "Another model is being loaded. Please wait for it to finish."
-            )
+            print("Another model is being loaded. Please wait for it to finish.")
             return
 
         # Check config file path
@@ -191,13 +181,10 @@ class ModelManager(QObject):
             "type" not in model_config
             or "display_name" not in model_config
             or "name" not in model_config
-            or model_config["type"]
-            not in ["segment_anything", "yolov5", "yolov8"]
+            or model_config["type"] not in ["segment_anything", "yolov5", "yolov8"]
         ):
             self.new_model_status.emit(
-                self.tr(
-                    "Error in loading custom model: Invalid config file format."
-                )
+                self.tr("Error in loading custom model: Invalid config file format.")
             )
             return
 
@@ -205,9 +192,7 @@ class ModelManager(QObject):
         custom_models = get_config().get("custom_models", [])
         matched_index = None
         for i, model in enumerate(custom_models):
-            if os.path.normpath(model["config_file"]) == os.path.normpath(
-                config_file
-            ):
+            if os.path.normpath(model["config_file"]) == os.path.normpath(config_file):
                 matched_index = i
                 break
         if matched_index is not None:
@@ -215,9 +200,7 @@ class ModelManager(QObject):
             custom_models[matched_index] = model_config
         else:
             if len(custom_models) >= self.MAX_NUM_CUSTOM_MODELS:
-                custom_models.sort(
-                    key=lambda x: x.get("last_used", 0), reverse=True
-                )
+                custom_models.sort(key=lambda x: x.get("last_used", 0), reverse=True)
                 removed_model = custom_models.pop()
                 # Remove old model folder
                 config_file = removed_model["config_file"]
@@ -245,9 +228,7 @@ class ModelManager(QObject):
             self.model_download_thread is not None
             and self.model_download_thread.isRunning()
         ):
-            print(
-                "Another model is being loaded. Please wait for it to finish."
-            )
+            print("Another model is being loaded. Please wait for it to finish.")
             return
         if not config_file:
             if self.model_download_worker is not None:
@@ -280,16 +261,10 @@ class ModelManager(QObject):
             )
         )
         self.model_download_worker = GenericWorker(self._load_model, model_id)
-        self.model_download_worker.finished.connect(
-            self.on_model_download_finished
-        )
-        self.model_download_worker.finished.connect(
-            self.model_download_thread.quit
-        )
+        self.model_download_worker.finished.connect(self.on_model_download_finished)
+        self.model_download_worker.finished.connect(self.model_download_thread.quit)
         self.model_download_worker.moveToThread(self.model_download_thread)
-        self.model_download_thread.started.connect(
-            self.model_download_worker.run
-        )
+        self.model_download_thread.started.connect(self.model_download_worker.run)
         self.model_download_thread.start()
 
     def _download_and_extract_model(self, model_config):
@@ -313,12 +288,8 @@ class ModelManager(QObject):
         # Download url
         ellipsis_download_url = download_url
         if len(download_url) > 40:
-            ellipsis_download_url = (
-                download_url[:20] + "..." + download_url[-20:]
-            )
-        logging.info(
-            "Downloading %s to %s", ellipsis_download_url, zip_model_path
-        )
+            ellipsis_download_url = download_url[:20] + "..." + download_url[-20:]
+        logging.info("Downloading %s to %s", ellipsis_download_url, zip_model_path)
         try:
             # Download and show progress
             def _progress(count, block_size, total_size):
@@ -326,9 +297,7 @@ class ModelManager(QObject):
                 self.new_model_status.emit(
                     QCoreApplication.translate(
                         "Model", "Downloading {download_url}: {percent}%"
-                    ).format(
-                        download_url=ellipsis_download_url, percent=percent
-                    )
+                    ).format(download_url=ellipsis_download_url, percent=percent)
                 )
 
             urllib.request.urlretrieve(
@@ -352,9 +321,7 @@ class ModelManager(QObject):
                 model_folder = root
                 break
         if model_folder is None:
-            raise ValueError(
-                self.tr("Could not find config.yaml in zip file.")
-            )
+            raise ValueError(self.tr("Could not find config.yaml in zip file."))
 
         # Move model folder to correct location
         shutil.rmtree(extract_dir)
@@ -494,9 +461,9 @@ class ModelManager(QObject):
             self.prediction_finished.emit()
             return
         try:
-            auto_labeling_result = self.loaded_model_config[
-                "model"
-            ].predict_shapes(image, filename)
+            auto_labeling_result = self.loaded_model_config["model"].predict_shapes(
+                image, filename
+            )
             self.new_auto_labeling_result.emit(auto_labeling_result)
         except Exception as e:  # noqa
             print(f"Error in predict_shapes: {e}")
@@ -518,9 +485,7 @@ class ModelManager(QObject):
                 self.tr("Model is not loaded. Choose a mode to continue.")
             )
             return
-        self.new_model_status.emit(
-            self.tr("Inferencing AI model. Please wait...")
-        )
+        self.new_model_status.emit(self.tr("Inferencing AI model. Please wait..."))
         self.prediction_started.emit()
 
         with self.model_execution_thread_lock:
@@ -530,8 +495,7 @@ class ModelManager(QObject):
             ):
                 self.new_model_status.emit(
                     self.tr(
-                        "Another model is being executed."
-                        " Please wait for it to finish."
+                        "Another model is being executed. Please wait for it to finish."
                     )
                 )
                 self.prediction_finished.emit()
@@ -544,12 +508,8 @@ class ModelManager(QObject):
             self.model_execution_worker.finished.connect(
                 self.model_execution_thread.quit
             )
-            self.model_execution_worker.moveToThread(
-                self.model_execution_thread
-            )
-            self.model_execution_thread.started.connect(
-                self.model_execution_worker.run
-            )
+            self.model_execution_worker.moveToThread(self.model_execution_thread)
+            self.model_execution_thread.started.connect(self.model_execution_worker.run)
             self.model_execution_thread.start()
 
     def on_next_files_changed(self, next_files):

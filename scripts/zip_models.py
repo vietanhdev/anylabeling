@@ -48,9 +48,7 @@ for model in model_list:
             model_config["decoder_model_path"]
         )
     else:
-        model_config["model_path"] = get_filename_from_url(
-            model_config["model_path"]
-        )
+        model_config["model_path"] = get_filename_from_url(model_config["model_path"])
     with open(os.path.join(model_output_path, "config.yaml"), "w") as f:
         yaml.dump(model_config, f)
 
@@ -59,9 +57,7 @@ for model in model_list:
         os.system(f"wget -P {model_output_path} {link}")
 
     # Zip model
-    with zipfile.ZipFile(
-        os.path.join(output_path, f"{model_name}.zip"), "w"
-    ) as zip:
+    with zipfile.ZipFile(os.path.join(output_path, f"{model_name}.zip"), "w") as zip:
         for root, _, files in os.walk(model_output_path):
             for file in files:
                 zip.write(
