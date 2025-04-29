@@ -190,7 +190,7 @@ class LabelDialog(QtWidgets.QDialog):
         self.delete_flags()
         for key in flags:
             item = QtWidgets.QCheckBox(key, self)
-            item.setChecked(flags[key])
+            item.setChecked(bool(flags[key]))
             self.flags_layout.addWidget(item)
             item.show()
 
