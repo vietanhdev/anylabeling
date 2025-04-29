@@ -1,4 +1,5 @@
 """This module defines Canvas widget - the core component for drawing image labels"""
+
 import imgviz
 from time import time
 from PyQt5 import QtCore, QtGui, QtWidgets

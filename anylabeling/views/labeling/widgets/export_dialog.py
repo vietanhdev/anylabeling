@@ -37,7 +37,7 @@ class ExportDialog(QDialog):
         self.export_worker = None
         self.setMinimumWidth(600)
         self.setMinimumHeight(400)
-        self.setWindowTitle("Export Annotations")
+        self.setWindowTitle(self.tr("Export Annotations"))
         self.setup_ui()
 
     def setup_ui(self):
@@ -46,27 +46,27 @@ class ExportDialog(QDialog):
         self.setLayout(layout)
 
         # -- Format selection --
-        format_group = QGroupBox("Format")
+        format_group = QGroupBox(self.tr("Format"))
         format_layout = QVBoxLayout()
         format_group.setLayout(format_layout)
 
         self.format_combo = QComboBox()
-        self.format_combo.addItem("YOLO (.txt)", "yolo")
-        self.format_combo.addItem("COCO (.json)", "coco")
-        self.format_combo.addItem("Pascal VOC (.xml)", "pascal_voc")
-        self.format_combo.addItem("CreateML", "createml")
+        self.format_combo.addItem(self.tr("YOLO (.txt)"), "yolo")
+        self.format_combo.addItem(self.tr("COCO (.json)"), "coco")
+        self.format_combo.addItem(self.tr("Pascal VOC (.xml)"), "pascal_voc")
+        self.format_combo.addItem(self.tr("CreateML"), "createml")
         format_layout.addWidget(self.format_combo)
 
         layout.addWidget(format_group)
 
         # -- Source selection --
-        source_group = QGroupBox("Source")
+        source_group = QGroupBox(self.tr("Source"))
         source_layout = QVBoxLayout()
         source_group.setLayout(source_layout)
 
-        self.current_folder_radio = QRadioButton("Current Folder")
+        self.current_folder_radio = QRadioButton(self.tr("Current Folder"))
         self.current_folder_radio.setChecked(True)
-        self.select_folder_radio = QRadioButton("Select Folder")
+        self.select_folder_radio = QRadioButton(self.tr("Select Folder"))
         self.source_button_group = QButtonGroup()
         self.source_button_group.addButton(self.current_folder_radio)
         self.source_button_group.addButton(self.select_folder_radio)
@@ -79,57 +79,65 @@ class ExportDialog(QDialog):
         self.source_folder_edit.setReadOnly(True)
         self.source_folder_edit.setEnabled(False)
         select_folder_layout.addWidget(self.source_folder_edit)
-        self.source_browse_button = QPushButton("Browse...")
+        self.source_browse_button = QPushButton(self.tr("Browse..."))
         self.source_browse_button.setEnabled(False)
         select_folder_layout.addWidget(self.source_browse_button)
 
         source_layout.addLayout(select_folder_layout)
 
         # Add recursive search option
-        self.recursive_check = QCheckBox("Search recursively in subfolders")
+        self.recursive_check = QCheckBox(
+            self.tr("Search recursively in subfolders")
+        )
         self.recursive_check.setChecked(True)
         source_layout.addWidget(self.recursive_check)
 
         layout.addWidget(source_group)
 
         # -- Output folder selection --
-        output_group = QGroupBox("Output Folder")
+        output_group = QGroupBox(self.tr("Output Folder"))
         output_layout = QHBoxLayout()
         output_group.setLayout(output_layout)
 
         self.output_folder_edit = QLineEdit()
         self.output_folder_edit.setReadOnly(True)
         output_layout.addWidget(self.output_folder_edit)
-        self.output_browse_button = QPushButton("Browse...")
+        self.output_browse_button = QPushButton(self.tr("Browse..."))
         output_layout.addWidget(self.output_browse_button)
 
         layout.addWidget(output_group)
 
         # -- Export options --
-        export_options_group = QGroupBox("Export Options")
+        export_options_group = QGroupBox(self.tr("Export Options"))
         export_options_layout = QVBoxLayout()
         export_options_group.setLayout(export_options_layout)
 
         # Random names option
-        self.random_names_check = QCheckBox("Use random names (UUID4) for exported items")
-        self.random_names_check.setToolTip("Generate unique identifiers for exported files")
+        self.random_names_check = QCheckBox(
+            self.tr("Use random names (UUID4) for exported items")
+        )
+        self.random_names_check.setToolTip(
+            self.tr("Generate unique identifiers for exported files")
+        )
         export_options_layout.addWidget(self.random_names_check)
 
         layout.addWidget(export_options_group)
 
         # -- Data split options --
-        split_group = QGroupBox("Data Split")
+        split_group = QGroupBox(self.tr("Data Split"))
         split_layout = QVBoxLayout()
         split_group.setLayout(split_layout)
 
-        self.split_check = QCheckBox("Split data into train/val/test sets")
+        self.split_check = QCheckBox(
+            self.tr("Split data into train/val/test sets")
+        )
         split_layout.addWidget(self.split_check)
 
         # Split ratio layout
         ratio_layout = QHBoxLayout()
 
         train_layout = QHBoxLayout()
-        train_layout.addWidget(QLabel("Train:"))
+        train_layout.addWidget(QLabel(self.tr("Train:")))
         self.train_spin = QSpinBox()
         self.train_spin.setRange(1, 99)
         self.train_spin.setValue(70)
@@ -139,7 +147,7 @@ class ExportDialog(QDialog):
         ratio_layout.addLayout(train_layout)
 
         val_layout = QHBoxLayout()
-        val_layout.addWidget(QLabel("Val:"))
+        val_layout.addWidget(QLabel(self.tr("Val:")))
         self.val_spin = QSpinBox()
         self.val_spin.setRange(1, 99)
         self.val_spin.setValue(20)
@@ -149,7 +157,7 @@ class ExportDialog(QDialog):
         ratio_layout.addLayout(val_layout)
 
         test_layout = QHBoxLayout()
-        test_layout.addWidget(QLabel("Test:"))
+        test_layout.addWidget(QLabel(self.tr("Test:")))
         self.test_spin = QSpinBox()
         self.test_spin.setRange(0, 98)
         self.test_spin.setValue(10)
@@ -163,7 +171,7 @@ class ExportDialog(QDialog):
         layout.addWidget(split_group)
 
         # -- Progress bar --
-        progress_group = QGroupBox("Progress")
+        progress_group = QGroupBox(self.tr("Progress"))
         progress_layout = QVBoxLayout()
         progress_group.setLayout(progress_layout)
 
@@ -172,7 +180,7 @@ class ExportDialog(QDialog):
         self.progress_bar.setValue(0)
         progress_layout.addWidget(self.progress_bar)
 
-        self.progress_label = QLabel("Ready")
+        self.progress_label = QLabel(self.tr("Ready"))
         progress_layout.addWidget(self.progress_label)
 
         layout.addWidget(progress_group)
@@ -180,9 +188,9 @@ class ExportDialog(QDialog):
         # -- Dialog buttons --
         button_layout = QHBoxLayout()
 
-        self.export_button = QPushButton("Export")
+        self.export_button = QPushButton(self.tr("Export"))
         self.export_button.setDefault(True)
-        self.cancel_button = QPushButton("Cancel")
+        self.cancel_button = QPushButton(self.tr("Cancel"))
 
         button_layout.addStretch()
         button_layout.addWidget(self.export_button)
@@ -227,7 +235,7 @@ class ExportDialog(QDialog):
         """Handle clicking of source browse button."""
         folder = QFileDialog.getExistingDirectory(
             self,
-            "Select Source Folder",
+            self.tr("Select Source Folder"),
             self.current_folder or os.path.expanduser("~"),
         )
         if folder:
@@ -238,7 +246,7 @@ class ExportDialog(QDialog):
         """Handle clicking of output browse button."""
         folder = QFileDialog.getExistingDirectory(
             self,
-            "Select Output Folder",
+            self.tr("Select Output Folder"),
             self.current_folder or os.path.expanduser("~"),
         )
         if folder:
@@ -322,14 +330,18 @@ class ExportDialog(QDialog):
         # Check if source folder is selected
         if self.select_folder_radio.isChecked() and not self.source_folder:
             QMessageBox.warning(
-                self, "Missing Source", "Please select a source folder."
+                self,
+                self.tr("Missing Source"),
+                self.tr("Please select a source folder."),
             )
             return False
 
         # Check if output folder is selected
         if not self.output_folder:
             QMessageBox.warning(
-                self, "Missing Output", "Please select an output folder."
+                self,
+                self.tr("Missing Output"),
+                self.tr("Please select an output folder."),
             )
             return False
 
@@ -342,8 +354,10 @@ class ExportDialog(QDialog):
         if source == self.output_folder:
             result = QMessageBox.question(
                 self,
-                "Same Folder",
-                "Source and output folders are the same. This may overwrite files. Continue?",
+                self.tr("Same Folder"),
+                self.tr(
+                    "Source and output folders are the same. This may overwrite files. Continue?"
+                ),
                 QMessageBox.Yes | QMessageBox.No,
                 QMessageBox.No,
             )
@@ -360,8 +374,8 @@ class ExportDialog(QDialog):
             if total != 100:
                 QMessageBox.warning(
                     self,
-                    "Invalid Split Ratio",
-                    "Split ratios must add up to 100%.",
+                    self.tr("Invalid Split Ratio"),
+                    self.tr("Split ratios must add up to 100%."),
                 )
                 return False
 
@@ -417,32 +431,36 @@ class ExportDialog(QDialog):
         if self.export_worker and self.export_worker.running:
             result = QMessageBox.question(
                 self,
-                "Cancel Export",
-                "Export is in progress. Are you sure you want to cancel?",
+                self.tr("Cancel Export"),
+                self.tr(
+                    "Export is in progress. Are you sure you want to cancel?"
+                ),
                 QMessageBox.Yes | QMessageBox.No,
                 QMessageBox.No,
             )
             if result == QMessageBox.Yes:
                 self.export_worker.stop()
-                self.progress_label.setText("Cancelling...")
+                self.progress_label.setText(self.tr("Cancelling..."))
         else:
             self.reject()
 
     def on_export_started(self):
         """Handle export started signal."""
-        self.progress_label.setText("Starting export...")
+        self.progress_label.setText(self.tr("Starting export..."))
         self.progress_bar.setValue(0)
 
     def on_export_finished(self):
         """Handle export finished signal."""
         self.set_controls_enabled(True)
-        self.progress_label.setText("Export completed!")
+        self.progress_label.setText(self.tr("Export completed!"))
         self.progress_bar.setValue(100)
 
         QMessageBox.information(
             self,
-            "Export Completed",
-            f"Annotations have been exported to {self.output_folder}",
+            self.tr("Export Completed"),
+            self.tr("Annotations have been exported to {}").format(
+                self.output_folder
+            ),
         )
 
     def on_export_progress(self, progress, message):
@@ -453,12 +471,14 @@ class ExportDialog(QDialog):
     def on_export_error(self, error_message):
         """Handle export error signal."""
         self.set_controls_enabled(True)
-        self.progress_label.setText(f"Error: {error_message}")
+        self.progress_label.setText(self.tr("Error: {}").format(error_message))
 
         QMessageBox.critical(
             self,
-            "Export Error",
-            f"An error occurred during export:\n{error_message}",
+            self.tr("Export Error"),
+            self.tr("An error occurred during export:\n{}").format(
+                error_message
+            ),
         )
 
     def set_controls_enabled(self, enabled):
@@ -493,4 +513,6 @@ class ExportDialog(QDialog):
 
         # Dialog buttons
         self.export_button.setEnabled(enabled)
-        self.cancel_button.setText("Close" if enabled else "Cancel")
+        self.cancel_button.setText(
+            self.tr("Close") if enabled else self.tr("Cancel")
+        )

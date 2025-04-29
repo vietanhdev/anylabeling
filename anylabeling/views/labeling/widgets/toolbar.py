@@ -1,4 +1,4 @@
-"""Defines toolbar for anylabeling, including """
+"""Defines toolbar for anylabeling, including"""
 
 import darkdetect
 from PyQt5 import QtCore, QtWidgets

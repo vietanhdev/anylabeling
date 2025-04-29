@@ -289,7 +289,9 @@ class ExportWorker(QRunnable):
                     output_img_name = osp.basename(image_path)
                     if self.use_random_names:
                         # Extract base_name from the output_path
-                        random_base = osp.splitext(osp.basename(output_path))[0]
+                        random_base = osp.splitext(osp.basename(output_path))[
+                            0
+                        ]
                         output_img_name = random_base + img_ext
 
                     if self.split_data:
@@ -301,7 +303,9 @@ class ExportWorker(QRunnable):
                         )
                     else:
                         image_output_path = osp.join(
-                            self.output_dir, "images", output_img_name,
+                            self.output_dir,
+                            "images",
+                            output_img_name,
                         )
                     shutil.copy2(image_path, image_output_path)
 
@@ -360,17 +364,17 @@ class ExportWorker(QRunnable):
 
                     # Get file name and extension for the image
                     img_name, img_ext = osp.splitext(osp.basename(image_path))
-                    
+
                     # Generate a random name if requested
                     output_img_name = osp.basename(image_path)
                     if self.use_random_names:
                         # Extract base_name from the output_path
-                        random_base = osp.splitext(osp.basename(output_path))[0]
+                        random_base = osp.splitext(osp.basename(output_path))[
+                            0
+                        ]
                         output_img_name = random_base + img_ext
 
-                    image_output_path = osp.join(
-                        split_dir, output_img_name
-                    )
+                    image_output_path = osp.join(split_dir, output_img_name)
                     shutil.copy2(image_path, image_output_path)
 
     def _export_coco(self, json_files_by_split):
@@ -432,7 +436,7 @@ class ExportWorker(QRunnable):
 
                 # Get file name and extension for the image
                 img_name, img_ext = osp.splitext(osp.basename(image_path))
-                
+
                 # Generate a random name if requested
                 output_img_name = osp.basename(image_path)
                 if self.use_random_names:
@@ -441,9 +445,7 @@ class ExportWorker(QRunnable):
                     # Update the image path in all_image_paths for the export formats
                     all_image_paths[-1] = output_img_name
 
-                image_output_path = osp.join(
-                    split_dir, output_img_name
-                )
+                image_output_path = osp.join(split_dir, output_img_name)
                 shutil.copy2(image_path, image_output_path)
 
             self.signals.progress.emit(
@@ -522,7 +524,7 @@ class ExportWorker(QRunnable):
 
                 # Get file name and extension for the image
                 img_name, img_ext = osp.splitext(osp.basename(image_path))
-                
+
                 # Generate a random name if requested
                 output_img_name = osp.basename(image_path)
                 if self.use_random_names:
@@ -531,9 +533,7 @@ class ExportWorker(QRunnable):
                     # Update the image path in all_image_paths for the export formats
                     all_image_paths[-1] = output_img_name
 
-                image_output_path = osp.join(
-                    split_dir, output_img_name
-                )
+                image_output_path = osp.join(split_dir, output_img_name)
                 shutil.copy2(image_path, image_output_path)
 
             self.signals.progress.emit(
