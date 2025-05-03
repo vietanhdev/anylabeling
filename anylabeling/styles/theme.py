@@ -153,7 +153,8 @@ class AppTheme:
 
         QDockWidget::title {{
             text-align: center;
-            padding: 5px;
+            border-radius: 4px;
+            margin-bottom: 2px;
             background-color: {colors["dock_title_bg"]};
             color: {colors["dock_title_text"]};
         }}

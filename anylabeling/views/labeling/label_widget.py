@@ -146,7 +146,8 @@ class LabelingWidget(LabelDialog):
         dock_title_style = (
             "QDockWidget::title {"
             "text-align: center;"
-            "padding: 5px;"
+            "border-radius: 4px;"
+            "margin-bottom: 2px;"
             f"background-color: {AppTheme.get_color('dock_title_bg')};"
             f"color: {AppTheme.get_color('dock_title_text')};"
             "}"
@@ -665,7 +666,7 @@ class LabelingWidget(LabelDialog):
             icon="us",
             checkable=True,
             checked=self._config["language"] == "en_US",
-            enabled=self._config["language"] != "en_US",
+            enabled=True,  # Always enable all language options
         )
         select_lang_vi = create_action(
             "Tiếng Việt",
@@ -673,7 +674,7 @@ class LabelingWidget(LabelDialog):
             icon="vn",
             checkable=True,
             checked=self._config["language"] == "vi_VN",
-            enabled=self._config["language"] != "vi_VN",
+            enabled=True,  # Always enable all language options
         )
         select_lang_zh = create_action(
             "中文",
@@ -681,34 +682,53 @@ class LabelingWidget(LabelDialog):
             icon="cn",
             checkable=True,
             checked=self._config["language"] == "zh_CN",
-            enabled=self._config["language"] != "zh_CN",
+            enabled=True,  # Always enable all language options
         )
 
+        # Create action group for language actions to make them mutually exclusive
+        lang_action_group = QtWidgets.QActionGroup(self)
+        lang_action_group.setExclusive(True)
+        lang_action_group.addAction(select_lang_en)
+        lang_action_group.addAction(select_lang_vi)
+        lang_action_group.addAction(select_lang_zh)
+
+        # Store language actions for later use
+        lang_actions = (select_lang_en, select_lang_vi, select_lang_zh)
+
         # Theme selector
+        current_theme = self._config.get("theme", "system")
         select_theme_system = create_action(
-            "System",
+            self.tr("System"),
             functools.partial(self.set_theme, "system"),
             icon="computer",
             checkable=True,
-            checked=self._config.get("theme", "system") == "system",
+            checked=current_theme == "system",
             enabled=True,
         )
         select_theme_light = create_action(
-            "Light",
+            self.tr("Light"),
             functools.partial(self.set_theme, "light"),
             icon="sun",
             checkable=True,
-            checked=self._config.get("theme", "system") == "light",
+            checked=current_theme == "light",
             enabled=True,
         )
         select_theme_dark = create_action(
-            "Dark",
+            self.tr("Dark"),
             functools.partial(self.set_theme, "dark"),
             icon="moon",
             checkable=True,
-            checked=self._config.get("theme", "system") == "dark",
+            checked=current_theme == "dark",
             enabled=True,
         )
+
+        # Create action group for theme actions to make them mutually exclusive
+        theme_action_group = QtWidgets.QActionGroup(self)
+        theme_action_group.setExclusive(True)
+        theme_action_group.addAction(select_theme_system)
+        theme_action_group.addAction(select_theme_light)
+        theme_action_group.addAction(select_theme_dark)
+
         # Store theme actions for later use
         theme_actions = (select_theme_system, select_theme_light, select_theme_dark)
 
@@ -934,11 +954,7 @@ class LabelingWidget(LabelDialog):
         )
         utils.add_actions(
             self.menus.language,
-            (
-                select_lang_en,
-                select_lang_vi,
-                select_lang_zh,
-            ),
+            lang_actions,
         )
         utils.add_actions(
             self.menus.theme,
@@ -1066,7 +1082,8 @@ class LabelingWidget(LabelDialog):
             "text-align: center;"
             "background-color: " + AppTheme.get_color("dock_title_bg") + ";"
             "color: " + AppTheme.get_color("dock_title_text") + ";"
-            "padding: 3px;"
+            "border-radius: 4px;"
+            "margin-bottom: 2px;"
             "}"
         )
         self.tools_dock.setStyleSheet(tools_dock_style)
