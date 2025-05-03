@@ -2,8 +2,11 @@
     <qresource prefix="/images">
         <file>images/minus.png</file>
         <file>images/plus.png</file>
+        <file>images/box.png</file>
         <file>images/cancel.png</file>
+        <file>images/check.png</file>
         <file>images/edit.png</file>
+        <file>images/group.png</file>
         <file>images/next.png</file>
         <file>images/open.png</file>
         <file>images/prev.png</file>
@@ -13,6 +16,7 @@
         <file>images/circle.png</file>
         <file>images/cn.png</file>
         <file>images/color.png</file>
+        <file>images/computer.png</file>
         <file>images/copy.png</file>
         <file>images/delete.png</file>
         <file>images/done.png</file>
@@ -36,6 +40,7 @@
         <file>images/line-strip.png</file>
         <file>images/line.png</file>
         <file>images/logo.png</file>
+        <file>images/moon.png</file>
         <file>images/new.png</file>
         <file>images/objects.png</file>
         <file>images/paste.png</file>
@@ -46,6 +51,7 @@
         <file>images/resetall.png</file>
         <file>images/save-as.png</file>
         <file>images/scissors.png</file>
+        <file>images/sun.png</file>
         <file>images/undo-cross.png</file>
         <file>images/undo.png</file>
         <file>images/upload_brain.png</file>

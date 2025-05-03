@@ -21,6 +21,10 @@ def update_dict(target_dict, new_dict, validate_item=None):
     for key, value in new_dict.items():
         if validate_item:
             validate_item(key, value)
+        # Special handling for recognized new keys
+        if key not in target_dict and key in ["theme"]:
+            target_dict[key] = value
+            continue
         if key not in target_dict:
             logger.warning("Skipping unexpected key in config: %s", key)
             continue
@@ -59,6 +63,8 @@ def validate_config_item(key, value):
         raise ValueError(f"Unexpected value for config key 'shape_color': {value}")
     if key == "labels" and value is not None and len(value) != len(set(value)):
         raise ValueError(f"Duplicates are detected for config key 'labels': {value}")
+    if key == "theme" and value not in ["system", "light", "dark"]:
+        raise ValueError(f"Unexpected value for config key 'theme': {value}")
 
 
 def get_config(config_file_or_yaml=None, config_from_args=None):

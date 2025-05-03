@@ -143,3 +143,4 @@ If you want to contribute to **AnyLabeling**, please read [Contribution Guidelin
 - Labeling UI built with ideas and components from [LabelImg](https://github.com/heartexlabs/labelImg), [LabelMe](https://github.com/wkentaro/labelme).
 - Auto-labeling with [Segment Anything Models](https://segment-anything.com/), [MobileSAM](https://github.com/ChaoningZhang/MobileSAM).
 - Auto-labeling with [YOLOv8](https://github.com/ultralytics/ultralytics).
+- Icons from FlatIcon: [DinosoftLabs](https://www.flaticon.com/free-icons/sun "sun icons"), [Freepik](https://www.flaticon.com/free-icons/moon "moon icons"), [Vectoricons](https://www.flaticon.com/free-icons/system "system icons"), [HideMaru](https://www.flaticon.com/free-icons/ungroup "ungroup icons").
