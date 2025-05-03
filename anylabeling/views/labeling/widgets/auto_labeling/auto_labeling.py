@@ -1,12 +1,12 @@
 import os
 
-import darkdetect
 from PyQt5 import uic
 from PyQt5.QtCore import pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QWidget, QFileDialog
 
 from anylabeling.services.auto_labeling.model_manager import ModelManager
 from anylabeling.services.auto_labeling.types import AutoLabelingMode
+from anylabeling.styles.theme import AppTheme
 
 
 class AutoLabelingWidget(QWidget):
@@ -128,15 +128,27 @@ class AutoLabelingWidget(QWidget):
 
     @pyqtSlot()
     def update_button_colors(self):
-        """Update button colors"""
+        """Update button colors based on current theme and mode"""
         style_sheet = """
             text-align: center;
             margin-right: 3px;
             border-radius: 5px;
             padding: 4px 8px;
-            border: 1px solid #999999;
+            border: 1px solid {border_color};
         """
-        normal_color = "#333333" if darkdetect.isDark() else "#ffffff"
+
+        border_color = AppTheme.get_color("border")
+        normal_bg_color = AppTheme.get_color("button")
+        normal_text_color = AppTheme.get_color("button_text")
+        active_bg_color = AppTheme.get_color("success")
+        remove_bg_color = AppTheme.get_color("error")
+        highlighted_text_color = AppTheme.get_color("highlighted_text")
+
+        normal_style = (
+            style_sheet.format(border_color=border_color)
+            + f"background-color: {normal_bg_color}; color: {normal_text_color};"
+        )
+
         for button in [
             self.button_add_point,
             self.button_remove_point,
@@ -144,22 +156,27 @@ class AutoLabelingWidget(QWidget):
             self.button_clear,
             self.button_finish_object,
         ]:
-            button.setStyleSheet(style_sheet + f"background-color: {normal_color};")
+            button.setStyleSheet(normal_style)
+
         if self.auto_labeling_mode == AutoLabelingMode.NONE:
             return
+
         if self.auto_labeling_mode.edit_mode == AutoLabelingMode.ADD:
             if self.auto_labeling_mode.shape_type == AutoLabelingMode.POINT:
                 self.button_add_point.setStyleSheet(
-                    style_sheet + "background-color: #00c100; color: #555555;"
+                    style_sheet.format(border_color=border_color)
+                    + f"background-color: {active_bg_color}; color: {highlighted_text_color};"
                 )
             elif self.auto_labeling_mode.shape_type == AutoLabelingMode.RECTANGLE:
                 self.button_add_rect.setStyleSheet(
-                    style_sheet + "background-color: #00c100; color: #555555;"
+                    style_sheet.format(border_color=border_color)
+                    + f"background-color: {active_bg_color}; color: {highlighted_text_color};"
                 )
         elif self.auto_labeling_mode.edit_mode == AutoLabelingMode.REMOVE:
             if self.auto_labeling_mode.shape_type == AutoLabelingMode.POINT:
                 self.button_remove_point.setStyleSheet(
-                    style_sheet + "background-color: #d30000; color: #fff;"
+                    style_sheet.format(border_color=border_color)
+                    + f"background-color: {remove_bg_color}; color: {highlighted_text_color};"
                 )
 
     def set_auto_labeling_mode(self, edit_mode, shape_type=None):
