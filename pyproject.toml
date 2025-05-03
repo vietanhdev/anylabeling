@@ -1,21 +1,56 @@
-[tool.black]
-line-length = 79
-#include = '\.pyi?$'
-exclude = '''
-/(
-    \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | _build
-  | buck-out
-  | build
-  | dist
-)/
-'''
+[project]
+name = "anylabeling"
+dynamic = ["version"]
+description = "Effortless data labeling with AI support"
+readme = "README.md"
+authors = [
+    {name = "Viet-Anh Nguyen", email = "vietanh.dev@gmail.com"}
+]
+license = {text = "GPLv3"}
+requires-python = ">=3.10"
+keywords = ["Image Annotation", "Machine Learning", "Deep Learning"]
+classifiers = [
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3 :: Only",
+]
+# Note: We're using most standard dependencies here
+# The GPU version will be handled by the setup.py
+# which dynamically chooses between onnxruntime and onnxruntime-gpu
+dependencies = [
+    "imgviz>=0.11",
+    "natsort>=7.1.0",
+    "numpy==1.26.4",
+    "Pillow>=2.8",
+    "PyYAML==6.0.1",
+    "termcolor==1.1.0",
+    "opencv-python-headless==4.7.0.72",
+    "PyQt5>=5.15.7; platform_system != 'Darwin'",
+    "onnx==1.16.1",
+    "qimage2ndarray==1.10.0",
+    "darkdetect==0.8.0",
+    "onnxruntime==1.18.1",
+]
+
+[project.urls]
+Homepage = "https://github.com/vietanhdev/anylabeling"
+
+[tool.setuptools.dynamic]
+version = {attr = "anylabeling.__version__"}
+
+[project.scripts]
+anylabeling = "anylabeling.app:main"
+
+# Since this project has dynamic dependencies based on GPU availability
+# and platform, we're still using setup.py for the final package building.
+# This configuration provides the minimal metadata needed for wheel building.
 
 [build-system]
 requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
-
