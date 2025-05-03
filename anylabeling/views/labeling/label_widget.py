@@ -1629,7 +1629,12 @@ class LabelingWidget(LabelDialog):
             text = f"{shape.label} ({shape.group_id})"
         label_list_item = LabelListWidgetItem(text, shape)
         self.label_list.add_iem(label_list_item)
-        if not self.unique_label_list.find_items_by_label(shape.label):
+        # Don't add special autolabeling labels to the unique_label_list
+        if shape.label not in [
+            AutoLabelingMode.OBJECT,
+            AutoLabelingMode.ADD,
+            AutoLabelingMode.REMOVE,
+        ] and not self.unique_label_list.find_items_by_label(shape.label):
             item = self.unique_label_list.create_item_from_label(shape.label)
             self.unique_label_list.addItem(item)
             rgb = self._get_rgb_by_label(shape.label)
@@ -1674,6 +1679,19 @@ class LabelingWidget(LabelDialog):
 
     def _get_rgb_by_label(self, label):
         if self._config["shape_color"] == "auto":
+            # For special autolabeling labels, use fixed colors
+            if label in [
+                AutoLabelingMode.OBJECT,
+                AutoLabelingMode.ADD,
+                AutoLabelingMode.REMOVE,
+            ]:
+                if label == AutoLabelingMode.OBJECT:
+                    return (0, 255, 255)  # Cyan color for object
+                elif label == AutoLabelingMode.ADD:
+                    return (0, 255, 0)  # Green color for add
+                elif label == AutoLabelingMode.REMOVE:
+                    return (255, 0, 0)  # Red color for remove
+
             if not self.unique_label_list.find_items_by_label(label):
                 item = self.unique_label_list.create_item_from_label(label)
                 self.unique_label_list.addItem(item)
