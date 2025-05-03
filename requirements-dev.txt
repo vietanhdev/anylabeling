@@ -1,4 +1,4 @@
 -r requirements.txt
-build
-twine
-black
+build==1.2.2
+twine==6.1.0
+
