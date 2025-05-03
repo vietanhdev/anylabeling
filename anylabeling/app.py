@@ -22,6 +22,7 @@ from anylabeling.views.mainwindow import MainWindow
 from anylabeling.views.labeling.logger import logger
 from anylabeling.views.labeling.utils import new_icon
 from anylabeling.resources import resources
+from anylabeling.styles import AppTheme
 
 __all__ = ["resources"]
 
@@ -111,6 +112,13 @@ def main():
         help="epsilon to find nearest vertex on canvas",
         default=argparse.SUPPRESS,
     )
+    # Add theme argument
+    parser.add_argument(
+        "--theme",
+        choices=["system", "light", "dark"],
+        help="set application theme (default: system)",
+        default="system",
+    )
     args = parser.parse_args()
 
     logger.setLevel(getattr(logging, args.logger_level.upper()))
@@ -141,6 +149,7 @@ def main():
     filename = config_from_args.pop("filename")
     output = config_from_args.pop("output")
     config_file_or_yaml = config_from_args.pop("config")
+    theme = config_from_args.pop("theme")
     anylabeling_config.current_config_file = config_file_or_yaml
     config = get_config(config_file_or_yaml, config_from_args)
 
@@ -175,6 +184,19 @@ def main():
 
     app = QtWidgets.QApplication(sys.argv)
     app.processEvents()
+
+    # Apply theme
+    if theme != "system":
+        # Override system theme detection
+        os.environ["DARK_MODE"] = "1" if theme == "dark" else "0"
+    else:
+        # Check if theme is in config
+        config_theme = config.get("theme", "system")
+        if config_theme != "system":
+            os.environ["DARK_MODE"] = "1" if config_theme == "dark" else "0"
+
+    # Apply our modern theme
+    AppTheme.apply_theme(app)
 
     app.setApplicationName(__appname__)
     app.setWindowIcon(new_icon("icon"))

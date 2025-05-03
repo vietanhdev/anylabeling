@@ -6,7 +6,6 @@ import os.path as osp
 import re
 import webbrowser
 
-import darkdetect
 import imgviz
 import natsort
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -42,6 +41,7 @@ from .widgets import (
     ZoomWidget,
 )
 from .widgets.export_dialog import ExportDialog
+from anylabeling.styles import AppTheme
 
 LABEL_COLORMAP = imgviz.label_colormap()
 
@@ -124,22 +124,15 @@ class LabelingWidget(LabelDialog):
         self.label_list = LabelListWidget()
         self.last_open_dir = None
 
-        if not darkdetect.isDark():
-            dock_title_style = (
-                "QDockWidget::title {"
-                "text-align: center;"
-                "padding: 0px;"
-                "background-color: #f0f0f0;"
-                "}"
-            )
-        else:
-            dock_title_style = (
-                "QDockWidget::title {"
-                "text-align: center;"
-                "padding: 0px;"
-                "background-color: #333333;"
-                "}"
-            )
+        # Use AppTheme for dock title styling
+        dock_title_style = (
+            "QDockWidget::title {"
+            "text-align: center;"
+            "padding: 5px;"
+            f"background-color: {AppTheme.get_color('dock_title_bg')};"
+            f"color: {AppTheme.get_color('dock_title_text')};"
+            "}"
+        )
 
         self.flag_dock = self.flag_widget = None
         self.flag_dock = QtWidgets.QDockWidget(self.tr("Flags"), self)
@@ -151,13 +144,7 @@ class LabelingWidget(LabelDialog):
             self.flag_dock.hide()
         self.flag_dock.setWidget(self.flag_widget)
         self.flag_widget.itemChanged.connect(self.set_dirty)
-        self.flag_dock.setStyleSheet(
-            "QDockWidget::title {"
-            "text-align: center;"
-            "padding: 0px;"
-            "background-color: #f0f0f0;"
-            "}"
-        )
+        self.flag_dock.setStyleSheet(dock_title_style)
 
         self.label_list.item_selection_changed.connect(self.label_selection_changed)
         self.label_list.item_double_clicked.connect(self.edit_label)
@@ -413,7 +400,7 @@ class LabelingWidget(LabelDialog):
             self.tr("Group Selected Shapes"),
             self.canvas.group_selected_shapes,
             shortcuts["group_selected_shapes"],
-            None,
+            "group",
             self.tr("Group shapes by assigning a same group_id"),
             enabled=True,
         )
@@ -421,7 +408,7 @@ class LabelingWidget(LabelDialog):
             self.tr("Ungroup Selected Shapes"),
             self.canvas.ungroup_selected_shapes,
             shortcuts["ungroup_selected_shapes"],
-            None,
+            "group",
             self.tr("Ungroup shapes"),
             enabled=True,
         )
@@ -640,6 +627,34 @@ class LabelingWidget(LabelDialog):
             enabled=self._config["language"] != "zh_CN",
         )
 
+        # Theme selector
+        select_theme_system = create_action(
+            "System",
+            functools.partial(self.set_theme, "system"),
+            icon="computer",
+            checkable=True,
+            checked=self._config.get("theme", "system") == "system",
+            enabled=True,
+        )
+        select_theme_light = create_action(
+            "Light",
+            functools.partial(self.set_theme, "light"),
+            icon="sun",
+            checkable=True,
+            checked=self._config.get("theme", "system") == "light",
+            enabled=True,
+        )
+        select_theme_dark = create_action(
+            "Dark",
+            functools.partial(self.set_theme, "dark"),
+            icon="moon",
+            checkable=True,
+            checked=self._config.get("theme", "system") == "dark",
+            enabled=True,
+        )
+        # Store theme actions for later use
+        theme_actions = (select_theme_system, select_theme_light, select_theme_dark)
+
         # Group zoom controls into a list for easier toggling.
         zoom_actions = (
             self.zoom_widget,
@@ -800,19 +815,35 @@ class LabelingWidget(LabelDialog):
             self.tr("Export Annotations"),
             self.export_annotations,
             None,
-            "export",
+            "box",
             self.tr("Export annotations to other formats"),
         )
+
+        # Store theme actions for later use
+        theme_actions = (select_theme_system, select_theme_light, select_theme_dark)
 
         self.menus = utils.Struct(
             file=self.menu(self.tr("&File")),
             edit=self.menu(self.tr("&Edit")),
             view=self.menu(self.tr("&View")),
             language=self.menu(self.tr("&Language")),
+            theme=self.menu(self.tr("&Theme")),
             tools=self.menu(self.tr("&Tools")),
             help=self.menu(self.tr("&Help")),
             recent_files=QtWidgets.QMenu(self.tr("Open &Recent")),
             label_list=label_menu,
+        )
+
+        # Add theme actions
+        utils.add_actions(
+            self.menus.theme,
+            theme_actions,
+        )
+
+        # Add theme actions
+        utils.add_actions(
+            self.menus.theme,
+            theme_actions,
         )
 
         utils.add_actions(
@@ -850,6 +881,14 @@ class LabelingWidget(LabelDialog):
                 select_lang_en,
                 select_lang_vi,
                 select_lang_zh,
+            ),
+        )
+        utils.add_actions(
+            self.menus.theme,
+            (
+                select_theme_system,
+                select_theme_light,
+                select_theme_dark,
             ),
         )
         utils.add_actions(
@@ -2709,3 +2748,25 @@ class LabelingWidget(LabelDialog):
         """Toggle the tools panel visibility."""
         if hasattr(self.parent, "toggle_tools_panel"):
             self.parent.toggle_tools_panel()
+
+    def set_theme(self, theme):
+        """Set application theme"""
+        # Update environment variable to override system theme detection
+        if theme == "light":
+            os.environ["DARK_MODE"] = "0"
+        elif theme == "dark":
+            os.environ["DARK_MODE"] = "1"
+        else:  # system
+            if "DARK_MODE" in os.environ:
+                del os.environ["DARK_MODE"]
+
+        # Save the theme setting to config
+        self._config["theme"] = theme
+        save_config(self._config)
+
+        # Show dialog to restart application
+        msg_box = QMessageBox()
+        msg_box.setText(
+            self.tr("Please restart the application to apply the theme change.")
+        )
+        msg_box.exec_()

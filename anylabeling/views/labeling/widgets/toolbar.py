@@ -1,7 +1,7 @@
 """Defines toolbar for anylabeling, including"""
 
-import darkdetect
 from PyQt5 import QtCore, QtWidgets
+from anylabeling.styles import AppTheme
 
 
 class ToolBar(QtWidgets.QToolBar):
@@ -16,30 +16,18 @@ class ToolBar(QtWidgets.QToolBar):
         self.setContentsMargins(*margin)
         self.setWindowFlags(self.windowFlags() | QtCore.Qt.FramelessWindowHint)
 
-        if darkdetect.isDark():
-            self.setStyleSheet(
-                """
-                QToolBar {
-                    background: #555;
-                    padding: 0px;
-                    border: 0px;
-                    border-radius: 5px;
-                    border: 2px solid #222;
-                }
-                """
-            )
-        else:
-            self.setStyleSheet(
-                """
-                QToolBar {
-                    background: #fff;
-                    padding: 0px;
-                    border: 0px;
-                    border-radius: 5px;
-                    border: 2px solid #aaa;
-                }
-                """
-            )
+        # Use theme system for styling
+        self.setStyleSheet(
+            f"""
+            QToolBar {{
+                background: {AppTheme.get_color("toolbar_bg")};
+                padding: 0px;
+                border: 0px;
+                border-radius: 5px;
+                border: 2px solid {AppTheme.get_color("border")};
+            }}
+            """
+        )
 
     def add_action(self, action):
         """Add an action (button) to the toolbar"""
