@@ -22,7 +22,7 @@ def update_dict(target_dict, new_dict, validate_item=None):
         if validate_item:
             validate_item(key, value)
         # Special handling for recognized new keys
-        if key not in target_dict and key in ["theme"]:
+        if key not in target_dict and key in ["theme", "ui"]:
             target_dict[key] = value
             continue
         if key not in target_dict:

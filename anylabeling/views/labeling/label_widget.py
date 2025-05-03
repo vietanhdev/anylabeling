@@ -11,7 +11,6 @@ import natsort
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import Qt, pyqtSlot
 from PyQt5.QtWidgets import (
-    QDockWidget,
     QHBoxLayout,
     QLabel,
     QPlainTextEdit,
@@ -22,13 +21,13 @@ from PyQt5.QtWidgets import (
 
 from anylabeling.services.auto_labeling.types import AutoLabelingMode
 
-from ...app_info import __appname__
-from . import utils
-from ...config import get_config, save_config
-from .label_file import LabelFile, LabelFileError
-from .logger import logger
-from .shape import Shape
-from .widgets import (
+from anylabeling.app_info import __appname__
+from anylabeling.config import get_config, save_config
+from anylabeling.views.labeling import utils
+from anylabeling.views.labeling.label_file import LabelFile, LabelFileError
+from anylabeling.views.labeling.logger import logger
+from anylabeling.views.labeling.shape import Shape
+from anylabeling.views.labeling.widgets import (
     AutoLabelingWidget,
     BrightnessContrastDialog,
     Canvas,
@@ -110,6 +109,19 @@ class LabelingWidget(LabelDialog):
 
         self._copied_shapes = None
 
+        # Initialize the QSettings object early
+        self.settings = QtCore.QSettings("anylabeling", "anylabeling")
+
+        # Initialize a QMainWindow for dock widget functionality
+        self.main_window = QtWidgets.QMainWindow()
+        self.main_window.setDockOptions(
+            QtWidgets.QMainWindow.AllowNestedDocks | QtWidgets.QMainWindow.AnimatedDocks
+        )
+        # Set central widget for the main window
+        self.main_window.setCentralWidget(QtWidgets.QWidget())
+        self.main_window.centralWidget().setLayout(QtWidgets.QVBoxLayout())
+        self.main_window.centralWidget().layout().setContentsMargins(0, 0, 0, 0)
+
         # Main widgets and related state.
         self.label_dialog = LabelDialog(
             parent=self,
@@ -124,7 +136,13 @@ class LabelingWidget(LabelDialog):
         self.label_list = LabelListWidget()
         self.last_open_dir = None
 
-        # Use AppTheme for dock title styling
+        features = (
+            QtWidgets.QDockWidget.DockWidgetClosable
+            | QtWidgets.QDockWidget.DockWidgetFloatable
+            | QtWidgets.QDockWidget.DockWidgetMovable
+        )
+
+        # Apply dock title styling
         dock_title_style = (
             "QDockWidget::title {"
             "text-align: center;"
@@ -134,9 +152,44 @@ class LabelingWidget(LabelDialog):
             "}"
         )
 
-        self.flag_dock = self.flag_widget = None
-        self.flag_dock = QtWidgets.QDockWidget(self.tr("Flags"), self)
+        # Create right sidebar with shape text editor
+        shape_text_widget = QtWidgets.QWidget()
+        shape_text_layout = QVBoxLayout()
+        shape_text_layout.setContentsMargins(0, 0, 0, 0)
+        self.shape_text_label = QLabel("Object Text")
+        self.shape_text_label.setStyleSheet(
+            "QLabel {"
+            "text-align: center;"
+            "padding: 0px;"
+            "font-size: 11px;"
+            "margin-bottom: 5px;"
+            "}"
+        )
+        self.shape_text_edit = QPlainTextEdit()
+        shape_text_layout.addWidget(self.shape_text_label, 0, Qt.AlignCenter)
+        shape_text_layout.addWidget(self.shape_text_edit)
+        shape_text_widget.setLayout(shape_text_layout)
+
+        # Add shape text widget to dock
+        self.shape_text_dock = QtWidgets.QDockWidget(
+            self.tr("Text Editor"), self.main_window
+        )
+        self.shape_text_dock.setObjectName("TextEditor")
+        self.shape_text_dock.setFeatures(features)
+        self.shape_text_dock.setWidget(shape_text_widget)
+        self.shape_text_dock.setStyleSheet(dock_title_style)
+        self.main_window.addDockWidget(Qt.RightDockWidgetArea, self.shape_text_dock)
+
+        # Text Editor Actions - created after dock is initialized
+        # Set shortcut for the text editor toggle view action
+        self.shape_text_dock.toggleViewAction().setShortcut(
+            QtCore.Qt.CTRL + QtCore.Qt.Key_T
+        )
+
+        # Create dock widgets with movable feature enabled
+        self.flag_dock = QtWidgets.QDockWidget(self.tr("Flags"), self.main_window)
         self.flag_dock.setObjectName("Flags")
+        self.flag_dock.setFeatures(features)
         self.flag_widget = QtWidgets.QListWidget()
         if config["flags"]:
             self.load_flags(dict.fromkeys(config["flags"], False))
@@ -145,15 +198,18 @@ class LabelingWidget(LabelDialog):
         self.flag_dock.setWidget(self.flag_widget)
         self.flag_widget.itemChanged.connect(self.set_dirty)
         self.flag_dock.setStyleSheet(dock_title_style)
+        self.main_window.addDockWidget(Qt.RightDockWidgetArea, self.flag_dock)
 
         self.label_list.item_selection_changed.connect(self.label_selection_changed)
         self.label_list.item_double_clicked.connect(self.edit_label)
         self.label_list.item_changed.connect(self.label_item_changed)
         self.label_list.item_dropped.connect(self.label_order_changed)
-        self.shape_dock = QtWidgets.QDockWidget(self.tr("Objects"), self)
+        self.shape_dock = QtWidgets.QDockWidget(self.tr("Objects"), self.main_window)
         self.shape_dock.setObjectName("Objects")
+        self.shape_dock.setFeatures(features)
         self.shape_dock.setWidget(self.label_list)
         self.shape_dock.setStyleSheet(dock_title_style)
+        self.main_window.addDockWidget(Qt.RightDockWidgetArea, self.shape_dock)
 
         self.unique_label_list = UniqueLabelQListWidget()
         self.unique_label_list.setToolTip(
@@ -165,10 +221,12 @@ class LabelingWidget(LabelDialog):
                 self.unique_label_list.addItem(item)
                 rgb = self._get_rgb_by_label(label)
                 self.unique_label_list.set_item_label(item, label, rgb)
-        self.label_dock = QtWidgets.QDockWidget(self.tr("Labels"), self)
+        self.label_dock = QtWidgets.QDockWidget(self.tr("Labels"), self.main_window)
         self.label_dock.setObjectName("Labels")
+        self.label_dock.setFeatures(features)
         self.label_dock.setWidget(self.unique_label_list)
         self.label_dock.setStyleSheet(dock_title_style)
+        self.main_window.addDockWidget(Qt.RightDockWidgetArea, self.label_dock)
 
         self.file_search = QtWidgets.QLineEdit()
         self.file_search.setPlaceholderText(self.tr("Search Filename"))
@@ -180,12 +238,14 @@ class LabelingWidget(LabelDialog):
         file_list_layout.setSpacing(0)
         file_list_layout.addWidget(self.file_search)
         file_list_layout.addWidget(self.file_list_widget)
-        self.file_dock = QtWidgets.QDockWidget(self.tr("Files"), self)
+        self.file_dock = QtWidgets.QDockWidget(self.tr("Files"), self.main_window)
         self.file_dock.setObjectName("Files")
+        self.file_dock.setFeatures(features)
         file_list_widget = QtWidgets.QWidget()
         file_list_widget.setLayout(file_list_layout)
         self.file_dock.setWidget(file_list_widget)
         self.file_dock.setStyleSheet(dock_title_style)
+        self.main_window.addDockWidget(Qt.RightDockWidgetArea, self.file_dock)
 
         self.zoom_widget = ZoomWidget()
         self.setAcceptDrops(True)
@@ -213,18 +273,6 @@ class LabelingWidget(LabelDialog):
         self.canvas.drawing_polygon.connect(self.toggle_drawing_sensitive)
 
         self._central_widget = scroll_area
-
-        features = QtWidgets.QDockWidget.DockWidgetFeatures()
-        for dock in ["flag_dock", "label_dock", "shape_dock", "file_dock"]:
-            if self._config[dock]["closable"]:
-                features = features | QtWidgets.QDockWidget.DockWidgetClosable
-            if self._config[dock]["floatable"]:
-                features = features | QtWidgets.QDockWidget.DockWidgetFloatable
-            if self._config[dock]["movable"]:
-                features = features | QtWidgets.QDockWidget.DockWidgetMovable
-            getattr(self, dock).setFeatures(features)
-            if self._config[dock]["show"] is False:
-                getattr(self, dock).setVisible(False)
 
         # Actions
         create_action = functools.partial(utils.new_action, self)
@@ -601,6 +649,15 @@ class LabelingWidget(LabelDialog):
             enabled=True,
         )
 
+        reset_views = create_action(
+            self.tr("&Reset Views"),
+            self.reset_dock_layout,
+            shortcuts.get("reset_views", "Ctrl+Shift+V"),
+            "refresh",
+            self.tr("Reset dock widgets layout to default"),
+            enabled=True,
+        )
+
         # Languages
         select_lang_en = create_action(
             "English",
@@ -891,13 +948,16 @@ class LabelingWidget(LabelDialog):
                 select_theme_dark,
             ),
         )
+
         utils.add_actions(
             self.menus.view,
             (
+                self.shape_text_dock.toggleViewAction(),
                 self.flag_dock.toggleViewAction(),
                 self.label_dock.toggleViewAction(),
                 self.shape_dock.toggleViewAction(),
                 self.file_dock.toggleViewAction(),
+                reset_views,
                 None,
                 fill_drawing,
                 None,
@@ -933,8 +993,7 @@ class LabelingWidget(LabelDialog):
             ),
         )
 
-        self.tools = self.toolbar("Tools")
-        # Menu buttons on Left
+        # Tool actions definition
         self.actions.tool = (
             # open_,
             opendir,
@@ -958,10 +1017,71 @@ class LabelingWidget(LabelDialog):
             toggle_auto_labeling_widget,
         )
 
+        # Create a movable dock widget for tools
+        self.tools_dock = QtWidgets.QDockWidget(
+            self.tr("..."), self.main_window
+        )  # Empty title
+        self.tools_dock.setObjectName("ToolsDock")
+        # Allow moving and detaching, but disable closing
+        self.tools_dock.setFeatures(
+            QtWidgets.QDockWidget.DockWidgetMovable
+            | QtWidgets.QDockWidget.DockWidgetFloatable
+        )
+
+        # We need visible handle, so don't hide the title bar completely
+        # self.tools_dock.setTitleBarWidget(QtWidgets.QWidget())
+
+        # Create toolbar widget to place inside dock
+        tools_widget = QtWidgets.QWidget()
+        tools_layout = QtWidgets.QVBoxLayout()
+        tools_layout.setContentsMargins(0, 0, 0, 0)
+        tools_layout.setSpacing(0)
+
+        # Create toolbar for tools
+        self.tools = ToolBar("Tools")
+        self.tools.setObjectName("ToolsToolBar")
+        self.tools.setOrientation(Qt.Vertical)
+        self.tools.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
+        self.tools.setIconSize(QtCore.QSize(24, 24))
+
+        # Set initial size constraints for vertical layout
+        self.tools_dock.setMinimumWidth(40)
+        self.tools_dock.setMaximumWidth(40)
+
+        # Add actions to toolbar
+        utils.add_actions(self.tools, self.actions.tool)
+
+        # Add toolbar to layout and set as dock widget
+        tools_layout.addWidget(self.tools)
+        tools_widget.setLayout(tools_layout)
+        self.tools_dock.setWidget(tools_widget)
+
+        # Apply styling for tools dock with visible handle
+        tools_dock_style = (
+            "QDockWidget {"
+            f"background-color: {AppTheme.get_color('dock_title_bg')};"
+            "border: none;"
+            "}"
+            "QDockWidget::title {"
+            "text-align: center;"
+            "background-color: " + AppTheme.get_color("dock_title_bg") + ";"
+            "color: " + AppTheme.get_color("dock_title_text") + ";"
+            "padding: 3px;"
+            "}"
+        )
+        self.tools_dock.setStyleSheet(tools_dock_style)
+
+        # Add dock to main window
+        self.main_window.addDockWidget(Qt.LeftDockWidgetArea, self.tools_dock)
+
+        # Connect signal for location changes to update toolbar orientation
+        self.tools_dock.dockLocationChanged.connect(self.on_tools_dock_location_changed)
+
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self.main_window)
 
-        layout.addWidget(self.tools)
+        # Setup central area
         central_layout = QVBoxLayout()
         central_layout.setContentsMargins(0, 0, 0, 0)
         self.label_instruction = QLabel(self.get_labeling_instruction())
@@ -998,50 +1118,29 @@ class LabelingWidget(LabelDialog):
             lambda: self.inform_next_files(self.filename)
         )
         self.auto_labeling_widget.hide()  # Hide by default
+
         central_layout.addWidget(self.label_instruction)
         central_layout.addWidget(self.auto_labeling_widget)
         central_layout.addWidget(scroll_area)
-        layout.addItem(central_layout)
 
-        # Save central area for resize
-        self._central_widget = scroll_area
+        # Set the central widget content
+        center_widget = QtWidgets.QWidget()
+        center_widget.setLayout(central_layout)
+        self.main_window.centralWidget().layout().addWidget(center_widget)
 
         # Stretch central area (image view)
-        layout.setStretch(1, 1)
+        layout.setStretch(0, 1)
 
-        right_sidebar_layout = QVBoxLayout()
-        right_sidebar_layout.setContentsMargins(0, 0, 0, 0)
-        self.shape_text_label = QLabel("Object Text")
-        self.shape_text_label.setStyleSheet(
-            "QLabel {"
-            "text-align: center;"
-            "padding: 0px;"
-            "font-size: 11px;"
-            "margin-bottom: 5px;"
-            "}"
-        )
-        self.shape_text_edit = QPlainTextEdit()
-        right_sidebar_layout.addWidget(self.shape_text_label, 0, Qt.AlignCenter)
-        right_sidebar_layout.addWidget(self.shape_text_edit)
-        right_sidebar_layout.addWidget(self.flag_dock)
-        right_sidebar_layout.addWidget(self.label_dock)
-        right_sidebar_layout.addWidget(self.shape_dock)
-        right_sidebar_layout.addWidget(self.file_dock)
-        self.file_dock.setFeatures(QDockWidget.DockWidgetFloatable)
-        dock_features = (
-            ~QDockWidget.DockWidgetMovable
-            | ~QDockWidget.DockWidgetFloatable
-            | ~QDockWidget.DockWidgetClosable
-        )
-        rev_dock_features = ~dock_features
-        self.label_dock.setFeatures(self.label_dock.features() & rev_dock_features)
-        self.file_dock.setFeatures(self.file_dock.features() & rev_dock_features)
-        self.flag_dock.setFeatures(self.flag_dock.features() & rev_dock_features)
-        self.shape_dock.setFeatures(self.shape_dock.features() & rev_dock_features)
+        # Arrange dock widgets separately rather than tabbing them
+        # All docks are initially added to RightDockWidgetArea but can be moved by the user
+        self.main_window.addDockWidget(Qt.RightDockWidgetArea, self.shape_text_dock)
+        self.main_window.addDockWidget(Qt.RightDockWidgetArea, self.flag_dock)
+        self.main_window.addDockWidget(Qt.RightDockWidgetArea, self.label_dock)
+        self.main_window.addDockWidget(Qt.RightDockWidgetArea, self.shape_dock)
+        self.main_window.addDockWidget(Qt.RightDockWidgetArea, self.file_dock)
 
         self.shape_text_edit.textChanged.connect(self.shape_text_changed)
 
-        layout.addItem(right_sidebar_layout)
         self.setLayout(layout)
 
         if output_file is not None and self._config["auto_save"]:
@@ -1079,7 +1178,6 @@ class LabelingWidget(LabelDialog):
 
         # XXX: Could be completely declarative.
         # Restore application settings.
-        self.settings = QtCore.QSettings("anylabeling", "anylabeling")
         self.recent_files = self.settings.value("recent_files", []) or []
         size = self.settings.value("window/size", QtCore.QSize(600, 500))
         position = self.settings.value("window/position", QtCore.QPoint(0, 0))
@@ -1107,6 +1205,15 @@ class LabelingWidget(LabelDialog):
             QWhatsThis.enterWhatsThisMode()
 
         self.set_text_editing(False)
+
+        # We'll load dock state with a longer delay to ensure UI is fully ready
+        QtCore.QTimer.singleShot(100, self.load_dock_state)
+
+        # Setup periodic dock state saving
+        self._dock_save_timer = QtCore.QTimer(self)
+        self._dock_save_timer.setInterval(60000)  # Save state every minute
+        self._dock_save_timer.timeout.connect(lambda: self.save_dock_state(force=True))
+        self._dock_save_timer.start()
 
     def set_language(self, language):
         if self._config["language"] == language:
@@ -1151,7 +1258,8 @@ class LabelingWidget(LabelDialog):
         return menu
 
     def central_widget(self):
-        return self._central_widget
+        """Return the central widget for the application."""
+        return self.main_window.centralWidget()
 
     def toolbar(self, title, actions=None):
         toolbar = ToolBar(title)
@@ -2058,6 +2166,10 @@ class LabelingWidget(LabelDialog):
         self.toggle_actions(True)
         self.canvas.setFocus()
         self.status(str(self.tr("Loaded %s")) % osp.basename(str(filename)))
+
+        # Save dock state after loading file (to capture any UI adjustments)
+        QtCore.QTimer.singleShot(100, self.save_dock_state)
+
         return True
 
     # QT Overload
@@ -2068,6 +2180,16 @@ class LabelingWidget(LabelDialog):
             and self.zoom_mode != self.MANUAL_ZOOM
         ):
             self.adjust_scale()
+
+        # Save dock state after resize (after a short delay to let layout settle)
+        if hasattr(self, "_resize_timer"):
+            self._resize_timer.stop()
+        else:
+            self._resize_timer = QtCore.QTimer()
+            self._resize_timer.setSingleShot(True)
+            self._resize_timer.timeout.connect(self.save_dock_state)
+
+        self._resize_timer.start(100)
 
     def paint_canvas(self):
         assert not self.image.isNull(), "cannot paint null image"
@@ -2110,6 +2232,10 @@ class LabelingWidget(LabelDialog):
         self.settings.setValue("window/size", self.size())
         self.settings.setValue("window/position", self.pos())
         self.settings.setValue("window/state", self.parent.parent.saveState())
+
+        # Save dock layout to config (final save on exit)
+        self.save_dock_state(force=True)
+
         self.settings.setValue("recent_files", self.recent_files)
         # ask the use for where to save the labels
         # self.settings.setValue('window/geometry', self.saveGeometry())
@@ -2156,6 +2282,9 @@ class LabelingWidget(LabelDialog):
         if self.filename is None:
             return
 
+        # Save dock state before changing images
+        self.save_dock_state()
+
         current_index = self.image_list.index(self.filename)
         if current_index - 1 >= 0:
             filename = self.image_list[current_index - 1]
@@ -2189,6 +2318,9 @@ class LabelingWidget(LabelDialog):
             else:
                 filename = self.image_list[-1]
         self.filename = filename
+
+        # Save dock state before changing images
+        self.save_dock_state()
 
         if self.filename and load:
             self.load_file(self.filename)
@@ -2749,6 +2881,85 @@ class LabelingWidget(LabelDialog):
         if hasattr(self.parent, "toggle_tools_panel"):
             self.parent.toggle_tools_panel()
 
+    def reset_dock_layout(self):
+        """Reset dock widget layout to default positions."""
+        # Close all docks first
+        self.shape_text_dock.close()
+        self.flag_dock.close()
+        self.label_dock.close()
+        self.shape_dock.close()
+        self.file_dock.close()
+        self.tools_dock.close()
+
+        # Re-add them in the desired order/position
+        self.main_window.addDockWidget(Qt.LeftDockWidgetArea, self.tools_dock)
+        self.main_window.addDockWidget(Qt.RightDockWidgetArea, self.shape_text_dock)
+        self.main_window.addDockWidget(Qt.RightDockWidgetArea, self.shape_dock)
+        self.main_window.addDockWidget(Qt.RightDockWidgetArea, self.flag_dock)
+        self.main_window.addDockWidget(Qt.RightDockWidgetArea, self.label_dock)
+        self.main_window.addDockWidget(Qt.RightDockWidgetArea, self.file_dock)
+
+        # Show all docks
+        self.tools_dock.show()
+        self.file_dock.show()
+        self.shape_dock.show()
+        self.label_dock.show()
+        self.flag_dock.hide()
+        self.shape_text_dock.show()
+
+        # Make sure tools dock is visible
+        self.tools_dock.raise_()
+
+        # Connect dock signals to save state when changed and update orientation
+        self.tools_dock.dockLocationChanged.connect(self.on_tools_dock_location_changed)
+        self.shape_text_dock.dockLocationChanged.connect(self.save_dock_state)
+        self.flag_dock.dockLocationChanged.connect(self.save_dock_state)
+        self.label_dock.dockLocationChanged.connect(self.save_dock_state)
+        self.shape_dock.dockLocationChanged.connect(self.save_dock_state)
+        self.file_dock.dockLocationChanged.connect(self.save_dock_state)
+
+        # Also connect visibility changes
+        self.tools_dock.visibilityChanged.connect(self.save_dock_state)
+        self.shape_text_dock.visibilityChanged.connect(self.save_dock_state)
+        self.flag_dock.visibilityChanged.connect(self.save_dock_state)
+        self.label_dock.visibilityChanged.connect(self.save_dock_state)
+        self.shape_dock.visibilityChanged.connect(self.save_dock_state)
+        self.file_dock.visibilityChanged.connect(self.save_dock_state)
+
+        # Apply a workaround to ensure proper sizes
+        self.main_window.resizeDocks(
+            [
+                self.tools_dock,
+                self.shape_text_dock,
+                self.flag_dock,
+                self.label_dock,
+                self.shape_dock,
+                self.file_dock,
+            ],
+            [40, 300, 300, 300, 300, 300],
+            Qt.Horizontal,
+        )
+
+        # Reset any saved dock state in config
+        try:
+            config = get_config()
+            if (
+                "ui" in config
+                and isinstance(config["ui"], dict)
+                and "dock_state" in config["ui"]
+            ):
+                del config["ui"]["dock_state"]
+                save_config(config)
+                logger.info("Previous dock state cleared from config")
+        except Exception as e:
+            logger.error(f"Error clearing dock state from config: {e}")
+
+        # Wait a short time for layout to stabilize, then save new layout
+        QtCore.QTimer.singleShot(100, self.save_dock_state)
+
+        # Show a status message
+        self.statusBar().showMessage(self.tr("Dock layout reset to default"), 5000)
+
     def set_theme(self, theme):
         """Set application theme"""
         # Update environment variable to override system theme detection
@@ -2770,3 +2981,171 @@ class LabelingWidget(LabelDialog):
             self.tr("Please restart the application to apply the theme change.")
         )
         msg_box.exec_()
+
+    def save_dock_state(self, force=False):
+        """Save dock state to config with error handling.
+
+        Args:
+            force (bool): If True, save regardless of how much time has passed since the last save
+        """
+        try:
+            # Use a minimum time interval between saves to prevent too frequent saving
+            current_time = QtCore.QDateTime.currentMSecsSinceEpoch()
+            if not force and hasattr(self, "_last_dock_save_time"):
+                time_since_last_save = current_time - self._last_dock_save_time
+                if time_since_last_save < 2000:  # Less than 2 seconds since last save
+                    return  # Skip this save to prevent excessive config writes
+
+            config = get_config()
+
+            # Make sure UI configuration exists
+            if "ui" not in config or not isinstance(config["ui"], dict):
+                config["ui"] = {}
+
+            # Get QByteArray state and convert to Base64 string
+            byte_state = self.main_window.saveState()
+            if byte_state.isEmpty():
+                logger.warning("Cannot save empty dock state")
+                return
+
+            base64_state = byte_state.toBase64().data().decode()
+            if not base64_state:
+                logger.warning("Failed to encode dock state to Base64")
+                return
+
+            # Store in config and save
+            config["ui"]["dock_state"] = base64_state
+            save_config(config)
+            self._last_dock_save_time = current_time
+            logger.debug("Dock state saved successfully")
+
+        except Exception as e:
+            logger.error(f"Error saving dock state: {e}")
+
+    def load_dock_state(self):
+        """Load dock state from config with better error handling."""
+        config = get_config()
+
+        # Check if we have a valid dock state in config
+        has_dock_state = (
+            "ui" in config
+            and isinstance(config["ui"], dict)
+            and "dock_state" in config["ui"]
+            and config["ui"]["dock_state"]
+        )
+
+        if not has_dock_state:
+            logger.info("No saved dock state found, using default layout")
+            return
+
+        logger.info("Attempting to load dock state...")
+
+        try:
+            # Convert stored Base64 string back to QByteArray
+            base64_str = config["ui"]["dock_state"]
+            logger.debug(f"Encoded dock state: {base64_str[:30]}...")
+
+            try:
+                dock_state = QtCore.QByteArray.fromBase64(base64_str.encode())
+                logger.debug(f"Decoded QByteArray size: {len(dock_state)}")
+            except Exception as decode_error:
+                logger.error(f"Failed to decode Base64 string: {decode_error}")
+                raise decode_error
+
+            # Make sure all dock widgets exist before restoring state
+            all_docks_exist = all(
+                [
+                    hasattr(self, "tools_dock"),
+                    hasattr(self, "shape_text_dock"),
+                    hasattr(self, "flag_dock"),
+                    hasattr(self, "label_dock"),
+                    hasattr(self, "shape_dock"),
+                    hasattr(self, "file_dock"),
+                ]
+            )
+
+            if not all_docks_exist:
+                logger.error(
+                    "Cannot restore dock state - not all dock widgets are initialized"
+                )
+                return
+
+            # Force all docks to be visible first
+            self.tools_dock.setVisible(True)
+            self.shape_text_dock.setVisible(True)
+            self.flag_dock.setVisible(True)
+            self.label_dock.setVisible(True)
+            self.shape_dock.setVisible(True)
+            self.file_dock.setVisible(True)
+
+            # Try to restore state
+            if self.main_window.restoreState(dock_state):
+                logger.info("✓ Dock state loaded successfully")
+                # Apply a workaround for proper dock resizing
+                self.main_window.resizeDocks(
+                    [
+                        self.tools_dock,
+                        self.shape_text_dock,
+                        self.flag_dock,
+                        self.label_dock,
+                        self.shape_dock,
+                        self.file_dock,
+                    ],
+                    [40, 300, 300, 300, 300, 300],
+                    Qt.Horizontal,
+                )
+            else:
+                logger.warning("✗ Failed to restore dock state - incompatible layout")
+                # Reset to default layout
+                self.reset_dock_layout()
+                return
+
+        except Exception as e:
+            logger.warning(f"✗ Error restoring dock state: {e}")
+            # If there was an error, delete the invalid state
+            if (
+                "ui" in config
+                and isinstance(config["ui"], dict)
+                and "dock_state" in config["ui"]
+            ):
+                del config["ui"]["dock_state"]
+                save_config(config)
+                logger.info("Invalid dock state removed from config")
+
+    def on_tools_dock_location_changed(self):
+        """Handle tools dock location changes to adjust toolbar orientation."""
+        # Get the current dock area of the tools dock
+        area = self.main_window.dockWidgetArea(self.tools_dock)
+
+        # If dock is moved to top or bottom areas, use horizontal layout
+        if area == Qt.TopDockWidgetArea or area == Qt.BottomDockWidgetArea:
+            self.tools.setOrientation(Qt.Horizontal)
+            # Adjust dock height for horizontal layout - including space for title bar
+            self.tools_dock.setMinimumHeight(65)  # Increased to accommodate title bar
+            self.tools_dock.setMaximumHeight(65)
+            # Reset width constraints
+            self.tools_dock.setMinimumWidth(0)
+            self.tools_dock.setMaximumWidth(16777215)  # Qt's QWIDGETSIZE_MAX
+        else:  # Otherwise (left, right, or floating), use vertical layout
+            self.tools.setOrientation(Qt.Vertical)
+            # Adjust dock width for vertical layout
+            self.tools_dock.setMinimumWidth(40)
+            self.tools_dock.setMaximumWidth(40)
+            # Reset height constraints
+            self.tools_dock.setMinimumHeight(0)
+            self.tools_dock.setMaximumHeight(16777215)  # Qt's QWIDGETSIZE_MAX
+
+            # If floating, provide more reasonable dimensions
+            if not area:  # Qt returns 0 for floating docks
+                self.tools_dock.setMinimumWidth(0)
+                self.tools_dock.setMaximumWidth(16777215)
+                # Set a good default size for the floating toolbox
+                self.tools_dock.resize(40, 300)
+                # Ensure the toolbar is vertical in floating mode
+                self.tools.setOrientation(Qt.Vertical)
+
+        # Force toolbar to update its layout
+        self.tools.update()
+
+        # Save the dock state
+        self.save_dock_state()
