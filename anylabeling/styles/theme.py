@@ -151,12 +151,6 @@ class AppTheme:
             color: {colors["highlighted_text"]};
         }}
 
-        /* Dock Widgets */
-        QDockWidget {{
-            titlebar-close-icon: url(:/16/close.png);
-            titlebar-normal-icon: url(:/16/undock.png);
-        }}
-
         QDockWidget::title {{
             text-align: center;
             padding: 5px;
@@ -254,79 +248,6 @@ class AppTheme:
             height: 0px;
         }}
 
-        /* Buttons */
-        QPushButton {{
-            background-color: {colors["button"]};
-            color: {colors["button_text"]};
-            border: 1px solid {colors["border"]};
-            border-radius: 4px;
-            padding: 5px 10px;
-            min-height: 20px;
-        }}
-
-        QPushButton:hover {{
-            background-color: {colors["midlight"]};
-        }}
-
-        QPushButton:pressed {{
-            background-color: {colors["mid"]};
-        }}
-
-        QPushButton:checked {{
-            background-color: {colors["highlight"]};
-            color: {colors["highlighted_text"]};
-        }}
-
-        QPushButton:disabled {{
-            background-color: {colors["alternate_base"]};
-            color: {colors["mid"]};
-            border: 1px solid {colors["midlight"]};
-        }}
-
-        /* Line Edit */
-        QLineEdit {{
-            background-color: {colors["base"]};
-            color: {colors["text"]};
-            border: 1px solid {colors["border"]};
-            border-radius: 4px;
-            padding: 3px 5px;
-            selection-background-color: {colors["highlight"]};
-            selection-color: {colors["highlighted_text"]};
-        }}
-
-        QLineEdit:focus {{
-            border: 1px solid {colors["highlight"]};
-        }}
-
-        /* Combo Box */
-        QComboBox {{
-            background-color: {colors["button"]};
-            color: {colors["button_text"]};
-            border: 1px solid {colors["border"]};
-            border-radius: 4px;
-            padding: 2px 10px 2px 5px;
-            min-height: 20px;
-        }}
-
-        QComboBox:hover {{
-            background-color: {colors["midlight"]};
-        }}
-
-        QComboBox::drop-down {{
-            subcontrol-origin: padding;
-            subcontrol-position: top right;
-            width: 20px;
-            border-left: 1px solid {colors["border"]};
-        }}
-
-        QComboBox QAbstractItemView {{
-            background-color: {colors["window"]};
-            color: {colors["window_text"]};
-            border: 1px solid {colors["border"]};
-            selection-background-color: {colors["highlight"]};
-            selection-color: {colors["highlighted_text"]};
-        }}
-
         /* Tab Widget */
         QTabWidget::pane {{
             border: 1px solid {colors["border"]};
@@ -355,50 +276,6 @@ class AppTheme:
             margin-top: 2px;
         }}
 
-        /* Check Box */
-        QCheckBox {{
-            color: {colors["text"]};
-            spacing: 5px;
-        }}
-
-        QCheckBox::indicator {{
-            width: 16px;
-            height: 16px;
-            border: 1px solid {colors["border"]};
-            border-radius: 3px;
-        }}
-
-        QCheckBox::indicator:unchecked {{
-            background-color: {colors["base"]};
-        }}
-
-        QCheckBox::indicator:checked {{
-            background-color: {colors["highlight"]};
-            image: url(:/16/check.png);
-        }}
-
-        /* Radio Button */
-        QRadioButton {{
-            color: {colors["text"]};
-            spacing: 5px;
-        }}
-
-        QRadioButton::indicator {{
-            width: 16px;
-            height: 16px;
-            border: 1px solid {colors["border"]};
-            border-radius: 8px;
-        }}
-
-        QRadioButton::indicator:unchecked {{
-            background-color: {colors["base"]};
-        }}
-
-        QRadioButton::indicator:checked {{
-            background-color: {colors["highlight"]};
-            image: url(:/16/radiobtn.png);
-        }}
-
         /* Progress Bar */
         QProgressBar {{
             background-color: {colors["base"]};
@@ -412,62 +289,6 @@ class AppTheme:
             background-color: {colors["highlight"]};
             width: 10px;
             margin: 0.5px;
-        }}
-
-        /* Sliders */
-        QSlider::groove:horizontal {{
-            height: 8px;
-            background: {colors["base"]};
-            border: 1px solid {colors["border"]};
-            border-radius: 4px;
-        }}
-
-        QSlider::handle:horizontal {{
-            background: {colors["highlight"]};
-            border: 1px solid {colors["border"]};
-            width: 14px;
-            margin: -4px 0;
-            border-radius: 7px;
-        }}
-
-        QSlider::groove:vertical {{
-            width: 8px;
-            background: {colors["base"]};
-            border: 1px solid {colors["border"]};
-            border-radius: 4px;
-        }}
-
-        QSlider::handle:vertical {{
-            background: {colors["highlight"]};
-            border: 1px solid {colors["border"]};
-            height: 14px;
-            margin: 0 -4px;
-            border-radius: 7px;
-        }}
-
-        /* Spinbox */
-        QSpinBox, QDoubleSpinBox {{
-            background-color: {colors["base"]};
-            color: {colors["text"]};
-            border: 1px solid {colors["border"]};
-            border-radius: 4px;
-            padding: 2px 5px;
-        }}
-
-        QSpinBox::up-button, QDoubleSpinBox::up-button {{
-            subcontrol-origin: border;
-            subcontrol-position: top right;
-            width: 16px;
-            border-left: 1px solid {colors["border"]};
-            border-bottom: 1px solid {colors["border"]};
-        }}
-
-        QSpinBox::down-button, QDoubleSpinBox::down-button {{
-            subcontrol-origin: border;
-            subcontrol-position: bottom right;
-            width: 16px;
-            border-left: 1px solid {colors["border"]};
-            border-top: 1px solid {colors["border"]};
         }}
 
         /* Status Bar */
