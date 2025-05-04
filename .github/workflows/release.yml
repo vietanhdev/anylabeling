@@ -12,8 +12,6 @@ jobs:
   release:
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
-    outputs:
-      upload_url: ${{ steps.create_release.outputs.upload_url }}
 
     steps:
       - name: Build Changelog
@@ -48,6 +46,9 @@ jobs:
           body: ${{steps.github_release.outputs.changelog}}
           draft: true
           prerelease: true
+          tag_name: ${{ github.ref_name }}
+          make_latest: 'false'
+          fail_on_unmatched_files: false
 
   build:
     needs: [release]
@@ -57,6 +58,8 @@ jobs:
         device: [CPU, GPU]
 
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write
 
     steps:
     - uses: actions/checkout@v2
@@ -78,58 +81,87 @@ jobs:
       run: |
         pip install .
 
-    - name: Install PyQt5 for macOS
-      shell: bash -l {0}
-      run: |
-        conda install -c conda-forge pyqt==5.15.7
-      if: runner.os == 'macOS'
-
     - name: Run pyinstaller
       shell: bash -l {0}
       run: |
         pip install pyinstaller
         pyinstaller anylabeling.spec
 
-    - name: Upload release executable on macOS & Linux
-      id: upload_release_executable_macos_linux
-      uses: softprops/action-gh-release@v2
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ needs.release.outputs.upload_url }}
-        asset_path: ./dist/anylabeling
-        asset_name: AnyLabeling-${{ runner.os }}${{ matrix.device == 'GPU' && '-GPU' || '' }}
-        asset_content_type: application/octet-stream
-      if: runner.os != 'Windows'
-
-    - name: Upload release executable on Windows
-      id: upload_release_executable_windows
-      uses: softprops/action-gh-release@v2
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ needs.release.outputs.upload_url }}
-        asset_path: ./dist/anylabeling.exe
-        asset_name: AnyLabeling${{ matrix.device == 'GPU' && '-GPU' || '' }}.exe
-        asset_content_type: application/octet-stream
-      if: runner.os == 'Windows'
-
-    - name: Create dmg for macOS
+    - name: Rename for GPU version
+      if: matrix.device == 'GPU'
+      shell: bash -l {0}
       run: |
-        npm install -g create-dmg
-        cd dist
-        create-dmg AnyLabeling.app || test -f AnyLabeling\ 0.0.0.dmg
-        mv AnyLabeling\ 0.0.0.dmg AnyLabeling${{ matrix.device == 'GPU' && '-GPU' || '' }}.dmg
-      if: runner.os == 'macOS'
+        if [ -f "./dist/anylabeling" ]; then
+          mv ./dist/anylabeling ./dist/anylabeling-GPU
+        fi
+        if [ -f "./dist/anylabeling.exe" ]; then
+          mv ./dist/anylabeling.exe ./dist/anylabeling-GPU.exe
+        fi
 
-    - name: Upload release app on macOS
-      id: upload_release_app_macos
+    - name: Upload Linux/Windows Release Assets
       uses: softprops/action-gh-release@v2
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        upload_url: ${{ needs.release.outputs.upload_url }}
-        asset_path: ./dist/AnyLabeling${{ matrix.device == 'GPU' && '-GPU' || '' }}.dmg
-        asset_name: AnyLabeling${{ matrix.device == 'GPU' && '-GPU' || '' }}.dmg
-        asset_content_type: application/octet-stream
-      if: runner.os == 'macOS'
+        tag_name: ${{ github.ref_name }}
+        files: |
+          ./dist/anylabeling*
+        fail_on_unmatched_files: false
+        append_body: true
+        preserve_order: true
+      if: success()
+
+  build_macos_folder:
+    needs: [release]
+    runs-on: macos-latest
+    permissions:
+      contents: write
+    strategy:
+      matrix:
+        device: [CPU, GPU]
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: true
+
+    - uses: conda-incubator/setup-miniconda@v2
+      with:
+        python-version: "3.10.14"
+        miniconda-version: "latest"
+
+    - name: Install main
+      shell: bash -l {0}
+      run: |
+        pip install .
+
+    - name: Install PyQt5 for macOS
+      shell: bash -l {0}
+      run: |
+        conda install -c conda-forge pyqt==5.15.7
+
+    - name: Make build script executable
+      shell: bash -l {0}
+      run: |
+        chmod +x scripts/build_macos_folder.sh
+
+    - name: Build in folder mode
+      shell: bash -l {0}
+      run: |
+        ./scripts/build_macos_folder.sh ${{ matrix.device }}
+
+    - name: Create zip archive
+      shell: bash -l {0}
+      run: |
+        cd dist && zip -r AnyLabeling-Folder${{ matrix.device == 'GPU' && '-GPU' || '' }}.zip AnyLabeling-Folder${{ matrix.device == 'GPU' && '-GPU' || '' }}/
+
+    - name: Upload macOS Folder Build Assets
+      uses: softprops/action-gh-release@v2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref_name }}
+        files: ./dist/AnyLabeling-Folder${{ matrix.device == 'GPU' && '-GPU' || '' }}.zip
+        append_body: true
+        preserve_order: true
+      if: success()
