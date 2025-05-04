@@ -46,9 +46,8 @@
 
 - Download and run newest version from [Releases](https://github.com/vietanhdev/anylabeling/releases).
 - For MacOS:
-  - After installing, go to Applications folder
-  - Right click on the app and select Open
-  - From the second time, you can open the app normally using Launchpad
+  - Download the folder mode build (`AnyLabeling-Folder.zip`) from [Releases](https://github.com/vietanhdev/anylabeling/releases)
+  - See [macOS folder mode instructions](docs/macos_folder_mode.md) for details
 
 ### Install from Pypi
 
