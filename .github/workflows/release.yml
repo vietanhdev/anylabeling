@@ -132,15 +132,15 @@ jobs:
         python-version: "3.10.14"
         miniconda-version: "latest"
 
-    - name: Install main
-      shell: bash -l {0}
-      run: |
-        pip install .
-
     - name: Install PyQt5 for macOS
       shell: bash -l {0}
       run: |
         conda install -c conda-forge pyqt==5.15.7
+
+    - name: Install main
+      shell: bash -l {0}
+      run: |
+        pip install -e .
 
     - name: Make build script executable
       shell: bash -l {0}
