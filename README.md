@@ -1,5 +1,5 @@
 <p align="center">
-  <img alt="AnyLabeling" style="width: 128px; max-width: 100%; height: auto;" src="https://github.com/user-attachments/assets/847e47e6-acf0-4f96-9ed9-5485ab405ae0"/>
+  <img alt="AnyLabeling" style="width: 128px; height: 128px; height: auto;" src="https://github.com/user-attachments/assets/847e47e6-acf0-4f96-9ed9-5485ab405ae0"/>
   <h1 align="center">🌟 AnyLabeling 🌟</h1>
   <p align="center">Effortless data labeling with AI support from <b>YOLO</b> and <b>Segment Anything</b>!</p>
   <p align="center"><b>AnyLabeling = LabelImg + Labelme + Improved UI + Auto-labeling</b></p>
