@@ -40,3 +40,6 @@ repos:
     hooks:
     -   id: codespell
         files: \.(py|sh|rst|yml|yaml)$
+        args:
+        - --ignore-words-list=datas
+        - --skip=scripts/build_macos_folder.sh
