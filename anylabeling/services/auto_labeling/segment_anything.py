@@ -18,7 +18,7 @@ from .model import Model
 from .types import AutoLabelingResult
 from .sam_onnx import SegmentAnythingONNX
 from .sam2_onnx import SegmentAnything2ONNX
-
+from .sam2_coreml import SegmentAnything2CoreML
 
 class SegmentAnything(Model):
     """Segmentation model using SegmentAnything"""
@@ -57,7 +57,7 @@ class SegmentAnything(Model):
         encoder_model_abs_path = self.get_model_abs_path(
             self.config, "encoder_model_path"
         )
-        if not encoder_model_abs_path or not os.path.isfile(encoder_model_abs_path):
+        if not encoder_model_abs_path or not (os.path.isfile(encoder_model_abs_path) or os.path.isdir(encoder_model_abs_path)):
             raise FileNotFoundError(
                 QCoreApplication.translate(
                     "Model",
@@ -67,7 +67,7 @@ class SegmentAnything(Model):
         decoder_model_abs_path = self.get_model_abs_path(
             self.config, "decoder_model_path"
         )
-        if not decoder_model_abs_path or not os.path.isfile(decoder_model_abs_path):
+        if not decoder_model_abs_path or not (os.path.isfile(decoder_model_abs_path) or os.path.isdir(decoder_model_abs_path)):
             raise FileNotFoundError(
                 QCoreApplication.translate(
                     "Model",
@@ -76,7 +76,10 @@ class SegmentAnything(Model):
             )
 
         # Load models
-        if self.detect_model_variant(decoder_model_abs_path) == "sam2":
+        if "coreml" in decoder_model_abs_path:
+            config_folder = os.path.dirname(decoder_model_abs_path)
+            self.model = SegmentAnything2CoreML(config_folder)
+        elif self.detect_model_variant(decoder_model_abs_path) == "sam2":
             self.model = SegmentAnything2ONNX(
                 encoder_model_abs_path, decoder_model_abs_path
             )
@@ -84,6 +87,8 @@ class SegmentAnything(Model):
             self.model = SegmentAnythingONNX(
                 encoder_model_abs_path, decoder_model_abs_path
             )
+        #else:
+        #    self.model = SegmentAnything2CoreML("/Users/A92940251/Documents/AICC-Next/digibb/models")
 
         # Mark for auto labeling
         # points, rectangles

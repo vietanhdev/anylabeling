@@ -1,3 +1,14 @@
+- name: "sam2_1_coreml_large"
+  display_name: Segment Anything 2.1 (Large) CoreML
+  download_url: https://huggingface.co/apple/coreml-sam2.1-large
+  encoder_model_path: SAM2_1LargeImageEncoderFLOAT16.mlpackage
+  decoder_model_path: SAM2_1LargeMaskDecoderFLOAT16.mlpackage
+  image_encoder_model_path: SAM2_1LargeImageEncoderFLOAT16.mlpackage
+  prompt_encoder_model_path: sSAM2_1LargePromptEncoderFLOAT16.mlpackage
+  input_size: 1024
+  max_height: 1024
+  max_width: 1024
+  type: segment_anything
 - name: "sam2_hiera_tiny_20240803"
   display_name: Segment Anything 2 (Hiera-Tiny)
   download_url: https://huggingface.co/vietanhdev/segment-anything-2-onnx-models/resolve/main/sam2_hiera_tiny.zip

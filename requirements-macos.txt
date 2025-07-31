@@ -8,3 +8,4 @@ onnx==1.16.1
 onnxruntime==1.18.1
 qimage2ndarray==1.10.0
 darkdetect==0.8.0
+coremltools==8.3.0
