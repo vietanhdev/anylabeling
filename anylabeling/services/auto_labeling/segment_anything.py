@@ -87,8 +87,6 @@ class SegmentAnything(Model):
             self.model = SegmentAnythingONNX(
                 encoder_model_abs_path, decoder_model_abs_path
             )
-        #else:
-        #    self.model = SegmentAnything2CoreML("/Users/A92940251/Documents/AICC-Next/digibb/models")
 
         # Mark for auto labeling
         # points, rectangles
