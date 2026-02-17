@@ -33,8 +33,6 @@ class ExportDialog(QDialog):
         self.output_folder = None
         self.thread_pool = QThreadPool()
         self.export_worker = None
-        self.setMinimumWidth(600)
-        self.setMinimumHeight(400)
         self.setWindowTitle(self.tr("Export Annotations"))
         self.setup_ui()
 
@@ -56,6 +54,34 @@ class ExportDialog(QDialog):
         format_layout.addWidget(self.format_combo)
 
         layout.addWidget(format_group)
+
+        # -- YOLO Export Mode (only for YOLO format) --
+        self.yolo_mode_group = QGroupBox(self.tr("YOLO Export Mode"))
+        yolo_mode_layout = QVBoxLayout()
+        self.yolo_mode_group.setLayout(yolo_mode_layout)
+
+        self.yolo_detection_radio = QRadioButton(self.tr("Detection (Bounding Boxes)"))
+        self.yolo_detection_radio.setChecked(True)
+        self.yolo_detection_radio.setToolTip(
+            self.tr("Export as YOLO detection format with bounding boxes")
+        )
+
+        self.yolo_segmentation_radio = QRadioButton(self.tr("Segmentation (Polygons)"))
+        self.yolo_segmentation_radio.setToolTip(
+            self.tr("Export as YOLO segmentation format preserving polygon shapes")
+        )
+
+        self.yolo_mode_button_group = QButtonGroup()
+        self.yolo_mode_button_group.addButton(self.yolo_detection_radio)
+        self.yolo_mode_button_group.addButton(self.yolo_segmentation_radio)
+
+        yolo_mode_layout.addWidget(self.yolo_detection_radio)
+        yolo_mode_layout.addWidget(self.yolo_segmentation_radio)
+
+        # Show by default since YOLO is the first option
+        self.yolo_mode_group.setVisible(True)
+
+        layout.addWidget(self.yolo_mode_group)
 
         # -- Source selection --
         source_group = QGroupBox(self.tr("Source"))
@@ -146,7 +172,6 @@ class ExportDialog(QDialog):
         self.val_spin.setRange(1, 99)
         self.val_spin.setValue(20)
         self.val_spin.setSuffix("%")
-        self.val_spin.setEnabled(False)
         val_layout.addWidget(self.val_spin)
         ratio_layout.addLayout(val_layout)
 
@@ -156,7 +181,6 @@ class ExportDialog(QDialog):
         self.test_spin.setRange(0, 98)
         self.test_spin.setValue(10)
         self.test_spin.setSuffix("%")
-        self.test_spin.setEnabled(False)
         test_layout.addWidget(self.test_spin)
         ratio_layout.addLayout(test_layout)
 
@@ -213,6 +237,17 @@ class ExportDialog(QDialog):
         # Dialog buttons
         self.export_button.clicked.connect(self.on_export_clicked)
         self.cancel_button.clicked.connect(self.on_cancel_clicked)
+        
+        # Format selection - show/hide YOLO mode options
+        self.format_combo.currentIndexChanged.connect(self.on_format_changed)
+
+    def on_format_changed(self, index):
+
+        """Handle format selection changes."""
+        export_format = self.format_combo.currentData()
+        # Show YOLO mode options only for YOLO format
+        self.yolo_mode_group.setVisible(export_format == "yolo")
+
 
     def on_source_radio_toggled(self, checked):
         """Handle toggling of source radio buttons."""
@@ -382,6 +417,9 @@ class ExportDialog(QDialog):
         recursive = self.recursive_check.isChecked()
         use_random_names = self.random_names_check.isChecked()
 
+        yolo_export_mode = "segmentation" if self.yolo_segmentation_radio.isChecked() else "detection"
+
+
         # Create and start export worker
         self.export_worker = ExportWorker(
             export_format,
@@ -393,6 +431,7 @@ class ExportDialog(QDialog):
             test_ratio,
             recursive,
             use_random_names,
+            yolo_export_mode,
         )
 
         # Connect worker signals
@@ -475,6 +514,11 @@ class ExportDialog(QDialog):
 
         # Export options
         self.random_names_check.setEnabled(enabled)
+
+        # YOLO mode options - enable when YOLO is selected AND controls are enabled
+        is_yolo = self.format_combo.currentData() == "yolo"
+        self.yolo_detection_radio.setEnabled(enabled and is_yolo)
+        self.yolo_segmentation_radio.setEnabled(enabled and is_yolo)
 
         # Data split options
         self.split_check.setEnabled(enabled)

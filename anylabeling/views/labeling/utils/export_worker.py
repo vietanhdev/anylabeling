@@ -11,7 +11,7 @@ from .export_formats import FormatExporter
 
 class ExportSignals(QObject):
     """Signals for the export worker."""
-
+    
     started = pyqtSignal()
     finished = pyqtSignal()
     progress = pyqtSignal(int, str)
@@ -32,6 +32,7 @@ class ExportWorker(QRunnable):
         test_ratio=0.1,
         recursive=False,
         use_random_names=False,
+        yolo_export_mode="detection",
     ):
         """Initialize the export worker.
 
@@ -45,6 +46,7 @@ class ExportWorker(QRunnable):
             test_ratio: Ratio of data for test set
             recursive: Whether to scan input directory recursively
             use_random_names: Whether to use random UUID4 names for exported items
+            yolo_export_mode: YOLO export mode ('detection' or 'segmentation')
         """
         super().__init__()
         self.signals = ExportSignals()
@@ -57,6 +59,7 @@ class ExportWorker(QRunnable):
         self.test_ratio = test_ratio
         self.recursive = recursive
         self.use_random_names = use_random_names
+        self.yolo_export_mode = yolo_export_mode  # <-- NUOVO
         self.running = False
 
     def _create_split_dirs(self):
@@ -250,6 +253,7 @@ class ExportWorker(QRunnable):
                     image_width,
                     label_map,
                     output_path,
+                    export_mode=self.yolo_export_mode,  
                 )
 
                 # Copy image file
