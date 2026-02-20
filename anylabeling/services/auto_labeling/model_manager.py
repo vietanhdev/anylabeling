@@ -21,6 +21,7 @@ from anylabeling.utils import GenericWorker
 from anylabeling.config import get_config, save_config
 
 import ssl
+from huggingface_hub import snapshot_download
 
 ssl._create_default_https_context = (
     ssl._create_unverified_context
@@ -267,22 +268,7 @@ class ModelManager(QObject):
         self.model_download_thread.started.connect(self.model_download_worker.run)
         self.model_download_thread.start()
 
-    def _download_and_extract_model(self, model_config):
-        """Download and extract a model from model config"""
-        config_file = model_config["config_file"]
-        # Check if model is already downloaded
-        if not os.path.exists(config_file):
-            raise ValueError(self.tr("Error in loading config file."))
-        with open(config_file, "r") as f:
-            model_config = yaml.safe_load(f)
-        if model_config.get("has_downloaded", False):
-            return
-
-        # Download model
-        download_url = model_config.get("download_url", None)
-        if not download_url:
-            raise ValueError(self.tr("Missing download_url in config file."))
-        tmp_dir = tempfile.mkdtemp()
+    def download_zip(self, tmp_dir, download_url):
         zip_model_path = os.path.join(tmp_dir, "model.zip")
 
         # Download url
@@ -307,14 +293,11 @@ class ModelManager(QObject):
             print(f"Could not download {download_url}: {e}")
             self.new_model_status.emit(f"Could not download {download_url}")
             return None
-
         # Extract model
         tmp_extract_dir = os.path.join(tmp_dir, "extract")
-        extract_dir = os.path.dirname(config_file)
         with zipfile.ZipFile(zip_model_path, "r") as zip_ref:
             zip_ref.extractall(tmp_extract_dir)
-
-        # Find model folder (containing config.yaml)
+                # Find model folder (containing config.yaml)
         model_folder = None
         for root, _, files in os.walk(tmp_extract_dir):
             if "config.yaml" in files:
@@ -322,6 +305,43 @@ class ModelManager(QObject):
                 break
         if model_folder is None:
             raise ValueError(self.tr("Could not find config.yaml in zip file."))
+        return model_folder
+    
+    def download_hf(self, tmp_dir, download_url, model_config):
+        repo_id = download_url.split('https://huggingface.co/')[-1].strip('/')
+        tmp_extract_dir = os.path.join(tmp_dir, "extract")
+        local_dir = snapshot_download(
+            repo_id=repo_id,
+            local_dir=tmp_extract_dir  # where to store everything
+        )
+        with open(tmp_extract_dir + "/config.yaml", "w") as f:
+            model_config = yaml.dump(model_config, f, default_flow_style=False)
+        return tmp_extract_dir
+
+    def _download_and_extract_model(self, model_config):
+        """Download and extract a model from model config"""
+        config_file = model_config["config_file"]
+        extract_dir = os.path.dirname(config_file)
+        # Check if model is already downloaded
+        if not os.path.exists(config_file):
+            raise ValueError(self.tr("Error in loading config file."))
+        with open(config_file, "r") as f:
+            model_config = yaml.safe_load(f)
+        if model_config.get("has_downloaded", False):
+            return
+
+        # Download model
+        download_url = model_config.get("download_url", None)
+        if not download_url:
+            raise ValueError(self.tr("Missing download_url in config file."))
+        
+        tmp_dir = tempfile.mkdtemp()
+        if download_url.endswith('.zip'):
+            model_folder = self.download_zip(tmp_dir, download_url)
+
+        if download_url.startswith('https://huggingface.co'):
+            model_folder = self.download_hf(tmp_dir, download_url, model_config)
+
 
         # Move model folder to correct location
         shutil.rmtree(extract_dir)

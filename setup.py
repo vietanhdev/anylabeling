@@ -51,6 +51,7 @@ def get_install_requires():
         "onnx==1.16.1",
         "qimage2ndarray==1.10.0",
         "darkdetect==0.8.0",
+        'coremltools==8.3.0; platform_system == "Darwin"',
     ]
 
     # Add onnxruntime-gpu if GPU is preferred
