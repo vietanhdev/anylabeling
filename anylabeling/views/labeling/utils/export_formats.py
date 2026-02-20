@@ -14,7 +14,8 @@ class FormatExporter:
 
     @staticmethod
     def export_to_yolo(
-        shapes, image_height, image_width, label_map=None, output_path=None
+        shapes, image_height, image_width, label_map=None, output_path=None, 
+        export_mode="detection"
     ):
         """Export annotations to YOLO format.
 
@@ -24,6 +25,7 @@ class FormatExporter:
             image_width: Width of the image
             label_map: Dictionary mapping labels to class indices
             output_path: Path to save the YOLO annotations
+            export_mode: "detection" for bounding boxes, "segmentation" for polygons
 
         Returns:
             Exported YOLO annotations as string
@@ -35,7 +37,7 @@ class FormatExporter:
 
         results = []
         for shape in shapes:
-            if shape["shape_type"] != "rectangle" and shape["shape_type"] != "polygon":
+            if shape["shape_type"] not in ["rectangle", "polygon"]:
                 continue
 
             label = shape["label"]
@@ -45,27 +47,62 @@ class FormatExporter:
             class_idx = label_map[label]
             points = shape["points"]
 
-            if shape["shape_type"] == "rectangle":
-                # Convert rectangle to YOLO format [x_center, y_center, width, height]
-                x1, y1 = points[0]
-                x2, y2 = points[1]
-                x_center = (x1 + x2) / (2 * image_width)
-                y_center = (y1 + y2) / (2 * image_height)
-                width = abs(x2 - x1) / image_width
-                height = abs(y2 - y1) / image_height
-                results.append(f"{class_idx} {x_center} {y_center} {width} {height}")
-            elif shape["shape_type"] == "polygon":
-                # For polygons, convert to bbox firs
-                x_coords = [p[0] for p in points]
-                y_coords = [p[1] for p in points]
-                x_min, x_max = min(x_coords), max(x_coords)
-                y_min, y_max = min(y_coords), max(y_coords)
+            if export_mode == "segmentation":
+                # Export polygon points for YOLO segmentation
+                if shape["shape_type"] == "polygon":
+                    # Normalize polygon points
+                    normalized_points = []
+                    for x, y in points:
+                        normalized_points.append(x / image_width)
+                        normalized_points.append(y / image_height)
+                    
+                    points_str = " ".join(f"{p:.6f}" for p in normalized_points)
+                    results.append(f"{class_idx} {points_str}")
+                    
+                elif shape["shape_type"] == "rectangle":
+                    # Convert rectangle to polygon (4 points) for segmentation
+                    x1, y1 = points[0]
+                    x2, y2 = points[1]
+                    
+                    # Create 4 corners: top-left, top-right, bottom-right, bottom-left
+                    rect_points = [
+                        (x1, y1),
+                        (x2, y1),
+                        (x2, y2),
+                        (x1, y2)
+                    ]
+                    
+                    normalized_points = []
+                    for x, y in rect_points:
+                        normalized_points.append(x / image_width)
+                        normalized_points.append(y / image_height)
+                    
+                    points_str = " ".join(f"{p:.6f}" for p in normalized_points)
+                    results.append(f"{class_idx} {points_str}")
+                    
+            else:  # detection mode - bounding boxes
+                if shape["shape_type"] == "rectangle":
+                    # Convert rectangle to YOLO format [x_center, y_center, width, height]
+                    x1, y1 = points[0]
+                    x2, y2 = points[1]
+                    x_center = (x1 + x2) / (2 * image_width)
+                    y_center = (y1 + y2) / (2 * image_height)
+                    width = abs(x2 - x1) / image_width
+                    height = abs(y2 - y1) / image_height
+                    results.append(f"{class_idx} {x_center:.6f} {y_center:.6f} {width:.6f} {height:.6f}")
+                    
+                elif shape["shape_type"] == "polygon":
+                    # For detection, convert polygon to bounding box
+                    x_coords = [p[0] for p in points]
+                    y_coords = [p[1] for p in points]
+                    x_min, x_max = min(x_coords), max(x_coords)
+                    y_min, y_max = min(y_coords), max(y_coords)
 
-                x_center = (x_min + x_max) / (2 * image_width)
-                y_center = (y_min + y_max) / (2 * image_height)
-                width = (x_max - x_min) / image_width
-                height = (y_max - y_min) / image_height
-                results.append(f"{class_idx} {x_center} {y_center} {width} {height}")
+                    x_center = (x_min + x_max) / (2 * image_width)
+                    y_center = (y_min + y_max) / (2 * image_height)
+                    width = (x_max - x_min) / image_width
+                    height = (y_max - y_min) / image_height
+                    results.append(f"{class_idx} {x_center:.6f} {y_center:.6f} {width:.6f} {height:.6f}")
 
         result_text = "\n".join(results)
         if output_path:
@@ -73,6 +110,29 @@ class FormatExporter:
                 f.write(result_text)
 
         return result_text, label_map
+
+    @staticmethod
+    def export_to_yolo_segmentation(
+        shapes, image_height, image_width, label_map=None, output_path=None
+    ):
+        """Export annotations to YOLO segmentation format (polygons).
+        
+        This is a convenience method that calls export_to_yolo with export_mode="segmentation".
+
+        Args:
+            shapes: List of annotation shapes
+            image_height: Height of the image
+            image_width: Width of the image
+            label_map: Dictionary mapping labels to class indices
+            output_path: Path to save the YOLO annotations
+
+        Returns:
+            Exported YOLO segmentation annotations as string
+        """
+        return FormatExporter.export_to_yolo(
+            shapes, image_height, image_width, label_map, output_path, 
+            export_mode="segmentation"
+        )
 
     @staticmethod
     def export_to_pascal_voc(
@@ -110,7 +170,7 @@ class FormatExporter:
 
         # Add objects
         for shape in shapes:
-            if shape["shape_type"] != "rectangle" and shape["shape_type"] != "polygon":
+            if shape["shape_type"] not in ["rectangle", "polygon"]:
                 continue
 
             obj = ET.SubElement(annotation, "object")
@@ -241,7 +301,7 @@ class FormatExporter:
                     height = y_max - y_min
                     bbox = [x_min, y_min, width, height]
 
-                    # Convert rectangle to segmentation forma
+                    # Convert rectangle to segmentation format
                     segmentation = [
                         [
                             x_min,
