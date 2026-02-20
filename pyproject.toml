@@ -1,3 +1,65 @@
 [build-system]
-requires = ["setuptools", "wheel"]
+requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "anylabeling"
+dynamic = ["version"]
+description = "Effortless data labeling with AI support"
+readme = "README.md"
+license = { text = "GPLv3" }
+authors = [{ name = "Viet-Anh Nguyen", email = "vietanh.dev@gmail.com" }]
+keywords = ["Image Annotation", "Machine Learning", "Deep Learning"]
+requires-python = ">=3.10"
+classifiers = [
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3 :: Only",
+]
+dependencies = [
+    "imgviz>=0.11",
+    "natsort>=7.1.0",
+    "numpy==1.26.4",
+    "Pillow>=2.8",
+    "PyYAML==6.0.1",
+    "termcolor==1.1.0",
+    "opencv-python-headless==4.7.0.72",
+    "PyQt5>=5.15.7; platform_system != 'Darwin'",
+    "onnx==1.16.1",
+    "onnxruntime==1.18.1",
+    "qimage2ndarray==1.10.0",
+    "darkdetect==0.8.0",
+    "huggingface_hub",
+]
+
+[project.optional-dependencies]
+# Windows/Linux GPU — replaces onnxruntime with GPU variant
+gpu = [
+    "onnxruntime-gpu==1.18.1",
+]
+# macOS extras (CoreML support)
+macos = [
+    "coremltools==8.3.0",
+]
+# Developer tooling
+dev = [
+    "build>=1.2",
+    "twine>=6.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/vietanhdev/anylabeling"
+
+[project.scripts]
+anylabeling = "anylabeling.app:main"
+
+[tool.setuptools.dynamic]
+version = { attr = "anylabeling.app_info.__version__" }
+
+[tool.setuptools.packages.find]
+where = ["."]

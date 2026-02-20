@@ -1,4 +1,2 @@
--r requirements.txt
-build==1.2.2
-twine==6.1.0
-
+# CPU + developer tooling
+-e ".[dev]"

@@ -1,13 +1,13 @@
 import os
 import cv2
 import numpy as np
-import coremltools as ct
 from pathlib import Path
 from PIL import Image
 
 
 class SegmentAnything2CoreML:
     def __init__(self, model_path: str) -> None:
+        import coremltools as ct  # macOS-only; imported lazily to avoid failure on Windows/Linux
         print("using CoreML", model_path)
         image_decoder_path = os.path.join(
             model_path, "SAM2_1LargeImageEncoderFLOAT16.mlpackage"

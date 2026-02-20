@@ -18,7 +18,6 @@ from .model import Model
 from .types import AutoLabelingResult
 from .sam_onnx import SegmentAnythingONNX
 from .sam2_onnx import SegmentAnything2ONNX
-from .sam2_coreml import SegmentAnything2CoreML
 
 class SegmentAnything(Model):
     """Segmentation model using SegmentAnything"""
@@ -77,6 +76,7 @@ class SegmentAnything(Model):
 
         # Load models
         if "coreml" in decoder_model_abs_path:
+            from .sam2_coreml import SegmentAnything2CoreML  # macOS-only; imported lazily
             config_folder = os.path.dirname(decoder_model_abs_path)
             self.model = SegmentAnything2CoreML(config_folder)
         elif self.detect_model_variant(decoder_model_abs_path) == "sam2":

@@ -1,11 +1,2 @@
-opencv-contrib-python-headless==4.7.0.72
-# PyQt5==5.15.6 # Use Miniconda/Anaconda: conda install -c conda-forge pyqt
-imgviz==1.5.0
-natsort==8.1.0
-termcolor==1.1.0
-PyYAML==6.0.1
-onnx==1.16.1
-onnxruntime==1.18.1
-qimage2ndarray==1.10.0
-darkdetect==0.8.0
-coremltools==8.3.0
+# macOS install — base deps + coremltools
+-e ".[macos]"

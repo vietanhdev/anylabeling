@@ -1,3 +1,2 @@
--r requirements-macos.txt
-build==1.2.2
-twine==6.1.0
+# macOS + developer tooling
+-e ".[macos,dev]"
