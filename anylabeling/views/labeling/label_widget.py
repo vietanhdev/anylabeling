@@ -1517,6 +1517,10 @@ class LabelingWidget(LabelDialog):
         if self._config["validate_label"] is None:
             return True
 
+        # These labels are produced by the auto-labeling feature and shouldn't emit errors
+        if label in ("AUTOLABEL_ADD", "AUTOLABEL_REMOVE"):
+            return True
+
         for i in range(self.unique_label_list.count()):
             label_i = self.unique_label_list.item(i).data(Qt.UserRole)
             if self._config["validate_label"] in ["exact"]:
