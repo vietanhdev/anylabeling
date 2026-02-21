@@ -1,3 +1,19 @@
+- name: "sam2.1_hiera_tiny_20260221"
+  display_name: Segment Anything 2.1 (Hiera-Tiny)
+  download_url: https://huggingface.co/vietanhdev/segment-anything-2.1-onnx-models/resolve/main/sam2.1_hiera_tiny_20260221.zip
+  type: segment_anything
+- name: "sam2.1_hiera_small_20260221"
+  display_name: Segment Anything 2.1 (Hiera-Small)
+  download_url: https://huggingface.co/vietanhdev/segment-anything-2.1-onnx-models/resolve/main/sam2.1_hiera_small_20260221.zip
+  type: segment_anything
+- name: "sam2.1_hiera_base_plus_20260221"
+  display_name: Segment Anything 2.1 (Hiera-Base+)
+  download_url: https://huggingface.co/vietanhdev/segment-anything-2.1-onnx-models/resolve/main/sam2.1_hiera_base_plus_20260221.zip
+  type: segment_anything
+- name: "sam2.1_hiera_large_20260221"
+  display_name: Segment Anything 2.1 (Hiera-Large)
+  download_url: https://huggingface.co/vietanhdev/segment-anything-2.1-onnx-models/resolve/main/sam2.1_hiera_large_20260221.zip
+  type: segment_anything
 - name: "sam2_1_coreml_large"
   display_name: Segment Anything 2.1 (Large) CoreML
   download_url: https://huggingface.co/apple/coreml-sam2.1-large
@@ -22,48 +38,64 @@
 - name: "sam2_hiera_tiny_20240803"
   display_name: Segment Anything 2 (Hiera-Tiny)
   download_url: https://huggingface.co/vietanhdev/segment-anything-2-onnx-models/resolve/main/sam2_hiera_tiny.zip
+  type: segment_anything
 - name: "sam2_hiera_small_20240803"
   display_name: Segment Anything 2 (Hiera-Small)
   download_url: https://huggingface.co/vietanhdev/segment-anything-2-onnx-models/resolve/main/sam2_hiera_small.zip
+  type: segment_anything
 - name: "sam2_hiera_base_plus_20240803"
   display_name: Segment Anything 2 (Hiera-Base+)
   download_url: https://huggingface.co/vietanhdev/segment-anything-2-onnx-models/resolve/main/sam2_hiera_base_plus.zip
+  type: segment_anything
 - name: "sam2_hiera_large_20240803"
   display_name: Segment Anything 2 (Hiera-Large)
   download_url: https://huggingface.co/vietanhdev/segment-anything-2-onnx-models/resolve/main/sam2_hiera_large.zip
+  type: segment_anything
 - name: "mobile_sam_20230629"
   display_name: Segment Anything (MobileSAM)
   download_url: https://huggingface.co/vietanhdev/segment-anything-onnx-models/resolve/main/mobile_sam_20230629.zip
+  type: segment_anything
 - name: "sam_vit_b_01ec64"
   display_name: Segment Anything (ViT-B)
   download_url: https://huggingface.co/vietanhdev/segment-anything-onnx-models/resolve/main/sam_vit_b_01ec64.zip
+  type: segment_anything
 - name: "sam_vit_b_01ec64_quant"
   display_name: Segment Anything (ViT-B Quant)
   download_url: https://huggingface.co/vietanhdev/segment-anything-onnx-models/resolve/main/sam_vit_b_01ec64_quant.zip
+  type: segment_anything
 - name: "sam_vit_l_0b3195"
   display_name: Segment Anything (ViT-L)
   download_url: https://huggingface.co/vietanhdev/segment-anything-onnx-models/resolve/main/sam_vit_l_0b3195.zip
+  type: segment_anything
 - name: "sam_vit_l_0b3195_quant"
   display_name: Segment Anything (ViT-L Quant)
   download_url: https://huggingface.co/vietanhdev/segment-anything-onnx-models/resolve/main/sam_vit_l_0b3195_quant.zip
+  type: segment_anything
 - name: "sam_vit_h_4b8939"
   display_name: Segment Anything (ViT-H)
   download_url: https://huggingface.co/vietanhdev/segment-anything-onnx-models/resolve/main/sam_vit_h_4b8939.zip
+  type: segment_anything
 - name: "sam_vit_h_4b8939_quant"
   display_name: Segment Anything (ViT-H Quant)
   download_url: https://huggingface.co/vietanhdev/segment-anything-onnx-models/resolve/main/sam_vit_h_4b8939_quant.zip
+  type: segment_anything
 - name: "yolov8n-r20230415"
   display_name: YOLOv8n
   download_url: https://github.com/vietanhdev/anylabeling-assets/releases/download/v0.4.0/yolov8n-r20230415.zip
+  type: yolov8
 - name: "yolov8s-r20230415"
   display_name: YOLOv8s
   download_url: https://github.com/vietanhdev/anylabeling-assets/releases/download/v0.4.0/yolov8s-r20230415.zip
+  type: yolov8
 - name: "yolov8m-r20230415"
   display_name: YOLOv8m
   download_url: https://github.com/vietanhdev/anylabeling-assets/releases/download/v0.4.0/yolov8m-r20230415.zip
+  type: yolov8
 - name: "yolov8l-r20230415"
   display_name: YOLOv8l
   download_url: https://github.com/vietanhdev/anylabeling-assets/releases/download/v0.4.0/yolov8l-r20230415.zip
+  type: yolov8
 - name: "yolov8x-r20230415"
   display_name: YOLOv8x
   download_url: https://github.com/vietanhdev/anylabeling-assets/releases/download/v0.4.0/yolov8x-r20230415.zip
+  type: yolov8

@@ -108,14 +108,19 @@ class ModelManager(QObject):
             model_config = copy.deepcopy(model)
             config_file = model.get("config_file", None)
             if config_file:
-                with open(config_file) as f:
-                    model_config = yaml.safe_load(f)
-                    model_config["config_file"] = os.path.normpath(
-                        os.path.abspath(config_file)
-                    )
-                    model_config["is_custom_model"] = model.get(
-                        "is_custom_model", False
-                    )
+                # Use utf-8-sig to strip any UTF-8 BOM that may be present in
+                # config files created on Windows (BOM in the first key would
+                # turn "type" into "\ufefftype", causing a KeyError on load).
+                with open(config_file, encoding="utf-8-sig") as f:
+                    file_config = yaml.safe_load(f)
+                # Overlay file config on top of master config so that fields
+                # present in models.yaml (e.g. "type") are never lost even if
+                # the on-disk file is missing them.
+                model_config.update(file_config)
+                model_config["config_file"] = os.path.normpath(
+                    os.path.abspath(config_file)
+                )
+                model_config["is_custom_model"] = model.get("is_custom_model", False)
             model_configs.append(model_config)
 
         # Sort by last used
@@ -181,7 +186,7 @@ class ModelManager(QObject):
 
         # Check config file content
         model_config = {}
-        with open(config_file) as f:
+        with open(config_file, encoding="utf-8-sig") as f:
             model_config = yaml.safe_load(f)
             model_config["config_file"] = os.path.abspath(config_file)
         if not model_config:
@@ -353,7 +358,7 @@ class ModelManager(QObject):
         # Check if model is already downloaded
         if not os.path.exists(config_file):
             raise ValueError(self.tr("Error in loading config file."))
-        with open(config_file) as f:
+        with open(config_file, encoding="utf-8-sig") as f:
             model_config = yaml.safe_load(f)
         if model_config.get("has_downloaded", False):
             return
@@ -381,12 +386,13 @@ class ModelManager(QObject):
         # Clean up
         shutil.rmtree(tmp_dir)
 
-        # Update config file
-        with open(config_file) as f:
+        # Update config file – use utf-8-sig to strip any BOM introduced
+        # by Windows tools when the zip was created.
+        with open(config_file, encoding="utf-8-sig") as f:
             model_config = yaml.safe_load(f)
         model_config["has_downloaded"] = True
         model_config["config_file"] = config_file
-        with open(config_file, "w") as f:
+        with open(config_file, "w", encoding="utf-8") as f:
             yaml.dump(model_config, f)
 
         return model_config
