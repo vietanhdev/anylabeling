@@ -36,9 +36,26 @@
 **Features:**
 
 - [x] Image annotation for polygon, rectangle, circle, line and point.
-- [x] Auto-labeling YOLOv8, Segment Anything (SAM, SAM2).
+- [x] Auto-labeling with **YOLOv8** (object detection).
+- [x] Auto-labeling with **Segment Anything** family:
+  - **SAM** (ViT-B / ViT-L / ViT-H) and **MobileSAM**
+  - **SAM 2** and **SAM 2.1** (Hiera-Tiny / Small / Base+ / Large)
+  - **SAM 3** (ViT-H) — open-vocabulary segmentation with text prompts
 - [x] Text detection, recognition and KIE (Key Information Extraction) labeling.
 - [x] Multiple languages availables: English, Vietnamese, Chinese.
+
+### Supported Models
+
+| Model | Prompt Types | Notes |
+|-------|-------------|-------|
+| SAM ViT-B / ViT-L / ViT-H | Point, Rectangle | Original Segment Anything |
+| MobileSAM | Point, Rectangle | Lightweight SAM |
+| SAM 2 Hiera-Tiny / Small / Base+ / Large | Point, Rectangle | Meta SAM 2 |
+| SAM 2.1 Hiera-Tiny / Small / Base+ / Large | Point, Rectangle | Improved SAM 2 |
+| SAM 3 ViT-H | **Text**, Point, Rectangle | Open-vocabulary; text drives detection |
+| YOLOv8n / s / m / l / x | — | Object detection & auto-labeling |
+
+All models are downloaded automatically on first use from Hugging Face.
 
 ## Install and Run
 
@@ -140,6 +157,6 @@ If you want to contribute to **AnyLabeling**, please read [Contribution Guidelin
 ## References
 
 - Labeling UI built with ideas and components from [LabelImg](https://github.com/heartexlabs/labelImg), [LabelMe](https://github.com/wkentaro/labelme).
-- Auto-labeling with [Segment Anything Models](https://segment-anything.com/), [MobileSAM](https://github.com/ChaoningZhang/MobileSAM).
+- Auto-labeling with [Segment Anything](https://segment-anything.com/) (SAM, SAM 2, SAM 2.1, SAM 3), [MobileSAM](https://github.com/ChaoningZhang/MobileSAM).
 - Auto-labeling with [YOLOv8](https://github.com/ultralytics/ultralytics).
 - Icons from FlatIcon: [DinosoftLabs](https://www.flaticon.com/free-icons/sun "sun icons"), [Freepik](https://www.flaticon.com/free-icons/moon "moon icons"), [Vectoricons](https://www.flaticon.com/free-icons/system "system icons"), [HideMaru](https://www.flaticon.com/free-icons/ungroup "ungroup icons").
