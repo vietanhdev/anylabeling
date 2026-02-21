@@ -49,7 +49,7 @@ class TestLabelColormapMutability(unittest.TestCase):
         This is the direct regression test for the startup crash:
           ValueError: assignment destination is read-only
         """
-        # We cannot import label_widget without PyQt5, so we reproduce the
+        # We cannot import label_widget without PyQt6, so we reproduce the
         # exact same pattern the module uses and confirm it works.
         LABEL_COLORMAP = imgviz.label_colormap().copy()   # the fix
         # These were the crashing lines:

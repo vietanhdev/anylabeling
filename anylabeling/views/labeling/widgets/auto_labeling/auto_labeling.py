@@ -1,8 +1,8 @@
 import os
 
-from PyQt5 import uic
-from PyQt5.QtCore import pyqtSignal, pyqtSlot
-from PyQt5.QtWidgets import QWidget, QFileDialog
+from PyQt6 import uic
+from PyQt6.QtCore import pyqtSignal, pyqtSlot
+from PyQt6.QtWidgets import QWidget, QFileDialog
 
 from anylabeling.services.auto_labeling.model_manager import ModelManager
 from anylabeling.services.auto_labeling.types import AutoLabelingMode
@@ -259,9 +259,9 @@ class AutoLabelingWidget(QWidget):
             self.model_manager.unload_model()
             # Open file dialog to select "config.yaml" file for model
             file_dialog = QFileDialog(self)
-            file_dialog.setFileMode(QFileDialog.ExistingFile)
+            file_dialog.setFileMode(QFileDialog.FileMode.ExistingFile)
             file_dialog.setNameFilter("Config file (*.yaml)")
-            if file_dialog.exec_():
+            if file_dialog.exec():
                 config_file = file_dialog.selectedFiles()[0]
                 # Disable combobox while loading model
                 if config_path:
@@ -282,15 +282,29 @@ class AutoLabelingWidget(QWidget):
         """Update widget status"""
         if not model_config or "model" not in model_config:
             return
-        widgets = model_config["model"].get_required_widgets()
-        
+        model = model_config["model"]
+        widgets = model.get_required_widgets()
+
+        is_sam3 = getattr(model, "_is_sam3", False)
+
         # Always check if prompt mode selection should be shown
         if "label_prompt" in widgets or "edit_prompt" in widgets:
             self.label_prompt_mode.show()
             self.combobox_prompt_mode.show()
             self.label_confidence.show()
             self.double_spin_box_confidence.show()
-        
+
+            if not is_sam3:
+                # Force Visual mode for non-SAM3 models
+                visual_index = self.combobox_prompt_mode.findText(
+                    self.tr("Visual")
+                )
+                if visual_index >= 0:
+                    self.combobox_prompt_mode.setCurrentIndex(visual_index)
+                self.combobox_prompt_mode.setEnabled(False)
+            else:
+                self.combobox_prompt_mode.setEnabled(True)
+
         prompt_mode = self.combobox_prompt_mode.currentText().lower()
 
         for widget in widgets:

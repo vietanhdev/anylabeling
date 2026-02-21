@@ -1,6 +1,6 @@
 """Tests for SegmentAnything.detect_model_variant and post_process.
 
-PyQt5 is mocked out so no display is required.
+PyQt6 is mocked out so no display is required.
 """
 import sys
 import os
@@ -10,10 +10,10 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 
 # ---------------------------------------------------------------------------
-# Stub out PyQt5 and anylabeling UI modules before importing segment_anything
+# Stub out PyQt6 and anylabeling UI modules before importing segment_anything
 # ---------------------------------------------------------------------------
 _MOCK_MODS = [
-    "PyQt5", "PyQt5.QtCore", "PyQt5.QtGui", "PyQt5.QtWidgets",
+    "PyQt6", "PyQt6.QtCore", "PyQt6.QtGui", "PyQt6.QtWidgets",
     "anylabeling.utils",
     "anylabeling.views.labeling.shape",
     "anylabeling.views.labeling.utils",
@@ -25,7 +25,7 @@ for _mod in _MOCK_MODS:
         sys.modules[_mod] = MagicMock()
 
 # QCoreApplication.translate must return the first arg (msgid) so strings work
-import PyQt5.QtCore as _qt_core
+import PyQt6.QtCore as _qt_core
 _qt_core.QCoreApplication.translate = lambda ctx, s: s
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -136,7 +136,7 @@ def _sa_with_mocks(output_mode="polygon"):
     # Patch the Shape class and QPointF inside the module
     import anylabeling.services.auto_labeling.segment_anything as _sa_mod
     _sa_mod.Shape = _FakeShape
-    import PyQt5.QtCore as _qtc
+    import PyQt6.QtCore as _qtc
     _qtc.QPointF = _FakeQPointF
 
     return sa

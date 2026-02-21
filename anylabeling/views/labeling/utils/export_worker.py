@@ -5,7 +5,7 @@ import os.path as osp
 import json
 import random
 import uuid
-from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot, QRunnable
+from PyQt6.QtCore import QObject, pyqtSignal, pyqtSlot, QRunnable
 from .export_formats import FormatExporter
 
 

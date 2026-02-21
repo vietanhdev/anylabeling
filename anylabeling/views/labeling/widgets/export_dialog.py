@@ -1,8 +1,8 @@
 """Export dialog widget for exporting annotations to different formats."""
 
 import os
-from PyQt5.QtCore import QThreadPool
-from PyQt5.QtWidgets import (
+from PyQt6.QtCore import QThreadPool
+from PyQt6.QtWidgets import (
     QDialog,
     QVBoxLayout,
     QHBoxLayout,
@@ -373,10 +373,10 @@ class ExportDialog(QDialog):
                 self.tr(
                     "Source and output folders are the same. This may overwrite files. Continue?"
                 ),
-                QMessageBox.Yes | QMessageBox.No,
-                QMessageBox.No,
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No,
             )
-            if result == QMessageBox.No:
+            if result == QMessageBox.StandardButton.No:
                 return False
 
         # Check split ratios
@@ -450,10 +450,10 @@ class ExportDialog(QDialog):
                 self,
                 self.tr("Cancel Export"),
                 self.tr("Export is in progress. Are you sure you want to cancel?"),
-                QMessageBox.Yes | QMessageBox.No,
-                QMessageBox.No,
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No,
             )
-            if result == QMessageBox.Yes:
+            if result == QMessageBox.StandardButton.Yes:
                 self.export_worker.stop()
                 self.progress_label.setText(self.tr("Cancelling..."))
         else:

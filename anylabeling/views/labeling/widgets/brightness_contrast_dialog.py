@@ -2,8 +2,8 @@
 
 import PIL.Image
 import PIL.ImageEnhance
-from PyQt5 import QtGui, QtWidgets
-from PyQt5.QtCore import Qt
+from PyQt6 import QtGui, QtWidgets
+from PyQt6.QtCore import Qt
 
 from .. import utils
 
@@ -43,7 +43,7 @@ class BrightnessContrastDialog(QtWidgets.QDialog):
 
     def _create_slider(self):
         """Create brightness/contrast slider"""
-        slider = QtWidgets.QSlider(Qt.Horizontal)
+        slider = QtWidgets.QSlider(Qt.Orientation.Horizontal)
         slider.setRange(0, 150)
         slider.setValue(50)
         slider.valueChanged.connect(self.on_new_value)

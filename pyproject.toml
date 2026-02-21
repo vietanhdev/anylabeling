@@ -10,30 +10,30 @@ readme = "README.md"
 license = { text = "GPLv3" }
 authors = [{ name = "Viet-Anh Nguyen", email = "vietanh.dev@gmail.com" }]
 keywords = ["Image Annotation", "Machine Learning", "Deep Learning"]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 classifiers = [
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
     "Natural Language :: English",
     "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3 :: Only",
 ]
 dependencies = [
-    "imgviz>=0.11",
-    "natsort>=7.1.0",
-    "numpy==1.26.4",
-    "Pillow>=2.8",
-    "PyYAML==6.0.1",
-    "termcolor==1.1.0",
-    "opencv-python-headless==4.7.0.72",
-    "PyQt5>=5.15.11; platform_system != 'Darwin'",
-    "onnx==1.16.1",
-    "onnxruntime==1.18.1",
-    "qimage2ndarray==1.10.0",
-    "darkdetect==0.8.0",
+    "imgviz>=2.0.0",
+    "natsort>=8.0.0",
+    "numpy>=2.0.0",
+    "Pillow>=10.0.0",
+    "PyYAML>=6.0.2",
+    "termcolor>=2.0.0",
+    "opencv-python-headless>=4.10.0",
+    "PyQt6>=6.5.0; platform_system != 'Darwin'",
+    "onnx>=1.18.0",
+    "onnxruntime>=1.20.0",
+    "qimage2ndarray>=1.10.0",
+    "darkdetect>=0.8.0",
     "huggingface_hub",
     "osam>=0.3.1",  # CLIP tokenizer for SAM3 language encoder
 ]
@@ -41,7 +41,7 @@ dependencies = [
 [project.optional-dependencies]
 # Windows/Linux GPU — replaces onnxruntime with GPU variant
 gpu = [
-    "onnxruntime-gpu==1.18.1",
+    "onnxruntime-gpu>=1.20.0",
 ]
 # macOS extras (CoreML support)
 macos = [

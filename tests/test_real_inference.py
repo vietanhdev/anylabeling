@@ -15,10 +15,10 @@ import cv2
 import numpy as np
 
 # ---------------------------------------------------------------------------
-# Stub PyQt5 before importing anylabeling (headless / no display)
+# Stub PyQt6 before importing anylabeling (headless / no display)
 # ---------------------------------------------------------------------------
 _MOCK_MODS = [
-    "PyQt5", "PyQt5.QtCore", "PyQt5.QtGui", "PyQt5.QtWidgets",
+    "PyQt6", "PyQt6.QtCore", "PyQt6.QtGui", "PyQt6.QtWidgets",
     "qimage2ndarray",
     "anylabeling.views.labeling.shape",
     "anylabeling.views.labeling.label_file",
@@ -27,7 +27,7 @@ _MOCK_MODS = [
 for _m in _MOCK_MODS:
     sys.modules.setdefault(_m, MagicMock())
 
-import PyQt5.QtCore as _qtc
+import PyQt6.QtCore as _qtc
 _qtc.QCoreApplication.translate = lambda ctx, s: s
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))

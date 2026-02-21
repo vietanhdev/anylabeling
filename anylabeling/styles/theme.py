@@ -1,5 +1,5 @@
 import darkdetect
-from PyQt5.QtGui import QPalette, QColor
+from PyQt6.QtGui import QPalette, QColor
 import os
 
 
@@ -100,21 +100,21 @@ class AppTheme:
 
         # Create and apply palette
         palette = QPalette()
-        palette.setColor(QPalette.Window, QColor(colors["window"]))
-        palette.setColor(QPalette.WindowText, QColor(colors["window_text"]))
-        palette.setColor(QPalette.Base, QColor(colors["base"]))
-        palette.setColor(QPalette.AlternateBase, QColor(colors["alternate_base"]))
-        palette.setColor(QPalette.Text, QColor(colors["text"]))
-        palette.setColor(QPalette.Button, QColor(colors["button"]))
-        palette.setColor(QPalette.ButtonText, QColor(colors["button_text"]))
-        palette.setColor(QPalette.BrightText, QColor(colors["bright_text"]))
-        palette.setColor(QPalette.Highlight, QColor(colors["highlight"]))
-        palette.setColor(QPalette.HighlightedText, QColor(colors["highlighted_text"]))
-        palette.setColor(QPalette.Link, QColor(colors["link"]))
-        palette.setColor(QPalette.Dark, QColor(colors["dark"]))
-        palette.setColor(QPalette.Mid, QColor(colors["mid"]))
-        palette.setColor(QPalette.Midlight, QColor(colors["midlight"]))
-        palette.setColor(QPalette.Light, QColor(colors["light"]))
+        palette.setColor(QPalette.ColorRole.Window, QColor(colors["window"]))
+        palette.setColor(QPalette.ColorRole.WindowText, QColor(colors["window_text"]))
+        palette.setColor(QPalette.ColorRole.Base, QColor(colors["base"]))
+        palette.setColor(QPalette.ColorRole.AlternateBase, QColor(colors["alternate_base"]))
+        palette.setColor(QPalette.ColorRole.Text, QColor(colors["text"]))
+        palette.setColor(QPalette.ColorRole.Button, QColor(colors["button"]))
+        palette.setColor(QPalette.ColorRole.ButtonText, QColor(colors["button_text"]))
+        palette.setColor(QPalette.ColorRole.BrightText, QColor(colors["bright_text"]))
+        palette.setColor(QPalette.ColorRole.Highlight, QColor(colors["highlight"]))
+        palette.setColor(QPalette.ColorRole.HighlightedText, QColor(colors["highlighted_text"]))
+        palette.setColor(QPalette.ColorRole.Link, QColor(colors["link"]))
+        palette.setColor(QPalette.ColorRole.Dark, QColor(colors["dark"]))
+        palette.setColor(QPalette.ColorRole.Mid, QColor(colors["mid"]))
+        palette.setColor(QPalette.ColorRole.Midlight, QColor(colors["midlight"]))
+        palette.setColor(QPalette.ColorRole.Light, QColor(colors["light"]))
 
         app.setPalette(palette)
 

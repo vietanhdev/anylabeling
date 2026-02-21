@@ -1,4 +1,4 @@
-- Use PyQt5 for GUI.
+- Use PyQt6 for GUI.
 - Split code into files when possible.
 - Make code clean and understandable.
 - Optimize code for performance and memory usage.

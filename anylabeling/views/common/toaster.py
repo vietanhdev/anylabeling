@@ -1,6 +1,6 @@
 """Defines Toaster widget"""
 
-from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt6 import QtCore, QtGui, QtWidgets
 
 
 class QToaster(QtWidgets.QFrame):
@@ -28,7 +28,7 @@ class QToaster(QtWidgets.QFrame):
         )
         # alternatively:
         self.setAutoFillBackground(True)
-        self.setFrameShape(self.Box)
+        self.setFrameShape(QtWidgets.QFrame.Shape.Box)
 
         self.timer = QtCore.QTimer(singleShot=True, timeout=self.hide)
 
@@ -52,13 +52,13 @@ class QToaster(QtWidgets.QFrame):
         self.opacity_ani.setDuration(100)
         self.opacity_ani.finished.connect(self.check_closed)
 
-        self.corner = QtCore.Qt.TopLeftCorner
+        self.corner = QtCore.Qt.Corner.TopLeftCorner
         self.margin = 10
 
     def check_closed(self):
         """Close the toaster after fading out"""
         # if we have been fading out, we're closing the notification
-        if self.opacity_ani.direction() == self.opacity_ani.Backward:
+        if self.opacity_ani.direction() == QtCore.QAbstractAnimation.Direction.Backward:
             self.close()
 
     def restore(self):
@@ -77,24 +77,24 @@ class QToaster(QtWidgets.QFrame):
 
     def hide(self):
         """Hide toaster by opacity effect"""
-        self.opacity_ani.setDirection(self.opacity_ani.Backward)
+        self.opacity_ani.setDirection(QtCore.QAbstractAnimation.Direction.Backward)
         self.opacity_ani.setDuration(500)
         self.opacity_ani.start()
 
     def eventFilter(self, source, event):
         """Event filter"""
-        if source == self.parent() and event.type() == QtCore.QEvent.Resize:
+        if source == self.parent() and event.type() == QtCore.QEvent.Type.Resize:
             self.opacity_ani.stop()
             parent_rect = self.parent().rect()
             geo = self.geometry()
             margin = int(self.margin)
-            if self.corner == QtCore.Qt.TopLeftCorner:
+            if self.corner == QtCore.Qt.Corner.TopLeftCorner:
                 geo.moveTopLeft(parent_rect.topLeft() + QtCore.QPoint(margin, margin))
-            elif self.corner == QtCore.Qt.TopRightCorner:
+            elif self.corner == QtCore.Qt.Corner.TopRightCorner:
                 geo.moveTopRight(
                     parent_rect.topRight() + QtCore.QPoint(-margin, margin)
                 )
-            elif self.corner == QtCore.Qt.BottomRightCorner:
+            elif self.corner == QtCore.Qt.Corner.BottomRightCorner:
                 geo.moveBottomRight(
                     parent_rect.bottomRight() + QtCore.QPoint(-margin, -margin)
                 )
@@ -144,7 +144,7 @@ class QToaster(QtWidgets.QFrame):
     def show_message(
         parent,
         message,
-        corner=QtCore.Qt.TopLeftCorner,
+        corner=QtCore.Qt.Corner.TopLeftCorner,
         margin=10,
         closable=True,
         timeout=5000,
@@ -161,8 +161,8 @@ class QToaster(QtWidgets.QFrame):
             self = QToaster(None)
             self.setWindowFlags(
                 self.windowFlags()
-                | QtCore.Qt.FramelessWindowHint
-                | QtCore.Qt.BypassWindowManagerHint
+                | QtCore.Qt.WindowType.FramelessWindowHint
+                | QtCore.Qt.WindowType.BypassWindowManagerHint
             )
             # This is a dirty hack!
             # parentless objects are garbage collected, so the widget will be
@@ -212,7 +212,7 @@ class QToaster(QtWidgets.QFrame):
             close_button = QtWidgets.QToolButton()
             self.layout().addWidget(close_button)
             close_icon = self.style().standardIcon(
-                QtWidgets.QStyle.SP_TitleBarCloseButton
+                QtWidgets.QStyle.StandardPixmap.SP_TitleBarCloseButton
             )
             close_button.setIcon(close_icon)
             close_button.setAutoRaise(True)
@@ -230,11 +230,11 @@ class QToaster(QtWidgets.QFrame):
         geo = self.geometry()
         # now the widget should have the correct size hints, let's move it to the
         # right place
-        if corner == QtCore.Qt.TopLeftCorner:
+        if corner == QtCore.Qt.Corner.TopLeftCorner:
             geo.moveTopLeft(parent_rect.topLeft() + QtCore.QPoint(margin, margin))
-        elif corner == QtCore.Qt.TopRightCorner:
+        elif corner == QtCore.Qt.Corner.TopRightCorner:
             geo.moveTopRight(parent_rect.topRight() + QtCore.QPoint(-margin, margin))
-        elif corner == QtCore.Qt.BottomRightCorner:
+        elif corner == QtCore.Qt.Corner.BottomRightCorner:
             geo.moveBottomRight(
                 parent_rect.bottomRight() + QtCore.QPoint(-margin, -margin)
             )

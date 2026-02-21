@@ -32,7 +32,7 @@ if is_gpu:
         name="anylabeling-gpu",
         install_requires=[
             # swap CPU onnxruntime for the GPU build
-            "onnxruntime-gpu==1.18.1",
+            "onnxruntime-gpu>=1.20.0",
         ],
     )
     print("Building AnyLabeling with GPU support")

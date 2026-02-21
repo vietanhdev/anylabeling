@@ -61,10 +61,10 @@ conda create -n anylabeling python=3.12
 conda activate anylabeling
 ```
 
-- **(For macOS only)** Install PyQt5 using Conda:
+- **(For macOS only)** Install PyQt6 using Conda:
 
 ```bash
-conda install -c conda-forge pyqt==5.15.9
+conda install -c conda-forge pyqt=6
 ```
 
 - Install anylabeling:

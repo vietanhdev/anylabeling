@@ -11,8 +11,8 @@ from threading import Lock
 import urllib.request
 
 import yaml
-from PyQt5.QtCore import QObject, QThread, pyqtSignal, pyqtSlot
-from PyQt5.QtCore import QCoreApplication
+from PyQt6.QtCore import QObject, QThread, pyqtSignal, pyqtSlot
+from PyQt6.QtCore import QCoreApplication
 
 from anylabeling.configs import auto_labeling as auto_labeling_configs
 from anylabeling.services.auto_labeling.types import AutoLabelingResult
@@ -144,6 +144,16 @@ class ModelManager(QObject):
     @pyqtSlot()
     def on_model_download_finished(self):
         """Handle model download thread finished"""
+        if self.model_download_thread:
+            try:
+                self.model_download_thread.quit()
+                if not self.model_download_thread.wait(1000):
+                    logging.warning("Model download thread did not stop in time")
+            except RuntimeError:
+                pass
+            self.model_download_thread = None
+        self.model_download_worker = None
+
         if self.loaded_model_config and self.loaded_model_config["model"]:
             self.new_model_status.emit(self.tr("Model loaded. Ready for labeling."))
             self.model_loaded.emit(self.loaded_model_config)
@@ -269,6 +279,12 @@ class ModelManager(QObject):
         self.model_download_worker = GenericWorker(self._load_model, model_id)
         self.model_download_worker.finished.connect(self.on_model_download_finished)
         self.model_download_worker.finished.connect(self.model_download_thread.quit)
+        self.model_download_worker.finished.connect(
+            self.model_download_worker.deleteLater
+        )
+        self.model_download_thread.finished.connect(
+            self.model_download_thread.deleteLater
+        )
         self.model_download_worker.moveToThread(self.model_download_thread)
         self.model_download_thread.started.connect(self.model_download_worker.run)
         self.model_download_thread.start()
@@ -382,6 +398,7 @@ class ModelManager(QObject):
         """Load and return model info"""
         if self.loaded_model_config is not None:
             self.loaded_model_config["model"].unload()
+            # If the model has a thread, it should have been joined in unload()
             self.loaded_model_config = None
             self.auto_segmentation_model_unselected.emit()
 
@@ -504,22 +521,25 @@ class ModelManager(QObject):
                 self.tr("Model is not loaded. Choose a mode to continue.")
             )
             return
-        self.new_model_status.emit(self.tr("Inferencing AI model. Please wait..."))
-        self.prediction_started.emit()
-        QCoreApplication.processEvents()
 
         with self.model_execution_thread_lock:
+            # If a model is already running, try to stop it first
             if (
                 self.model_execution_thread is not None
                 and self.model_execution_thread.isRunning()
             ):
-                self.new_model_status.emit(
-                    self.tr(
-                        "Another model is being executed. Please wait for it to finish."
-                    )
-                )
-                self.prediction_finished.emit()
-                return
+                if hasattr(self.loaded_model_config["model"], "unload"):
+                    self.loaded_model_config["model"].unload()
+                
+                # Wait for the thread to finish
+                self.model_execution_thread.quit()
+                if not self.model_execution_thread.wait(1000):
+                    # If still running, we skip this request to avoid over-queuing
+                    self.prediction_finished.emit()
+                    return
+
+            self.new_model_status.emit(self.tr("Inferencing AI model. Please wait..."))
+            self.prediction_started.emit()
 
             self.model_execution_thread = QThread()
             self.model_execution_worker = GenericWorker(
@@ -527,6 +547,15 @@ class ModelManager(QObject):
             )
             self.model_execution_worker.finished.connect(
                 self.model_execution_thread.quit
+            )
+            self.model_execution_worker.finished.connect(
+                self.model_execution_worker.deleteLater
+            )
+            self.model_execution_thread.finished.connect(
+                lambda: setattr(self, "model_execution_thread", None)
+            )
+            self.model_execution_thread.finished.connect(
+                self.model_execution_thread.deleteLater
             )
             self.model_execution_worker.moveToThread(self.model_execution_thread)
             self.model_execution_thread.started.connect(self.model_execution_worker.run)

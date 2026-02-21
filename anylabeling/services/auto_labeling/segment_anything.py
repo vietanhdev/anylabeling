@@ -5,9 +5,9 @@ import traceback
 import cv2
 import onnx
 import numpy as np
-from PyQt5 import QtCore
-from PyQt5.QtCore import QThread
-from PyQt5.QtCore import QCoreApplication
+from PyQt6 import QtCore
+from PyQt6.QtCore import QThread
+from PyQt6.QtCore import QCoreApplication
 
 from anylabeling.utils import GenericWorker
 from anylabeling.views.labeling.shape import Shape
@@ -179,6 +179,10 @@ class SegmentAnything(Model):
         masks:
             2-D array of shape ``(H, W)``.  May be bool, float, or uint8.
         """
+        # Ensure the mask is 2D
+        while len(masks.shape) > 2:
+            masks = masks[0]
+
         # Ensure the mask is a float/uint8 array so that assignment of the
         # value 255 works correctly (bool arrays raise an error in NumPy ≥ 2).
         masks = masks.astype(np.float32)
@@ -199,7 +203,7 @@ class SegmentAnything(Model):
         if len(approx_contours) > 1:
             image_size = masks.shape[0] * masks.shape[1]
             areas = [cv2.contourArea(contour) for contour in approx_contours]
-            filtered_approx_contours = [
+            approx_contours = [
                 contour
                 for contour, area in zip(approx_contours, areas)
                 if area < image_size * 0.9
@@ -210,12 +214,11 @@ class SegmentAnything(Model):
             areas = [cv2.contourArea(contour) for contour in approx_contours]
             avg_area = np.mean(areas)
 
-            filtered_approx_contours = [
+            approx_contours = [
                 contour
                 for contour, area in zip(approx_contours, areas)
                 if area > avg_area * 0.2
             ]
-            approx_contours = filtered_approx_contours
 
         # Contours to shapes
         shapes = []
@@ -284,6 +287,7 @@ class SegmentAnything(Model):
         """
         Predict shapes from image
         """
+        self.stop_inference = False
         if image is None or (not self.marks and self.prompt_mode != "text"):
             return AutoLabelingResult([], replace=False)
 
@@ -361,7 +365,9 @@ class SegmentAnything(Model):
                 if masks is None or len(masks) == 0:
                     return AutoLabelingResult([], replace=False)
 
-                mask_2d = masks[0]  # (H, W)
+                mask_2d = masks
+                while len(mask_2d.shape) > 2:
+                    mask_2d = mask_2d[0]
                 shapes = self.post_process(mask_2d, label="AUTOLABEL_OBJECT")
         except Exception as e:  # noqa
             logging.warning("Could not inference model")
@@ -375,7 +381,15 @@ class SegmentAnything(Model):
     def unload(self):
         self.stop_inference = True
         if self.pre_inference_thread:
-            self.pre_inference_thread.quit()
+            try:
+                self.pre_inference_thread.quit()
+                # Wait for the thread to actually finish (increased to 3s)
+                if not self.pre_inference_thread.wait(3000):
+                    logging.warning("Pre-inference thread did not stop in time")
+                else:
+                    self.pre_inference_thread = None
+            except RuntimeError:
+                self.pre_inference_thread = None
 
     def preload_worker(self, files):
         """
@@ -409,6 +423,16 @@ class SegmentAnything(Model):
             self.pre_inference_thread = QThread()
             self.pre_inference_worker = GenericWorker(self.preload_worker, next_files)
             self.pre_inference_worker.finished.connect(self.pre_inference_thread.quit)
+            self.pre_inference_worker.finished.connect(
+                self.pre_inference_worker.deleteLater
+            )
+            # Reset reference when the thread actually finishes
+            self.pre_inference_thread.finished.connect(
+                lambda: setattr(self, "pre_inference_thread", None)
+            )
+            self.pre_inference_thread.finished.connect(
+                self.pre_inference_thread.deleteLater
+            )
             self.pre_inference_worker.moveToThread(self.pre_inference_thread)
             self.pre_inference_thread.started.connect(self.pre_inference_worker.run)
             self.pre_inference_thread.start()

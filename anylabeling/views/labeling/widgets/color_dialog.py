@@ -1,4 +1,4 @@
-from PyQt5 import QtWidgets
+from PyQt6 import QtWidgets
 
 
 class ColorDialog(QtWidgets.QColorDialog):
@@ -12,7 +12,7 @@ class ColorDialog(QtWidgets.QColorDialog):
         # works across dialogs for different elements.
         self.default = None
         self.bb = self.layout().itemAt(1).widget()
-        self.bb.addButton(QtWidgets.QDialogButtonBox.RestoreDefaults)
+        self.bb.addButton(QtWidgets.QDialogButtonBox.StandardButton.RestoreDefaults)
         self.bb.clicked.connect(self.check_restore)
 
     def get_color(self, value=None, title=None, default=None):
@@ -21,11 +21,11 @@ class ColorDialog(QtWidgets.QColorDialog):
             self.setWindowTitle(title)
         if value:
             self.setCurrentColor(value)
-        return self.currentColor() if self.exec_() else None
+        return self.currentColor() if self.exec() else None
 
     def check_restore(self, button):
         if (
-            self.bb.buttonRole(button) & QtWidgets.QDialogButtonBox.ResetRole
+            self.bb.buttonRole(button) & QtWidgets.QDialogButtonBox.ButtonRole.ResetRole
             and self.default
         ):
             self.setCurrentColor(self.default)
