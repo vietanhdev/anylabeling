@@ -96,9 +96,75 @@
       </widget>
      </item>
      <item>
+      <widget class="QLabel" name="label_prompt_mode">
+       <property name="text">
+        <string>Mode</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="combobox_prompt_mode">
+       <item>
+        <property name="text">
+         <string>Visual</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Text</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Both</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="label_confidence">
+       <property name="text">
+        <string>Conf</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QDoubleSpinBox" name="double_spin_box_confidence">
+       <property name="maximum">
+        <double>1.000000000000000</double>
+       </property>
+       <property name="singleStep">
+        <double>0.050000000000000</double>
+       </property>
+       <property name="value">
+        <double>0.500000000000000</double>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="Line" name="line">
        <property name="orientation">
         <enum>Qt::Vertical</enum>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="label_prompt">
+       <property name="text">
+        <string>Prompt</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="edit_prompt">
+       <property name="minimumSize">
+        <size>
+         <width>150</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="placeholderText">
+        <string>Enter prompt...</string>
        </property>
       </widget>
      </item>
@@ -192,11 +258,11 @@
      </property>
      <property name="font">
       <font>
-       <pointsize>10</pointsize>
+       <pointsize>8</pointsize>
       </font>
      </property>
      <property name="styleSheet">
-      <string notr="true">margin-top: 0;
+      <string notr="true">margin-top: 6px;
 margin-bottom: 10px;</string>
      </property>
      <property name="text">

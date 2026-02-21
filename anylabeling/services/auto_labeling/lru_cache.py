@@ -32,3 +32,8 @@ class LRUCache:
         """Returns True if key is in cache, False otherwise."""
         with self.lock:
             return key in self._cache
+
+    def clear(self):
+        """Clear all items from cache."""
+        with self.lock:
+            self._cache.clear()

@@ -86,6 +86,7 @@ class SAM2ImageEncoder:
         # Get model info
         self.get_input_details()
         self.get_output_details()
+        self.input_type = self.session.get_inputs()[0].type
 
     def __call__(self, image: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         return self.encode_image(image)
@@ -105,11 +106,15 @@ class SAM2ImageEncoder:
         input_img = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         input_img = cv2.resize(input_img, (self.input_width, self.input_height))
 
-        mean = np.array([0.485, 0.456, 0.406])
-        std = np.array([0.229, 0.224, 0.225])
-        input_img = (input_img / 255.0 - mean) / std
-        input_img = input_img.transpose(2, 0, 1)
-        input_tensor = input_img[np.newaxis, :, :, :].astype(np.float32)
+        if self.input_type == "tensor(float)":
+            mean = np.array([0.485, 0.456, 0.406])
+            std = np.array([0.229, 0.224, 0.225])
+            input_img = (input_img / 255.0 - mean) / std
+            input_img = input_img.transpose(2, 0, 1)
+            input_tensor = input_img[np.newaxis, :, :, :].astype(np.float32)
+        else:
+            input_img = input_img.transpose(2, 0, 1)
+            input_tensor = input_img[np.newaxis, :, :, :].astype(np.uint8)
 
         return input_tensor
 

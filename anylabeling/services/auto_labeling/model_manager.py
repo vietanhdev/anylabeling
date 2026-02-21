@@ -19,6 +19,7 @@ from anylabeling.services.auto_labeling.types import AutoLabelingResult
 from anylabeling.utils import GenericWorker
 
 from anylabeling.config import get_config, save_config
+from .registry import ModelRegistry
 
 import ssl
 from huggingface_hub import snapshot_download
@@ -56,6 +57,8 @@ class ModelManager(QObject):
         self.model_execution_thread = None
         self.model_execution_worker = None
         self.model_execution_thread_lock = Lock()
+
+        self.last_status_update_time = 0
 
         self.load_model_configs()
 
@@ -219,6 +222,7 @@ class ModelManager(QObject):
 
         # Reload model configs
         self.load_model_configs()
+        QCoreApplication.processEvents()
 
         # Load model
         self.load_model(model_config["config_file"])
@@ -261,6 +265,7 @@ class ModelManager(QObject):
                 model_name=self.model_configs[model_id]["display_name"]
             )
         )
+        QCoreApplication.processEvents()
         self.model_download_worker = GenericWorker(self._load_model, model_id)
         self.model_download_worker.finished.connect(self.on_model_download_finished)
         self.model_download_worker.finished.connect(self.model_download_thread.quit)
@@ -278,7 +283,13 @@ class ModelManager(QObject):
         logging.info("Downloading %s to %s", ellipsis_download_url, zip_model_path)
         try:
             # Download and show progress
+            self.last_status_update_time = 0
+
             def _progress(count, block_size, total_size):
+                now = time.time()
+                if now - self.last_status_update_time < 0.2:  # Throttle to 5 FPS
+                    return
+                self.last_status_update_time = now
                 percent = int(count * block_size * 100 / total_size)
                 self.new_model_status.emit(
                     QCoreApplication.translate(
@@ -308,14 +319,17 @@ class ModelManager(QObject):
         return model_folder
     
     def download_hf(self, tmp_dir, download_url, model_config):
-        repo_id = download_url.split('https://huggingface.co/')[-1].strip('/')
+        repo_id = download_url.replace('https://huggingface.co/', '').strip('/')
+        # Only take the first two segments: namespace/repo_name
+        repo_id = "/".join(repo_id.split('/')[:2])
+        
         tmp_extract_dir = os.path.join(tmp_dir, "extract")
         local_dir = snapshot_download(
             repo_id=repo_id,
             local_dir=tmp_extract_dir  # where to store everything
         )
         with open(tmp_extract_dir + "/config.yaml", "w") as f:
-            model_config = yaml.dump(model_config, f, default_flow_style=False)
+            yaml.dump(model_config, f, default_flow_style=False)
         return tmp_extract_dir
 
     def _download_and_extract_model(self, model_config):
@@ -336,11 +350,15 @@ class ModelManager(QObject):
             raise ValueError(self.tr("Missing download_url in config file."))
         
         tmp_dir = tempfile.mkdtemp()
+        model_folder = None
         if download_url.endswith('.zip'):
             model_folder = self.download_zip(tmp_dir, download_url)
-
-        if download_url.startswith('https://huggingface.co'):
+        elif download_url.startswith('https://huggingface.co'):
             model_folder = self.download_hf(tmp_dir, download_url, model_config)
+
+        if model_folder is None:
+            shutil.rmtree(tmp_dir)
+            raise ValueError(self.tr("Could not download model."))
 
 
         # Move model folder to correct location
@@ -377,77 +395,40 @@ class ModelManager(QObject):
 
             self.model_configs[model_id].update(model_config)
 
-        if model_config["type"] == "yolov5":
-            from .yolov5 import YOLOv5
+        model_type = model_config["type"]
+        model_class = ModelRegistry.get(model_type)
 
-            try:
-                model_config["model"] = YOLOv5(
-                    model_config, on_message=self.new_model_status.emit
-                )
-                self.auto_segmentation_model_unselected.emit()
-            except Exception as e:  # noqa
-                self.new_model_status.emit(
-                    self.tr(
-                        "Error in loading model: {error_message}".format(
-                            error_message=str(e)
-                        )
-                    )
-                )
-                print(
-                    "Error in loading model: {error_message}".format(
-                        error_message=str(e)
-                    )
-                )
-                return
-        elif model_config["type"] == "yolov8":
-            from .yolov8 import YOLOv8
+        if not model_class:
+            raise Exception(f"Unknown model type: {model_type}")
 
-            try:
-                model_config["model"] = YOLOv8(
-                    model_config, on_message=self.new_model_status.emit
-                )
-                self.auto_segmentation_model_unselected.emit()
-            except Exception as e:  # noqa
-                self.new_model_status.emit(
-                    self.tr(
-                        "Error in loading model: {error_message}".format(
-                            error_message=str(e)
-                        )
-                    )
-                )
-                print(
-                    "Error in loading model: {error_message}".format(
-                        error_message=str(e)
-                    )
-                )
-                return
-        elif model_config["type"] == "segment_anything":
-            from .segment_anything import SegmentAnything
-
-            try:
-                model_config["model"] = SegmentAnything(
-                    model_config, on_message=self.new_model_status.emit
-                )
+        try:
+            model_config["model"] = model_class(
+                model_config, on_message=self.new_model_status.emit
+            )
+            
+            # Specific logic for interactive models (like SAM) vs detection models
+            # Ideally this should be a property of the model class (capabilities)
+            if model_type == "segment_anything":
                 self.auto_segmentation_model_selected.emit()
-            except Exception as e:  # noqa
-                print(
+                # Request next files for prediction
+                self.request_next_files_requested.emit()
+            else:
+                self.auto_segmentation_model_unselected.emit()
+
+        except Exception as e:  # noqa
+            self.new_model_status.emit(
+                self.tr(
                     "Error in loading model: {error_message}".format(
                         error_message=str(e)
                     )
                 )
-                self.new_model_status.emit(
-                    self.tr(
-                        "Error in loading model: {error_message}".format(
-                            error_message=str(e)
-                        )
-                    )
+            )
+            print(
+                "Error in loading model: {error_message}".format(
+                    error_message=str(e)
                 )
-                return
-
-            # Request next files for prediction
-            self.request_next_files_requested.emit()
-        else:
-            raise Exception(f"Unknown model type: {model_config['type']}")
+            )
+            return
 
         self.loaded_model_config = model_config
         return self.loaded_model_config
@@ -462,6 +443,24 @@ class ModelManager(QObject):
         ):
             return
         self.loaded_model_config["model"].set_auto_labeling_marks(marks)
+
+    def set_text_prompt(self, text):
+        """Set text prompt"""
+        if self.loaded_model_config and self.loaded_model_config["model"]:
+            if hasattr(self.loaded_model_config["model"], "set_text_prompt"):
+                self.loaded_model_config["model"].set_text_prompt(text)
+
+    def set_prompt_mode(self, mode):
+        """Set prompt mode"""
+        if self.loaded_model_config and self.loaded_model_config["model"]:
+            if hasattr(self.loaded_model_config["model"], "set_prompt_mode"):
+                self.loaded_model_config["model"].set_prompt_mode(mode)
+
+    def set_confidence_threshold(self, threshold):
+        """Set confidence threshold"""
+        if self.loaded_model_config and self.loaded_model_config["model"]:
+            if hasattr(self.loaded_model_config["model"], "set_confidence_threshold"):
+                self.loaded_model_config["model"].set_confidence_threshold(threshold)
 
     def unload_model(self):
         """Unload model"""
@@ -507,6 +506,7 @@ class ModelManager(QObject):
             return
         self.new_model_status.emit(self.tr("Inferencing AI model. Please wait..."))
         self.prediction_started.emit()
+        QCoreApplication.processEvents()
 
         with self.model_execution_thread_lock:
             if (

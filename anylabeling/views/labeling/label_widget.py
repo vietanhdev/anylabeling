@@ -42,7 +42,7 @@ from anylabeling.views.labeling.widgets import (
 from .widgets.export_dialog import ExportDialog
 from anylabeling.styles import AppTheme
 
-LABEL_COLORMAP = imgviz.label_colormap()
+LABEL_COLORMAP = imgviz.label_colormap().copy()
 
 # Green for the first label
 LABEL_COLORMAP[2] = LABEL_COLORMAP[1]

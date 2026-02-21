@@ -13,7 +13,9 @@ class SegmentAnythingONNX:
         self.input_size = (684, 1024)
 
         self.encoder_session = onnxruntime.InferenceSession(encoder_model_path)
-        self.encoder_input_name = self.encoder_session.get_inputs()[0].name
+        encoder_input = self.encoder_session.get_inputs()[0]
+        self.encoder_input_name = encoder_input.name
+        self.encoder_input_type = encoder_input.type
         self.decoder_session = onnxruntime.InferenceSession(decoder_model_path)
 
     def get_input_points(self, prompt):
@@ -154,8 +156,13 @@ class SegmentAnythingONNX:
             flags=cv2.INTER_LINEAR,
         )
 
+        if self.encoder_input_type == "tensor(float)":
+            input_data = cv_image.astype(np.float32)
+        else:
+            input_data = cv_image.astype(np.uint8)
+
         encoder_inputs = {
-            self.encoder_input_name: cv_image.astype(np.float32),
+            self.encoder_input_name: input_data,
         }
         image_embedding = self.run_encoder(encoder_inputs)
         return {

@@ -29,12 +29,13 @@ dependencies = [
     "PyYAML==6.0.1",
     "termcolor==1.1.0",
     "opencv-python-headless==4.7.0.72",
-    "PyQt5>=5.15.7; platform_system != 'Darwin'",
+    "PyQt5>=5.15.11; platform_system != 'Darwin'",
     "onnx==1.16.1",
     "onnxruntime==1.18.1",
     "qimage2ndarray==1.10.0",
     "darkdetect==0.8.0",
     "huggingface_hub",
+    "osam>=0.3.1",  # CLIP tokenizer for SAM3 language encoder
 ]
 
 [project.optional-dependencies]

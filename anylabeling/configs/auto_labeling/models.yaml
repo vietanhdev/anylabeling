@@ -9,6 +9,16 @@
   max_height: 1024
   max_width: 1024
   type: segment_anything
+- name: "sam3_vit_h_20260220"
+  display_name: Segment Anything 3 (ViT-H)
+  download_url: https://huggingface.co/vietanhdev/segment-anything-3-onnx-models/resolve/main/sam3_vit_h.zip
+  encoder_model_path: sam3_image_encoder.onnx
+  decoder_model_path: sam3_decoder.onnx
+  language_encoder_path: sam3_language_encoder.onnx
+  input_size: 1008
+  max_height: 1008
+  max_width: 1008
+  type: segment_anything
 - name: "sam2_hiera_tiny_20240803"
   display_name: Segment Anything 2 (Hiera-Tiny)
   download_url: https://huggingface.co/vietanhdev/segment-anything-2-onnx-models/resolve/main/sam2_hiera_tiny.zip

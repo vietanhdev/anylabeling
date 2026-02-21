@@ -57,6 +57,7 @@ class AutoLabelingWidget(QWidget):
         def set_enable_tools(enable):
             self.model_select_combobox.setEnabled(enable)
             self.output_select_combobox.setEnabled(enable)
+            self.edit_prompt.setEnabled(enable)
             self.button_add_point.setEnabled(enable)
             self.button_remove_point.setEnabled(enable)
             self.button_add_rect.setEnabled(enable)
@@ -65,6 +66,16 @@ class AutoLabelingWidget(QWidget):
 
         self.model_manager.prediction_started.connect(lambda: set_enable_tools(False))
         self.model_manager.prediction_finished.connect(lambda: set_enable_tools(True))
+
+        # Prompt input
+        self.edit_prompt.textChanged.connect(self.on_prompt_changed)
+        self.edit_prompt.returnPressed.connect(self.run_prediction)
+
+        # Prompt mode
+        self.combobox_prompt_mode.currentIndexChanged.connect(self.on_prompt_mode_changed)
+
+        # Confidence
+        self.double_spin_box_confidence.valueChanged.connect(self.on_confidence_changed)
 
         # Auto labeling buttons
         self.button_run.setShortcut("I")
@@ -272,14 +283,54 @@ class AutoLabelingWidget(QWidget):
         if not model_config or "model" not in model_config:
             return
         widgets = model_config["model"].get_required_widgets()
+        
+        # Always check if prompt mode selection should be shown
+        if "label_prompt" in widgets or "edit_prompt" in widgets:
+            self.label_prompt_mode.show()
+            self.combobox_prompt_mode.show()
+            self.label_confidence.show()
+            self.double_spin_box_confidence.show()
+        
+        prompt_mode = self.combobox_prompt_mode.currentText().lower()
+
         for widget in widgets:
-            getattr(self, widget).show()
+            widget_obj = getattr(self, widget)
+
+            # Filter based on prompt mode
+            if prompt_mode == "visual":
+                if widget in ["label_prompt", "edit_prompt"]:
+                    widget_obj.hide()
+                    continue
+            elif prompt_mode == "text":
+                # In text mode hide the geometric-prompt buttons.
+                # Inference is triggered by pressing Enter, changing
+                # the prompt text, or clicking the Run button.
+                if widget in [
+                    "button_add_point", "button_remove_point",
+                    "button_add_rect", "button_clear", "button_finish_object",
+                ]:
+                    widget_obj.hide()
+                    continue
+
+            widget_obj.show()
+
+        # Set initial values for widgets
+        if hasattr(model_config["model"], "text_prompt"):
+            self.edit_prompt.setText(model_config["model"].text_prompt)
+        if hasattr(model_config["model"], "confidence_threshold"):
+            self.double_spin_box_confidence.setValue(model_config["model"].confidence_threshold)
 
     def hide_labeling_widgets(self):
         """Hide labeling widgets by default"""
         widgets = [
             "output_label",
             "output_select_combobox",
+            "label_prompt_mode",
+            "combobox_prompt_mode",
+            "label_confidence",
+            "double_spin_box_confidence",
+            "label_prompt",
+            "edit_prompt",
             "button_run",
             "button_add_point",
             "button_remove_point",
@@ -289,6 +340,31 @@ class AutoLabelingWidget(QWidget):
         ]
         for widget in widgets:
             getattr(self, widget).hide()
+
+    def on_prompt_changed(self, text):
+        """Handle prompt changed"""
+        self.model_manager.set_text_prompt(text)
+
+    def on_confidence_changed(self, value):
+        """Handle confidence changed"""
+        self.model_manager.set_confidence_threshold(value)
+
+    def on_prompt_mode_changed(self, index):
+        """Handle prompt mode changed"""
+        mode = self.combobox_prompt_mode.currentText().lower()
+        self.model_manager.set_prompt_mode(mode)
+
+        if mode == "visual":
+            # Clear and reset the text prompt when switching to visual mode so
+            # old text does not linger in the model's language encoder.
+            self.edit_prompt.blockSignals(True)
+            self.edit_prompt.clear()
+            self.edit_prompt.blockSignals(False)
+            self.model_manager.set_text_prompt("")
+
+        # Refresh widget visibility
+        if self.model_manager.loaded_model_config:
+            self.update_visible_widgets(self.model_manager.loaded_model_config)
 
     def on_new_marks(self, marks):
         """Handle new marks"""
