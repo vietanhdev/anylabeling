@@ -1,4 +1,4 @@
 __appname__ = "AnyLabeling"
 __appdescription__ = "Effortless data labeling with AI support"
-__version__ = "0.4.30"
-__preferred_device__ = "CPU"  # GPU or CPU
+__version__ = "0.4.31"
+__preferred_device__ = "CPU"  # GPU or CPU"
