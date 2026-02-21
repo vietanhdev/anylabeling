@@ -135,7 +135,7 @@ jobs:
     - name: Install PyQt6 for macOS
       shell: bash -l {0}
       run: |
-        conda install -c conda-forge pyqt=6
+        pip install PyQt6
 
     - name: Install main
       shell: bash -l {0}
