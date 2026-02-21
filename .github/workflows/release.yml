@@ -68,7 +68,7 @@ jobs:
 
     - uses: conda-incubator/setup-miniconda@v2
       with:
-        python-version: "3.10.14"
+        python-version: "3.12"
         miniconda-version: "latest"
 
     - name: Set preferred device
@@ -129,13 +129,13 @@ jobs:
 
     - uses: conda-incubator/setup-miniconda@v2
       with:
-        python-version: "3.10.14"
+        python-version: "3.12"
         miniconda-version: "latest"
 
-    - name: Install PyQt5 for macOS
+    - name: Install PyQt6 for macOS
       shell: bash -l {0}
       run: |
-        conda install -c conda-forge pyqt==5.15.7
+        conda install -c conda-forge pyqt=6
 
     - name: Install main
       shell: bash -l {0}
