@@ -5,7 +5,7 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 
 class ScrollAreaPreview(QtWidgets.QScrollArea):
     def __init__(self, *args, **kwargs):
-        super(ScrollAreaPreview, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         self.setWidgetResizable(True)
 
@@ -31,7 +31,7 @@ class ScrollAreaPreview(QtWidgets.QScrollArea):
 
 class FileDialogPreview(QtWidgets.QFileDialog):
     def __init__(self, *args, **kwargs):
-        super(FileDialogPreview, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.setOption(QtWidgets.QFileDialog.Option.DontUseNativeDialog, True)
 
         self.label_preview = ScrollAreaPreview(self)
@@ -48,7 +48,7 @@ class FileDialogPreview(QtWidgets.QFileDialog):
 
     def on_change(self, path):
         if path.lower().endswith(".json"):
-            with open(path, "r") as f:
+            with open(path) as f:
                 data = json.load(f)
                 self.label_preview.set_text(json.dumps(data, indent=4, sort_keys=False))
             self.label_preview.label.setAlignment(
@@ -69,5 +69,7 @@ class FileDialogPreview(QtWidgets.QFileDialog):
                         QtCore.Qt.TransformationMode.SmoothTransformation,
                     )
                 )
-                self.label_preview.label.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+                self.label_preview.label.setAlignment(
+                    QtCore.Qt.AlignmentFlag.AlignCenter
+                )
                 self.label_preview.setHidden(False)

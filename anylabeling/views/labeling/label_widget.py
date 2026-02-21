@@ -13,16 +13,16 @@ from PyQt6.QtCore import Qt, pyqtSlot
 from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLabel,
+    QMessageBox,
     QPlainTextEdit,
     QVBoxLayout,
     QWhatsThis,
-    QMessageBox,
 )
-
-from anylabeling.services.auto_labeling.types import AutoLabelingMode
 
 from anylabeling.app_info import __appname__
 from anylabeling.config import get_config, save_config
+from anylabeling.services.auto_labeling.types import AutoLabelingMode
+from anylabeling.styles import AppTheme
 from anylabeling.views.labeling import utils
 from anylabeling.views.labeling.label_file import LabelFile, LabelFileError
 from anylabeling.views.labeling.logger import logger
@@ -39,8 +39,8 @@ from anylabeling.views.labeling.widgets import (
     UniqueLabelQListWidget,
     ZoomWidget,
 )
+
 from .widgets.export_dialog import ExportDialog
-from anylabeling.styles import AppTheme
 
 LABEL_COLORMAP = imgviz.label_colormap().copy()
 
@@ -168,7 +168,9 @@ class LabelingWidget(LabelDialog):
             "}"
         )
         self.shape_text_edit = QPlainTextEdit()
-        shape_text_layout.addWidget(self.shape_text_label, 0, Qt.AlignmentFlag.AlignCenter)
+        shape_text_layout.addWidget(
+            self.shape_text_label, 0, Qt.AlignmentFlag.AlignCenter
+        )
         shape_text_layout.addWidget(self.shape_text_edit)
         shape_text_widget.setLayout(shape_text_layout)
 
@@ -180,7 +182,9 @@ class LabelingWidget(LabelDialog):
         self.shape_text_dock.setFeatures(features)
         self.shape_text_dock.setWidget(shape_text_widget)
         self.shape_text_dock.setStyleSheet(dock_title_style)
-        self.main_window.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.shape_text_dock)
+        self.main_window.addDockWidget(
+            Qt.DockWidgetArea.RightDockWidgetArea, self.shape_text_dock
+        )
 
         # Text Editor Actions - created after dock is initialized
         # Set shortcut for the text editor toggle view action
@@ -202,7 +206,9 @@ class LabelingWidget(LabelDialog):
         self.flag_dock.setWidget(self.flag_widget)
         self.flag_widget.itemChanged.connect(self.set_dirty)
         self.flag_dock.setStyleSheet(dock_title_style)
-        self.main_window.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.flag_dock)
+        self.main_window.addDockWidget(
+            Qt.DockWidgetArea.RightDockWidgetArea, self.flag_dock
+        )
 
         self.label_list.item_selection_changed.connect(self.label_selection_changed)
         self.label_list.item_double_clicked.connect(self.edit_label)
@@ -213,7 +219,9 @@ class LabelingWidget(LabelDialog):
         self.shape_dock.setFeatures(features)
         self.shape_dock.setWidget(self.label_list)
         self.shape_dock.setStyleSheet(dock_title_style)
-        self.main_window.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.shape_dock)
+        self.main_window.addDockWidget(
+            Qt.DockWidgetArea.RightDockWidgetArea, self.shape_dock
+        )
 
         self.unique_label_list = UniqueLabelQListWidget()
         self.unique_label_list.setToolTip(
@@ -230,7 +238,9 @@ class LabelingWidget(LabelDialog):
         self.label_dock.setFeatures(features)
         self.label_dock.setWidget(self.unique_label_list)
         self.label_dock.setStyleSheet(dock_title_style)
-        self.main_window.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.label_dock)
+        self.main_window.addDockWidget(
+            Qt.DockWidgetArea.RightDockWidgetArea, self.label_dock
+        )
 
         self.file_search = QtWidgets.QLineEdit()
         self.file_search.setPlaceholderText(self.tr("Search Filename"))
@@ -249,7 +259,9 @@ class LabelingWidget(LabelDialog):
         file_list_widget.setLayout(file_list_layout)
         self.file_dock.setWidget(file_list_widget)
         self.file_dock.setStyleSheet(dock_title_style)
-        self.main_window.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.file_dock)
+        self.main_window.addDockWidget(
+            Qt.DockWidgetArea.RightDockWidgetArea, self.file_dock
+        )
 
         self.zoom_widget = ZoomWidget()
         self.setAcceptDrops(True)
@@ -1092,7 +1104,9 @@ class LabelingWidget(LabelDialog):
         self.tools_dock.setStyleSheet(tools_dock_style)
 
         # Add dock to main window
-        self.main_window.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.tools_dock)
+        self.main_window.addDockWidget(
+            Qt.DockWidgetArea.LeftDockWidgetArea, self.tools_dock
+        )
 
         # Connect signal for location changes to update toolbar orientation
         self.tools_dock.dockLocationChanged.connect(self.on_tools_dock_location_changed)
@@ -1153,11 +1167,21 @@ class LabelingWidget(LabelDialog):
 
         # Arrange dock widgets separately rather than tabbing them
         # All docks are initially added to RightDockWidgetArea but can be moved by the user
-        self.main_window.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.shape_text_dock)
-        self.main_window.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.flag_dock)
-        self.main_window.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.label_dock)
-        self.main_window.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.shape_dock)
-        self.main_window.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.file_dock)
+        self.main_window.addDockWidget(
+            Qt.DockWidgetArea.RightDockWidgetArea, self.shape_text_dock
+        )
+        self.main_window.addDockWidget(
+            Qt.DockWidgetArea.RightDockWidgetArea, self.flag_dock
+        )
+        self.main_window.addDockWidget(
+            Qt.DockWidgetArea.RightDockWidgetArea, self.label_dock
+        )
+        self.main_window.addDockWidget(
+            Qt.DockWidgetArea.RightDockWidgetArea, self.shape_dock
+        )
+        self.main_window.addDockWidget(
+            Qt.DockWidgetArea.RightDockWidgetArea, self.file_dock
+        )
 
         self.shape_text_edit.textChanged.connect(self.shape_text_changed)
 
@@ -1507,7 +1531,7 @@ class LabelingWidget(LabelDialog):
         for i, f in enumerate(files):
             icon = utils.new_icon("labels")
             menu_action = QtGui.QAction(
-                icon, "&%d %s" % (i + 1, QtCore.QFileInfo(f).fileName()), self
+                icon, f"&{i + 1} {QtCore.QFileInfo(f).fileName()}", self
             )
             menu_action.triggered.connect(functools.partial(self.load_recent, f))
             menu.addAction(menu_action)
@@ -1773,7 +1797,9 @@ class LabelingWidget(LabelDialog):
         for key, flag in flags.items():
             item = QtWidgets.QListWidgetItem(key)
             item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
-            item.setCheckState(Qt.CheckState.Checked if flag else Qt.CheckState.Unchecked)
+            item.setCheckState(
+                Qt.CheckState.Checked if flag else Qt.CheckState.Unchecked
+            )
             self.flag_widget.addItem(item)
 
     def save_labels(self, filename):
@@ -1827,7 +1853,9 @@ class LabelingWidget(LabelDialog):
                 flags=flags,
             )
             self.label_file = label_file
-            items = self.file_list_widget.findItems(self.image_path, Qt.MatchFlag.MatchExactly)
+            items = self.file_list_widget.findItems(
+                self.image_path, Qt.MatchFlag.MatchExactly
+            )
             if len(items) > 0:
                 if len(items) != 1:
                     raise RuntimeError("There are duplicate files.")
@@ -2040,7 +2068,9 @@ class LabelingWidget(LabelDialog):
 
     def toggle_polygons(self, value):
         for item in self.label_list:
-            item.setCheckState(Qt.CheckState.Checked if value else Qt.CheckState.Unchecked)
+            item.setCheckState(
+                Qt.CheckState.Checked if value else Qt.CheckState.Unchecked
+            )
 
     def get_next_files(self, filename, num_files):
         """Get the next files in the list."""
@@ -2589,7 +2619,10 @@ class LabelingWidget(LabelDialog):
                     act.setEnabled(False)
 
     def delete_selected_shape(self):
-        yes, no = QtWidgets.QMessageBox.StandardButton.Yes, QtWidgets.QMessageBox.StandardButton.No
+        yes, no = (
+            QtWidgets.QMessageBox.StandardButton.Yes,
+            QtWidgets.QMessageBox.StandardButton.No,
+        )
         msg = self.tr(
             "You are about to permanently delete {} polygons, proceed anyway?"
         ).format(len(self.canvas.selected_shapes))
@@ -2941,12 +2974,24 @@ class LabelingWidget(LabelDialog):
         self.tools_dock.close()
 
         # Re-add them in the desired order/position
-        self.main_window.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, self.tools_dock)
-        self.main_window.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.shape_text_dock)
-        self.main_window.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.shape_dock)
-        self.main_window.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.flag_dock)
-        self.main_window.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.label_dock)
-        self.main_window.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.file_dock)
+        self.main_window.addDockWidget(
+            Qt.DockWidgetArea.LeftDockWidgetArea, self.tools_dock
+        )
+        self.main_window.addDockWidget(
+            Qt.DockWidgetArea.RightDockWidgetArea, self.shape_text_dock
+        )
+        self.main_window.addDockWidget(
+            Qt.DockWidgetArea.RightDockWidgetArea, self.shape_dock
+        )
+        self.main_window.addDockWidget(
+            Qt.DockWidgetArea.RightDockWidgetArea, self.flag_dock
+        )
+        self.main_window.addDockWidget(
+            Qt.DockWidgetArea.RightDockWidgetArea, self.label_dock
+        )
+        self.main_window.addDockWidget(
+            Qt.DockWidgetArea.RightDockWidgetArea, self.file_dock
+        )
 
         # Show all docks
         self.tools_dock.show()

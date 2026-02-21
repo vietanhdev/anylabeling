@@ -15,14 +15,14 @@ import sys
 import yaml
 from PyQt6 import QtCore, QtWidgets
 
+from anylabeling import config as anylabeling_config
 from anylabeling.app_info import __appname__
 from anylabeling.config import get_config
-from anylabeling import config as anylabeling_config
-from anylabeling.views.mainwindow import MainWindow
-from anylabeling.views.labeling.logger import logger
-from anylabeling.views.labeling.utils import new_icon
 from anylabeling.resources import resources
 from anylabeling.styles import AppTheme
+from anylabeling.views.labeling.logger import logger
+from anylabeling.views.labeling.utils import new_icon
+from anylabeling.views.mainwindow import MainWindow
 
 __all__ = ["resources"]
 
@@ -175,7 +175,9 @@ def main():
 
     # Enable scaling for high dpi screens
     # High DPI scaling is enabled by default in Qt 6
-    QtCore.QCoreApplication.setAttribute(QtCore.Qt.ApplicationAttribute.AA_ShareOpenGLContexts)
+    QtCore.QCoreApplication.setAttribute(
+        QtCore.Qt.ApplicationAttribute.AA_ShareOpenGLContexts
+    )
 
     app = QtWidgets.QApplication(sys.argv)
     app.processEvents()

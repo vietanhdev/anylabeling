@@ -3,7 +3,6 @@ from typing import Any
 import cv2
 import numpy as np
 import onnxruntime
-from numpy import ndarray
 
 
 class SegmentAnything3ONNX:
@@ -204,7 +203,8 @@ class SAM3ImageEncoder:
         conversion is required here.
         """
         input_img = cv2.resize(
-            image, (self.input_width, self.input_height),
+            image,
+            (self.input_width, self.input_height),
             interpolation=cv2.INTER_LINEAR,
         )
         # (H, W, C) → (C, H, W)
@@ -238,6 +238,7 @@ class SAM3LanguageEncoder:
         )
         try:
             from osam._models.yoloworld.clip import tokenize
+
             self._tokenize = tokenize
         except ImportError:
             self._tokenize = self._fallback_tokenize
@@ -272,9 +273,7 @@ class SAM3ImageDecoder:
         self.session = onnxruntime.InferenceSession(
             path, providers=onnxruntime.get_available_providers()
         )
-        self.input_names: list[str] = [
-            i.name for i in self.session.get_inputs()
-        ]
+        self.input_names: list[str] = [i.name for i in self.session.get_inputs()]
 
     def __call__(
         self,
@@ -316,7 +315,10 @@ class SAM3ImageDecoder:
         #   language_features – float [32, 1, 256]
         if "language_mask" in self.input_names and inputs["language_mask"] is None:
             inputs["language_mask"] = np.zeros((1, 32), dtype=np.bool_)
-        if "language_features" in self.input_names and inputs["language_features"] is None:
+        if (
+            "language_features" in self.input_names
+            and inputs["language_features"] is None
+        ):
             inputs["language_features"] = np.zeros((32, 1, 256), dtype=np.float32)
         if "language_embeds" in self.input_names and inputs["language_embeds"] is None:
             inputs["language_embeds"] = np.zeros((32, 1, 1024), dtype=np.float32)
@@ -325,8 +327,7 @@ class SAM3ImageDecoder:
         # have removed some (e.g. vision_pos_enc_0/1, language_embeds) during
         # simplification.
         model_inputs = {
-            k: v for k, v in inputs.items()
-            if k in self.input_names and v is not None
+            k: v for k, v in inputs.items() if k in self.input_names and v is not None
         }
         outputs = self.session.run(None, model_inputs)
         # ONNX export order: [0]=boxes, [1]=scores, [2]=masks

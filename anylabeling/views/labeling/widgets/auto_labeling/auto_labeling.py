@@ -2,7 +2,7 @@ import os
 
 from PyQt6 import uic
 from PyQt6.QtCore import pyqtSignal, pyqtSlot
-from PyQt6.QtWidgets import QWidget, QFileDialog
+from PyQt6.QtWidgets import QFileDialog, QWidget
 
 from anylabeling.services.auto_labeling.model_manager import ModelManager
 from anylabeling.services.auto_labeling.types import AutoLabelingMode
@@ -72,7 +72,9 @@ class AutoLabelingWidget(QWidget):
         self.edit_prompt.returnPressed.connect(self.run_prediction)
 
         # Prompt mode
-        self.combobox_prompt_mode.currentIndexChanged.connect(self.on_prompt_mode_changed)
+        self.combobox_prompt_mode.currentIndexChanged.connect(
+            self.on_prompt_mode_changed
+        )
 
         # Confidence
         self.double_spin_box_confidence.valueChanged.connect(self.on_confidence_changed)
@@ -296,9 +298,7 @@ class AutoLabelingWidget(QWidget):
 
             if not is_sam3:
                 # Force Visual mode for non-SAM3 models
-                visual_index = self.combobox_prompt_mode.findText(
-                    self.tr("Visual")
-                )
+                visual_index = self.combobox_prompt_mode.findText(self.tr("Visual"))
                 if visual_index >= 0:
                     self.combobox_prompt_mode.setCurrentIndex(visual_index)
                 self.combobox_prompt_mode.setEnabled(False)
@@ -320,8 +320,11 @@ class AutoLabelingWidget(QWidget):
                 # Inference is triggered by pressing Enter, changing
                 # the prompt text, or clicking the Run button.
                 if widget in [
-                    "button_add_point", "button_remove_point",
-                    "button_add_rect", "button_clear", "button_finish_object",
+                    "button_add_point",
+                    "button_remove_point",
+                    "button_add_rect",
+                    "button_clear",
+                    "button_finish_object",
                 ]:
                     widget_obj.hide()
                     continue
@@ -332,7 +335,9 @@ class AutoLabelingWidget(QWidget):
         if hasattr(model_config["model"], "text_prompt"):
             self.edit_prompt.setText(model_config["model"].text_prompt)
         if hasattr(model_config["model"], "confidence_threshold"):
-            self.double_spin_box_confidence.setValue(model_config["model"].confidence_threshold)
+            self.double_spin_box_confidence.setValue(
+                model_config["model"].confidence_threshold
+            )
 
     def hide_labeling_widgets(self):
         """Hide labeling widgets by default"""

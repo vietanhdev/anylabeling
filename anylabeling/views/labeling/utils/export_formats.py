@@ -5,7 +5,6 @@ import os.path as osp
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
 
-
 from anylabeling.app_info import __version__
 
 
@@ -14,8 +13,12 @@ class FormatExporter:
 
     @staticmethod
     def export_to_yolo(
-        shapes, image_height, image_width, label_map=None, output_path=None, 
-        export_mode="detection"
+        shapes,
+        image_height,
+        image_width,
+        label_map=None,
+        output_path=None,
+        export_mode="detection",
     ):
         """Export annotations to YOLO format.
 
@@ -55,31 +58,26 @@ class FormatExporter:
                     for x, y in points:
                         normalized_points.append(x / image_width)
                         normalized_points.append(y / image_height)
-                    
+
                     points_str = " ".join(f"{p:.6f}" for p in normalized_points)
                     results.append(f"{class_idx} {points_str}")
-                    
+
                 elif shape["shape_type"] == "rectangle":
                     # Convert rectangle to polygon (4 points) for segmentation
                     x1, y1 = points[0]
                     x2, y2 = points[1]
-                    
+
                     # Create 4 corners: top-left, top-right, bottom-right, bottom-left
-                    rect_points = [
-                        (x1, y1),
-                        (x2, y1),
-                        (x2, y2),
-                        (x1, y2)
-                    ]
-                    
+                    rect_points = [(x1, y1), (x2, y1), (x2, y2), (x1, y2)]
+
                     normalized_points = []
                     for x, y in rect_points:
                         normalized_points.append(x / image_width)
                         normalized_points.append(y / image_height)
-                    
+
                     points_str = " ".join(f"{p:.6f}" for p in normalized_points)
                     results.append(f"{class_idx} {points_str}")
-                    
+
             else:  # detection mode - bounding boxes
                 if shape["shape_type"] == "rectangle":
                     # Convert rectangle to YOLO format [x_center, y_center, width, height]
@@ -89,8 +87,10 @@ class FormatExporter:
                     y_center = (y1 + y2) / (2 * image_height)
                     width = abs(x2 - x1) / image_width
                     height = abs(y2 - y1) / image_height
-                    results.append(f"{class_idx} {x_center:.6f} {y_center:.6f} {width:.6f} {height:.6f}")
-                    
+                    results.append(
+                        f"{class_idx} {x_center:.6f} {y_center:.6f} {width:.6f} {height:.6f}"
+                    )
+
                 elif shape["shape_type"] == "polygon":
                     # For detection, convert polygon to bounding box
                     x_coords = [p[0] for p in points]
@@ -102,7 +102,9 @@ class FormatExporter:
                     y_center = (y_min + y_max) / (2 * image_height)
                     width = (x_max - x_min) / image_width
                     height = (y_max - y_min) / image_height
-                    results.append(f"{class_idx} {x_center:.6f} {y_center:.6f} {width:.6f} {height:.6f}")
+                    results.append(
+                        f"{class_idx} {x_center:.6f} {y_center:.6f} {width:.6f} {height:.6f}"
+                    )
 
         result_text = "\n".join(results)
         if output_path:
@@ -116,7 +118,7 @@ class FormatExporter:
         shapes, image_height, image_width, label_map=None, output_path=None
     ):
         """Export annotations to YOLO segmentation format (polygons).
-        
+
         This is a convenience method that calls export_to_yolo with export_mode="segmentation".
 
         Args:
@@ -130,8 +132,12 @@ class FormatExporter:
             Exported YOLO segmentation annotations as string
         """
         return FormatExporter.export_to_yolo(
-            shapes, image_height, image_width, label_map, output_path, 
-            export_mode="segmentation"
+            shapes,
+            image_height,
+            image_width,
+            label_map,
+            output_path,
+            export_mode="segmentation",
         )
 
     @staticmethod

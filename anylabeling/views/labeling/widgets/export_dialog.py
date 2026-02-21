@@ -1,23 +1,24 @@
 """Export dialog widget for exporting annotations to different formats."""
 
 import os
+
 from PyQt6.QtCore import QThreadPool
 from PyQt6.QtWidgets import (
+    QButtonGroup,
+    QCheckBox,
+    QComboBox,
     QDialog,
-    QVBoxLayout,
+    QFileDialog,
+    QGroupBox,
     QHBoxLayout,
     QLabel,
-    QComboBox,
-    QRadioButton,
-    QButtonGroup,
-    QPushButton,
-    QFileDialog,
-    QCheckBox,
-    QGroupBox,
-    QProgressBar,
-    QSpinBox,
-    QMessageBox,
     QLineEdit,
+    QMessageBox,
+    QProgressBar,
+    QPushButton,
+    QRadioButton,
+    QSpinBox,
+    QVBoxLayout,
 )
 
 from ..utils.export_worker import ExportWorker
@@ -237,17 +238,15 @@ class ExportDialog(QDialog):
         # Dialog buttons
         self.export_button.clicked.connect(self.on_export_clicked)
         self.cancel_button.clicked.connect(self.on_cancel_clicked)
-        
+
         # Format selection - show/hide YOLO mode options
         self.format_combo.currentIndexChanged.connect(self.on_format_changed)
 
     def on_format_changed(self, index):
-
         """Handle format selection changes."""
         export_format = self.format_combo.currentData()
         # Show YOLO mode options only for YOLO format
         self.yolo_mode_group.setVisible(export_format == "yolo")
-
 
     def on_source_radio_toggled(self, checked):
         """Handle toggling of source radio buttons."""
@@ -417,8 +416,9 @@ class ExportDialog(QDialog):
         recursive = self.recursive_check.isChecked()
         use_random_names = self.random_names_check.isChecked()
 
-        yolo_export_mode = "segmentation" if self.yolo_segmentation_radio.isChecked() else "detection"
-
+        yolo_export_mode = (
+            "segmentation" if self.yolo_segmentation_radio.isChecked() else "detection"
+        )
 
         # Create and start export worker
         self.export_worker = ExportWorker(

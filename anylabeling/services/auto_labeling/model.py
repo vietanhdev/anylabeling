@@ -1,15 +1,16 @@
 import logging
 import os
-import yaml
 import socket
 import ssl
 from abc import abstractmethod
 
+import yaml
 from PyQt6.QtCore import QCoreApplication, QFile, QObject
 from PyQt6.QtGui import QImage
 
-from .types import AutoLabelingResult
 from anylabeling.views.labeling.label_file import LabelFile, LabelFileError
+
+from .types import AutoLabelingResult
 
 # Prevent issue when downloading models behind a proxy
 os.environ["no_proxy"] = "*"
@@ -44,7 +45,7 @@ class Model(QObject):
                         "Model", "Config file not found: {model_config}"
                     ).format(model_config=model_config)
                 )
-            with open(model_config, "r") as f:
+            with open(model_config) as f:
                 self.config = yaml.safe_load(f)
         elif isinstance(model_config, dict):
             self.config = model_config
@@ -120,14 +121,14 @@ class Model(QObject):
             try:
                 label_file = LabelFile(label_file)
             except LabelFileError as e:
-                logging.error("Error reading {}: {}".format(label_file, e))
+                logging.error(f"Error reading {label_file}: {e}")
                 return None, None
             image_data = label_file.image_data
         else:
             image_data = LabelFile.load_image_file(filename)
         image = QImage.fromData(image_data)
         if image.isNull():
-            logging.error("Error reading {}".format(filename))
+            logging.error(f"Error reading {filename}")
         return image
 
     def on_next_files_changed(self, next_files):

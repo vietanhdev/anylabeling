@@ -64,3 +64,31 @@ version = { attr = "anylabeling.app_info.__version__" }
 
 [tool.setuptools.packages.find]
 where = ["."]
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+exclude = [
+    ".git",
+    "__pycache__",
+    "build",
+    "dist",
+    "*.egg-info",
+]
+
+[tool.ruff.lint]
+# E = pycodestyle errors, W = pycodestyle warnings
+# F = pyflakes (unused imports, undefined names, etc.)
+# I = isort (import ordering)
+# UP = pyupgrade (modern Python idioms)
+select = ["E", "W", "F", "I", "UP"]
+ignore = [
+    "E501",   # line too long (handled by formatter)
+    "E741",   # ambiguous variable name (l, O, I) — common in ML code
+    "UP006",  # use `list` instead of `List` (too noisy for now)
+    "UP007",  # use `X | Y` instead of `Optional[X]` (too noisy for now)
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Test files may use star imports and assert statements freely
+"tests/*" = ["F401", "F811"]

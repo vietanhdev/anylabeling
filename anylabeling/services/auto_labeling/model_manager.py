@@ -1,28 +1,26 @@
-import os
 import copy
-import time
-import shutil
-import pathlib
-import logging
-import tempfile
-import zipfile
 import importlib.resources as pkg_resources
-from threading import Lock
+import logging
+import os
+import pathlib
+import shutil
+import ssl
+import tempfile
+import time
 import urllib.request
+import zipfile
+from threading import Lock
 
 import yaml
-from PyQt6.QtCore import QObject, QThread, pyqtSignal, pyqtSlot
-from PyQt6.QtCore import QCoreApplication
+from huggingface_hub import snapshot_download
+from PyQt6.QtCore import QCoreApplication, QObject, QThread, pyqtSignal, pyqtSlot
 
+from anylabeling.config import get_config, save_config
 from anylabeling.configs import auto_labeling as auto_labeling_configs
 from anylabeling.services.auto_labeling.types import AutoLabelingResult
 from anylabeling.utils import GenericWorker
 
-from anylabeling.config import get_config, save_config
 from .registry import ModelRegistry
-
-import ssl
-from huggingface_hub import snapshot_download
 
 ssl._create_default_https_context = (
     ssl._create_unverified_context
@@ -110,7 +108,7 @@ class ModelManager(QObject):
             model_config = copy.deepcopy(model)
             config_file = model.get("config_file", None)
             if config_file:
-                with open(config_file, "r") as f:
+                with open(config_file) as f:
                     model_config = yaml.safe_load(f)
                     model_config["config_file"] = os.path.normpath(
                         os.path.abspath(config_file)
@@ -183,7 +181,7 @@ class ModelManager(QObject):
 
         # Check config file content
         model_config = {}
-        with open(config_file, "r") as f:
+        with open(config_file) as f:
             model_config = yaml.safe_load(f)
             model_config["config_file"] = os.path.abspath(config_file)
         if not model_config:
@@ -324,7 +322,7 @@ class ModelManager(QObject):
         tmp_extract_dir = os.path.join(tmp_dir, "extract")
         with zipfile.ZipFile(zip_model_path, "r") as zip_ref:
             zip_ref.extractall(tmp_extract_dir)
-                # Find model folder (containing config.yaml)
+            # Find model folder (containing config.yaml)
         model_folder = None
         for root, _, files in os.walk(tmp_extract_dir):
             if "config.yaml" in files:
@@ -333,16 +331,16 @@ class ModelManager(QObject):
         if model_folder is None:
             raise ValueError(self.tr("Could not find config.yaml in zip file."))
         return model_folder
-    
+
     def download_hf(self, tmp_dir, download_url, model_config):
-        repo_id = download_url.replace('https://huggingface.co/', '').strip('/')
+        repo_id = download_url.replace("https://huggingface.co/", "").strip("/")
         # Only take the first two segments: namespace/repo_name
-        repo_id = "/".join(repo_id.split('/')[:2])
-        
+        repo_id = "/".join(repo_id.split("/")[:2])
+
         tmp_extract_dir = os.path.join(tmp_dir, "extract")
-        local_dir = snapshot_download(
+        snapshot_download(
             repo_id=repo_id,
-            local_dir=tmp_extract_dir  # where to store everything
+            local_dir=tmp_extract_dir,  # where to store everything
         )
         with open(tmp_extract_dir + "/config.yaml", "w") as f:
             yaml.dump(model_config, f, default_flow_style=False)
@@ -355,7 +353,7 @@ class ModelManager(QObject):
         # Check if model is already downloaded
         if not os.path.exists(config_file):
             raise ValueError(self.tr("Error in loading config file."))
-        with open(config_file, "r") as f:
+        with open(config_file) as f:
             model_config = yaml.safe_load(f)
         if model_config.get("has_downloaded", False):
             return
@@ -364,18 +362,17 @@ class ModelManager(QObject):
         download_url = model_config.get("download_url", None)
         if not download_url:
             raise ValueError(self.tr("Missing download_url in config file."))
-        
+
         tmp_dir = tempfile.mkdtemp()
         model_folder = None
-        if download_url.endswith('.zip'):
+        if download_url.endswith(".zip"):
             model_folder = self.download_zip(tmp_dir, download_url)
-        elif download_url.startswith('https://huggingface.co'):
+        elif download_url.startswith("https://huggingface.co"):
             model_folder = self.download_hf(tmp_dir, download_url, model_config)
 
         if model_folder is None:
             shutil.rmtree(tmp_dir)
             raise ValueError(self.tr("Could not download model."))
-
 
         # Move model folder to correct location
         shutil.rmtree(extract_dir)
@@ -385,7 +382,7 @@ class ModelManager(QObject):
         shutil.rmtree(tmp_dir)
 
         # Update config file
-        with open(config_file, "r") as f:
+        with open(config_file) as f:
             model_config = yaml.safe_load(f)
         model_config["has_downloaded"] = True
         model_config["config_file"] = config_file
@@ -422,7 +419,7 @@ class ModelManager(QObject):
             model_config["model"] = model_class(
                 model_config, on_message=self.new_model_status.emit
             )
-            
+
             # Specific logic for interactive models (like SAM) vs detection models
             # Ideally this should be a property of the model class (capabilities)
             if model_type == "segment_anything":
@@ -433,18 +430,8 @@ class ModelManager(QObject):
                 self.auto_segmentation_model_unselected.emit()
 
         except Exception as e:  # noqa
-            self.new_model_status.emit(
-                self.tr(
-                    "Error in loading model: {error_message}".format(
-                        error_message=str(e)
-                    )
-                )
-            )
-            print(
-                "Error in loading model: {error_message}".format(
-                    error_message=str(e)
-                )
-            )
+            self.new_model_status.emit(self.tr(f"Error in loading model: {str(e)}"))
+            print(f"Error in loading model: {str(e)}")
             return
 
         self.loaded_model_config = model_config
@@ -530,7 +517,7 @@ class ModelManager(QObject):
             ):
                 if hasattr(self.loaded_model_config["model"], "unload"):
                     self.loaded_model_config["model"].unload()
-                
+
                 # Wait for the thread to finish
                 self.model_execution_thread.quit()
                 if not self.model_execution_thread.wait(1000):

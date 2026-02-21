@@ -3,7 +3,6 @@ import logging
 
 import termcolor
 
-
 COLORS = {
     "WARNING": "yellow",
     "INFO": "white",

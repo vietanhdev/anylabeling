@@ -3,11 +3,10 @@ import os
 import traceback
 
 import cv2
-import onnx
 import numpy as np
+import onnx
 from PyQt6 import QtCore
-from PyQt6.QtCore import QThread
-from PyQt6.QtCore import QCoreApplication
+from PyQt6.QtCore import QCoreApplication, QThread
 
 from anylabeling.utils import GenericWorker
 from anylabeling.views.labeling.shape import Shape
@@ -16,10 +15,11 @@ from anylabeling.views.labeling.utils.opencv import qt_img_to_rgb_cv_img
 from .lru_cache import LRUCache
 from .model import Model
 from .registry import ModelRegistry
-from .types import AutoLabelingResult
-from .sam_onnx import SegmentAnythingONNX
 from .sam2_onnx import SegmentAnything2ONNX
 from .sam3_onnx import SegmentAnything3ONNX
+from .sam_onnx import SegmentAnythingONNX
+from .types import AutoLabelingResult
+
 
 @ModelRegistry.register("segment_anything")
 class SegmentAnything(Model):
@@ -97,6 +97,7 @@ class SegmentAnything(Model):
         # Load models
         if "coreml" in decoder_model_abs_path:
             from .sam2_coreml import SegmentAnything2CoreML  # macOS-only
+
             config_folder = os.path.dirname(decoder_model_abs_path)
             self.model = SegmentAnything2CoreML(config_folder)
         elif "language_encoder_path" in self.config or self._is_sam3:
@@ -322,8 +323,7 @@ class SegmentAnything(Model):
                 # Visual mode (point/rect) uses text_prompt as a single cue.
                 if self.prompt_mode == "text":
                     class_terms = [
-                        t.strip() for t in self.text_prompt.split(",")
-                        if t.strip()
+                        t.strip() for t in self.text_prompt.split(",") if t.strip()
                     ]
                     if not class_terms:
                         class_terms = [self.text_prompt or "visual"]
@@ -335,9 +335,7 @@ class SegmentAnything(Model):
                 for term in class_terms:
                     # Re-run language encoder for this specific class term.
                     # Image features are reused from the cached embedding (fast).
-                    term_embedding = self.model.update_language(
-                        image_embedding, term
-                    )
+                    term_embedding = self.model.update_language(image_embedding, term)
                     term_masks = self.model.predict_masks(
                         term_embedding,
                         inference_marks,
@@ -346,10 +344,7 @@ class SegmentAnything(Model):
                     if term_masks is None or len(term_masks) == 0:
                         continue
 
-                    label = (
-                        term if self.prompt_mode == "text"
-                        else "AUTOLABEL_OBJECT"
-                    )
+                    label = term if self.prompt_mode == "text" else "AUTOLABEL_OBJECT"
                     # SAM3 returns one mask per detected object instance.
                     # Iterate ALL masks so every matching object gets a shape.
                     for i in range(len(term_masks)):

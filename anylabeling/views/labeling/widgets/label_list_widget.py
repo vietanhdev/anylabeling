@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import QStyle
 class HTMLDelegate(QtWidgets.QStyledItemDelegate):
     def __init__(self, parent=None):
         self.parent = parent
-        super(HTMLDelegate, self).__init__()
+        super().__init__()
         self.doc = QtGui.QTextDocument(self)
 
     def paint(self, painter, option, index):
@@ -32,12 +32,16 @@ class HTMLDelegate(QtWidgets.QStyledItemDelegate):
         if option.state & QStyle.StateFlag.State_Selected:
             ctx.palette.setColor(
                 QPalette.ColorRole.Text,
-                option.palette.color(QPalette.ColorGroup.Active, QPalette.ColorRole.HighlightedText),
+                option.palette.color(
+                    QPalette.ColorGroup.Active, QPalette.ColorRole.HighlightedText
+                ),
             )
         else:
             ctx.palette.setColor(
                 QPalette.ColorRole.Text,
-                option.palette.color(QPalette.ColorGroup.Active, QPalette.ColorRole.Text),
+                option.palette.color(
+                    QPalette.ColorGroup.Active, QPalette.ColorRole.Text
+                ),
             )
 
         text_rect = style.subElementRect(QStyle.SubElement.SE_ItemViewItemText, options)
@@ -67,7 +71,7 @@ class HTMLDelegate(QtWidgets.QStyledItemDelegate):
 
 class LabelListWidgetItem(QtGui.QStandardItem):
     def __init__(self, text=None, shape=None):
-        super(LabelListWidgetItem, self).__init__()
+        super().__init__()
         self.setText(text or "")
         self.set_shape(shape)
 
@@ -114,7 +118,9 @@ class LabelListWidget(QtWidgets.QListView):
         self.setModel(StandardItemModel())
         self.model().setItemPrototype(LabelListWidgetItem())
         self.setItemDelegate(HTMLDelegate())
-        self.setSelectionMode(QtWidgets.QAbstractItemView.SelectionMode.ExtendedSelection)
+        self.setSelectionMode(
+            QtWidgets.QAbstractItemView.SelectionMode.ExtendedSelection
+        )
         self.setDragDropMode(QtWidgets.QAbstractItemView.DragDropMode.InternalMove)
         self.setDefaultDropAction(Qt.DropAction.MoveAction)
 
@@ -167,7 +173,9 @@ class LabelListWidget(QtWidgets.QListView):
 
     def select_item(self, item):
         index = self.model().indexFromItem(item)
-        self.selectionModel().select(index, QtCore.QItemSelectionModel.Select)
+        self.selectionModel().select(
+            index, QtCore.QItemSelectionModel.SelectionFlag.Select
+        )
 
     def find_item_by_shape(self, shape):
         for row in range(self.model().rowCount()):

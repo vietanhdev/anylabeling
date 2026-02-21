@@ -20,7 +20,7 @@ class TestLRUCache(unittest.TestCase):
         cache.put("a", 1)
         cache.put("b", 2)
         cache.put("c", 3)  # Should evict "a"
-        
+
         self.assertIsNone(cache.get("a"))
         self.assertEqual(cache.get("b"), 2)
         self.assertEqual(cache.get("c"), 3)
@@ -31,7 +31,7 @@ class TestLRUCache(unittest.TestCase):
         cache.put("b", 2)
         cache.get("a")     # Access "a", so "b" becomes the oldest
         cache.put("c", 3)  # Should evict "b"
-        
+
         self.assertEqual(cache.get("a"), 1)
         self.assertIsNone(cache.get("b"))
         self.assertEqual(cache.get("c"), 3)

@@ -145,7 +145,7 @@ class Shape:
         x2, y2 = pt2.x(), pt2.y()
         return QtCore.QRectF(x1, y1, x2 - x1, y2 - y1)
 
-    def paint(self, painter: QtGui.QPainter):  # noqa: max-complexity: 18
+    def paint(self, painter: QtGui.QPainter):  # noqa: C901
         """Paint shape using QPainter"""
         if self.points:
             color = self.select_line_color if self.selected else self.line_color

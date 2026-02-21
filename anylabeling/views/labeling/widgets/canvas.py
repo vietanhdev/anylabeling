@@ -1,7 +1,8 @@
 """This module defines Canvas widget - the core component for drawing image labels"""
 
-import imgviz
 from time import time
+
+import imgviz
 from PyQt6 import QtCore, QtGui, QtWidgets
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QWheelEvent
@@ -444,10 +445,7 @@ class Canvas(QtWidgets.QWidget):  # pylint: disable=too-many-public-methods, too
                     elif self.create_mode == "linestrip":
                         self.current.add_point(self.line[1])
                         self.line[0] = self.current[-1]
-                        if (
-                            ev.modifiers()
-                            == QtCore.Qt.KeyboardModifier.ControlModifier
-                        ):
+                        if ev.modifiers() == QtCore.Qt.KeyboardModifier.ControlModifier:
                             self.finalise()
                 elif not self.out_off_pixmap(pos):
                     # Create new shape.
@@ -479,9 +477,7 @@ class Canvas(QtWidgets.QWidget):  # pylint: disable=too-many-public-methods, too
                 self.prev_point = pos
                 self.repaint()
         elif ev.button() == QtCore.Qt.MouseButton.RightButton and self.editing():
-            group_mode = (
-                ev.modifiers() == QtCore.Qt.KeyboardModifier.ControlModifier
-            )
+            group_mode = ev.modifiers() == QtCore.Qt.KeyboardModifier.ControlModifier
             if not self.selected_shapes or (
                 self.h_hape is not None and self.h_hape not in self.selected_shapes
             ):
@@ -497,7 +493,10 @@ class Canvas(QtWidgets.QWidget):  # pylint: disable=too-many-public-methods, too
         if ev.button() == QtCore.Qt.MouseButton.RightButton:
             menu = self.menus[len(self.selected_shapes_copy) > 0]
             self.restore_cursor()
-            if not menu.exec(self.mapToGlobal(ev.position().toPoint())) and self.selected_shapes_copy:
+            if (
+                not menu.exec(self.mapToGlobal(ev.position().toPoint()))
+                and self.selected_shapes_copy
+            ):
                 # Cancel the move by deleting the shadow copy.
                 self.selected_shapes_copy = []
                 self.repaint()

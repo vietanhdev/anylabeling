@@ -23,7 +23,7 @@ class LabelQLineEdit(QtWidgets.QLineEdit):
         if e.key() in [QtCore.Qt.Key.Key_Up, QtCore.Qt.Key.Key_Down]:
             self.list_widget.keyPressEvent(e)
         else:
-            super(LabelQLineEdit, self).keyPressEvent(e)
+            super().keyPressEvent(e)
 
 
 class LabelDialog(QtWidgets.QDialog):
@@ -45,7 +45,7 @@ class LabelDialog(QtWidgets.QDialog):
             fit_to_content = {"row": False, "column": True}
         self._fit_to_content = fit_to_content
 
-        super(LabelDialog, self).__init__(parent)
+        super().__init__(parent)
         self.edit = LabelQLineEdit()
         self.edit.setPlaceholderText(text)
         self.edit.setValidator(utils.label_validator())
@@ -83,16 +83,22 @@ class LabelDialog(QtWidgets.QDialog):
         # label_list
         self.label_list = QtWidgets.QListWidget()
         if self._fit_to_content["row"]:
-            self.label_list.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+            self.label_list.setHorizontalScrollBarPolicy(
+                QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff
+            )
         if self._fit_to_content["column"]:
-            self.label_list.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+            self.label_list.setVerticalScrollBarPolicy(
+                QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff
+            )
         self._sort_labels = sort_labels
         if labels:
             self.label_list.addItems(labels)
         if self._sort_labels:
             self.label_list.sortItems()
         else:
-            self.label_list.setDragDropMode(QtWidgets.QAbstractItemView.DragDropMode.InternalMove)
+            self.label_list.setDragDropMode(
+                QtWidgets.QAbstractItemView.DragDropMode.InternalMove
+            )
         self.label_list.currentItemChanged.connect(self.label_selected)
         self.label_list.itemDoubleClicked.connect(self.label_double_clicked)
         self.edit.set_list_widget(self.label_list)

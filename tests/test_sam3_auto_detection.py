@@ -9,7 +9,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from anylabeling.services.auto_labeling.segment_anything import SegmentAnything
 
 class TestSAM3AutoDetection(unittest.TestCase):
-    
+
     @patch('anylabeling.services.auto_labeling.segment_anything.onnx.load')
     @patch('anylabeling.services.auto_labeling.segment_anything.SegmentAnything3ONNX')
     @patch('anylabeling.services.auto_labeling.segment_anything.SegmentAnything.get_model_abs_path')
@@ -27,13 +27,13 @@ class TestSAM3AutoDetection(unittest.TestCase):
             "max_width": 1008,
             "max_height": 1008
         }
-        
+
         mock_get_path.side_effect = lambda cfg, field: cfg.get(field)
-        
+
         # Instantiate SegmentAnything with the SAM3 config
         # It should detect it's SAM3 because 'language_encoder_path' is in config
         model = SegmentAnything(config, on_message=print)
-        
+
         # Verify SegmentAnything3ONNX was instantiated
         mock_sam3_class.assert_called_once()
         print("SUCCESS: SAM3 correctly detected by config field.")
@@ -56,9 +56,9 @@ class TestSAM3AutoDetection(unittest.TestCase):
             "max_width": 1008,
             "max_height": 1008
         }
-        
+
         mock_get_path.side_effect = lambda cfg, field: cfg.get(field)
-        
+
         # Mock ONNX model to return SAM3 specific input names.
         # Detection uses backbone_fpn_0 or language_mask (NOT vision_pos_enc_0,
         # which onnxsim removes during simplification).
@@ -93,14 +93,14 @@ class TestSAM3AutoDetection(unittest.TestCase):
             "max_height": 1024
         }
         mock_get_path.side_effect = lambda cfg, field: cfg.get(field)
-        
+
         # Mock ONNX model for SAM2
         mock_model = MagicMock()
         mock_input = MagicMock()
         mock_input.name = "high_res_feats_0"
         mock_model.graph.input = [mock_input]
         mock_onnx_load.return_value = mock_model
-        
+
         model = SegmentAnything(config, on_message=print)
         mock_sam2_class.assert_called_once()
         print("SUCCESS: SAM2 correctly detected.")

@@ -1,11 +1,12 @@
-from typing import Dict, Type, Any
 import logging
+
 
 class ModelRegistry:
     """
     Singleton registry to manage auto-labeling model classes.
     """
-    _registry: Dict[str, Type] = {}
+
+    _registry: dict[str, type] = {}
 
     @classmethod
     def register(cls, name: str):
@@ -15,15 +16,19 @@ class ModelRegistry:
             @ModelRegistry.register("yolov8")
             class YOLOv8(Model): ...
         """
+
         def decorator(model_class):
             if name in cls._registry:
-                logging.warning(f"Model type '{name}' is already registered. Overwriting.")
+                logging.warning(
+                    f"Model type '{name}' is already registered. Overwriting."
+                )
             cls._registry[name] = model_class
             return model_class
+
         return decorator
 
     @classmethod
-    def get(cls, name: str) -> Type:
+    def get(cls, name: str) -> type:
         """Get a model class by type name."""
         return cls._registry.get(name)
 

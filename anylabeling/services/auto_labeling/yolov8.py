@@ -9,6 +9,7 @@ from PyQt6.QtCore import QCoreApplication
 from anylabeling.app_info import __preferred_device__
 from anylabeling.views.labeling.shape import Shape
 from anylabeling.views.labeling.utils.opencv import qt_img_to_rgb_cv_img
+
 from .model import Model
 from .registry import ModelRegistry
 from .types import AutoLabelingResult

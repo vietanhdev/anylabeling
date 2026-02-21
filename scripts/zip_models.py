@@ -1,14 +1,14 @@
-import yaml
 import os
 import pathlib
 import zipfile
 from urllib.parse import urlparse
 
+import yaml
 
 output_path = "zipped_models/"
 model_config_path = "anylabeling/configs/auto_labeling/"
 model_list_path = "anylabeling/configs/auto_labeling/models.yaml"
-model_list = yaml.load(open(model_list_path, "r"), Loader=yaml.FullLoader)
+model_list = yaml.load(open(model_list_path), Loader=yaml.FullLoader)
 
 # Create output path
 pathlib.Path(output_path).mkdir(parents=True, exist_ok=True)
@@ -27,7 +27,7 @@ for model in model_list:
     # Get download links
     download_links = []
     model_config = yaml.load(
-        open(model_config_path + config_file, "r"), Loader=yaml.FullLoader
+        open(model_config_path + config_file), Loader=yaml.FullLoader
     )
     if model_config["type"] == "segment_anything":
         download_links.append(model_config["encoder_model_path"])

@@ -12,7 +12,7 @@ class BrightnessContrastDialog(QtWidgets.QDialog):
     """Dialog for adjusting brightness and contrast of current image"""
 
     def __init__(self, img, callback, parent=None):
-        super(BrightnessContrastDialog, self).__init__(parent)
+        super().__init__(parent)
         self.setModal(True)
         self.setWindowTitle(self.tr("Brightness/Contrast"))
 

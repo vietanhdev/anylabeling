@@ -1,7 +1,7 @@
 """Thread-safe LRU cache implementation."""
 
-from collections import OrderedDict
 import threading
+from collections import OrderedDict
 
 
 class LRUCache:

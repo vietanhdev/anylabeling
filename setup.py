@@ -7,10 +7,11 @@ expressed in static TOML: switching the package name to 'anylabeling-gpu'
 and replacing onnxruntime with onnxruntime-gpu when __preferred_device__
 is set to 'GPU' in anylabeling/app_info.py.
 """
-import re
-import platform
 
-from setuptools import find_packages, setup
+import platform
+import re
+
+from setuptools import setup
 
 
 def _read_app_info(key):

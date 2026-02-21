@@ -1,6 +1,7 @@
-import darkdetect
-from PyQt6.QtGui import QPalette, QColor
 import os
+
+import darkdetect
+from PyQt6.QtGui import QColor, QPalette
 
 
 class AppTheme:
@@ -103,13 +104,17 @@ class AppTheme:
         palette.setColor(QPalette.ColorRole.Window, QColor(colors["window"]))
         palette.setColor(QPalette.ColorRole.WindowText, QColor(colors["window_text"]))
         palette.setColor(QPalette.ColorRole.Base, QColor(colors["base"]))
-        palette.setColor(QPalette.ColorRole.AlternateBase, QColor(colors["alternate_base"]))
+        palette.setColor(
+            QPalette.ColorRole.AlternateBase, QColor(colors["alternate_base"])
+        )
         palette.setColor(QPalette.ColorRole.Text, QColor(colors["text"]))
         palette.setColor(QPalette.ColorRole.Button, QColor(colors["button"]))
         palette.setColor(QPalette.ColorRole.ButtonText, QColor(colors["button_text"]))
         palette.setColor(QPalette.ColorRole.BrightText, QColor(colors["bright_text"]))
         palette.setColor(QPalette.ColorRole.Highlight, QColor(colors["highlight"]))
-        palette.setColor(QPalette.ColorRole.HighlightedText, QColor(colors["highlighted_text"]))
+        palette.setColor(
+            QPalette.ColorRole.HighlightedText, QColor(colors["highlighted_text"])
+        )
         palette.setColor(QPalette.ColorRole.Link, QColor(colors["link"]))
         palette.setColor(QPalette.ColorRole.Dark, QColor(colors["dark"]))
         palette.setColor(QPalette.ColorRole.Mid, QColor(colors["mid"]))

@@ -14,7 +14,10 @@ class QToaster(QtWidgets.QFrame):
         super().__init__(*args, **kwargs)
         QtWidgets.QHBoxLayout(self)
 
-        self.setSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
+        self.setSizePolicy(
+            QtWidgets.QSizePolicy.Policy.Maximum,
+            QtWidgets.QSizePolicy.Policy.Maximum,
+        )
 
         self.setStyleSheet(
             """

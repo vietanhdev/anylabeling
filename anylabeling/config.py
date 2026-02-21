@@ -12,7 +12,6 @@ from anylabeling import configs as anylabeling_configs
 
 from .views.labeling.logger import logger
 
-
 # Save current config file
 current_config_file = None
 

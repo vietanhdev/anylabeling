@@ -1,17 +1,19 @@
 """Worker class for exporting annotations in the background."""
 
+import json
 import os
 import os.path as osp
-import json
 import random
 import uuid
-from PyQt6.QtCore import QObject, pyqtSignal, pyqtSlot, QRunnable
+
+from PyQt6.QtCore import QObject, QRunnable, pyqtSignal, pyqtSlot
+
 from .export_formats import FormatExporter
 
 
 class ExportSignals(QObject):
     """Signals for the export worker."""
-    
+
     started = pyqtSignal()
     finished = pyqtSignal()
     progress = pyqtSignal(int, str)
@@ -108,7 +110,7 @@ class ExportWorker(QRunnable):
     def _load_json_file(self, json_file):
         """Load a JSON annotation file."""
         try:
-            with open(osp.join(self.input_dir, json_file), "r") as f:
+            with open(osp.join(self.input_dir, json_file)) as f:
                 return json.load(f)
         except Exception as e:
             self.signals.error.emit(f"Error loading {json_file}: {str(e)}")
@@ -253,7 +255,7 @@ class ExportWorker(QRunnable):
                     image_width,
                     label_map,
                     output_path,
-                    export_mode=self.yolo_export_mode,  
+                    export_mode=self.yolo_export_mode,
                 )
 
                 # Copy image file

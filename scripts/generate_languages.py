@@ -1,5 +1,6 @@
-import os
 import glob
+import os
+
 from PyQt6 import QtCore
 
 supported_languages = ["en_US", "vi_VN", "zh_CN"]

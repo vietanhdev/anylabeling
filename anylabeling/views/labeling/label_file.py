@@ -17,7 +17,7 @@ PIL.Image.MAX_IMAGE_PIXELS = None
 def io_open(name, mode):
     assert mode in ["r", "w"]
     encoding = "utf-8"
-    yield io.open(name, mode, encoding=encoding)
+    yield open(name, mode, encoding=encoding)
 
 
 class LabelFileError(Exception):
@@ -39,7 +39,7 @@ class LabelFile:
     def load_image_file(filename):
         try:
             image_pil = PIL.Image.open(filename)
-        except IOError:
+        except OSError:
             logger.error("Failed opening image file: %s", filename)
             return None
 
