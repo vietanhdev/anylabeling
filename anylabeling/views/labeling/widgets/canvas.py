@@ -315,7 +315,7 @@ class Canvas(QtWidgets.QWidget):  # pylint: disable=too-many-public-methods, too
             elif self.create_mode == "point":
                 self.line.points = [self.current[0]]
                 self.line.close()
-            self.repaint()
+            self.update()
             self.current.highlight_clear()
             return
 
@@ -324,22 +324,22 @@ class Canvas(QtWidgets.QWidget):  # pylint: disable=too-many-public-methods, too
             if self.selected_shapes_copy and self.prev_point:
                 self.override_cursor(CURSOR_MOVE)
                 self.bounded_move_shapes(self.selected_shapes_copy, pos)
-                self.repaint()
+                self.update()
             elif self.selected_shapes:
                 self.selected_shapes_copy = [s.copy() for s in self.selected_shapes]
-                self.repaint()
+                self.update()
             return
 
         # Polygon/Vertex moving.
         if QtCore.Qt.MouseButton.LeftButton & ev.buttons():
             if self.selected_vertex():
                 self.bounded_move_vertex(pos)
-                self.repaint()
+                self.update()
                 self.moving_shape = True
             elif self.selected_shapes and self.prev_point:
                 self.override_cursor(CURSOR_MOVE)
                 self.bounded_move_shapes(self.selected_shapes, pos)
-                self.repaint()
+                self.update()
                 self.moving_shape = True
             return
 

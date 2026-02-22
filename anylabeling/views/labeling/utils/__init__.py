@@ -22,6 +22,36 @@ from .qt import (
     new_button,
     new_icon,
 )
+
+
+def encode_rle(data):
+    """Encode data using Run-Length Encoding"""
+    if len(data) == 0:
+        return []
+    res = []
+    current_val = data[0]
+    current_count = 0
+    for val in data:
+        if val == current_val:
+            current_count += 1
+        else:
+            res.extend([int(current_val), int(current_count)])
+            current_val = val
+            current_count = 1
+    res.extend([int(current_val), int(current_count)])
+    return res
+
+
+def decode_rle(rle):
+    """Decode data using Run-Length Encoding"""
+    res = []
+    for i in range(0, len(rle), 2):
+        val = rle[i]
+        count = rle[i + 1]
+        res.extend([val] * count)
+    return res
+
+
 from .shape import (
     masks_to_bboxes,
     polygons_to_mask,

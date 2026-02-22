@@ -36,6 +36,9 @@ dependencies = [
     "darkdetect>=0.8.0",
     "huggingface_hub>=0.24.0",
     "osam>=0.4.0",  # CLIP tokenizer for SAM3 language encoder
+    "pyvista>=0.43.0",
+    "pyvistaqt>=0.11.0",
+    "trimesh>=4.0.0",
 ]
 
 [project.optional-dependencies]
