@@ -3,6 +3,7 @@
 from .auto_labeling import AutoLabelingWidget
 from .brightness_contrast_dialog import BrightnessContrastDialog
 from .canvas import Canvas
+from .canvas3d import Canvas3D, ViewControls3D
 from .color_dialog import ColorDialog
 from .file_dialog_preview import FileDialogPreview
 from .label_dialog import LabelDialog, LabelQLineEdit

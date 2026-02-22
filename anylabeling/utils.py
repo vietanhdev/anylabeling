@@ -1,4 +1,15 @@
+import os
+
 from PyQt6.QtCore import QObject, pyqtSignal, pyqtSlot
+
+MESH_EXTENSIONS = [".obj", ".stl", ".ply"]
+
+
+def is_mesh_file(filename):
+    """Check if the filename is a mesh file"""
+    if not filename:
+        return False
+    return os.path.splitext(filename)[1].lower() in MESH_EXTENSIONS
 
 
 class GenericWorker(QObject):
