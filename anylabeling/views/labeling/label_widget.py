@@ -1,5 +1,6 @@
 import functools
 import html
+import json
 import math
 import os
 import os.path as osp
@@ -23,6 +24,7 @@ from anylabeling.app_info import __appname__
 from anylabeling.config import get_config, save_config
 from anylabeling.services.auto_labeling.types import AutoLabelingMode
 from anylabeling.styles import AppTheme
+from anylabeling.utils import MESH_EXTENSIONS, is_mesh_file
 from anylabeling.views.labeling import utils
 from anylabeling.views.labeling.label_file import LabelFile, LabelFileError
 from anylabeling.views.labeling.logger import logger
@@ -31,12 +33,14 @@ from anylabeling.views.labeling.widgets import (
     AutoLabelingWidget,
     BrightnessContrastDialog,
     Canvas,
+    Canvas3D,
     FileDialogPreview,
     LabelDialog,
     LabelListWidget,
     LabelListWidgetItem,
     ToolBar,
     UniqueLabelQListWidget,
+    ViewControls3D,
     ZoomWidget,
 )
 
@@ -233,10 +237,23 @@ class LabelingWidget(LabelDialog):
                 self.unique_label_list.addItem(item)
                 rgb = self._get_rgb_by_label(label)
                 self.unique_label_list.set_item_label(item, label, rgb)
+        self.unique_label_list.itemSelectionChanged.connect(
+            self._update_3d_active_label
+        )
+        # Container with Add Label button + label list
+        label_dock_widget = QtWidgets.QWidget()
+        label_dock_layout = QVBoxLayout()
+        label_dock_layout.setContentsMargins(0, 0, 0, 0)
+        label_dock_layout.setSpacing(2)
+        self.add_label_button = QtWidgets.QPushButton(self.tr("+ Add Label"))
+        self.add_label_button.clicked.connect(self._add_label_manually)
+        label_dock_layout.addWidget(self.add_label_button)
+        label_dock_layout.addWidget(self.unique_label_list)
+        label_dock_widget.setLayout(label_dock_layout)
         self.label_dock = QtWidgets.QDockWidget(self.tr("Labels"), self.main_window)
         self.label_dock.setObjectName("Labels")
         self.label_dock.setFeatures(features)
-        self.label_dock.setWidget(self.unique_label_list)
+        self.label_dock.setWidget(label_dock_widget)
         self.label_dock.setStyleSheet(dock_title_style)
         self.main_window.addDockWidget(
             Qt.DockWidgetArea.RightDockWidgetArea, self.label_dock
@@ -274,6 +291,26 @@ class LabelingWidget(LabelDialog):
         )
         self.canvas.zoom_request.connect(self.zoom_request)
 
+        # 3D Canvas
+        self.canvas_3d = Canvas3D(parent=self)
+        self.canvas_3d.new_shape.connect(self._on_new_shape_3d)
+        self.canvas_3d.shapes_updated.connect(self.set_dirty)
+        # self.canvas_3d.selection_changed.connect(self.shape_selection_changed)
+
+        # 3D View Controls dock
+        self.view_controls_3d = ViewControls3D(self.canvas_3d)
+        self.view_controls_3d_dock = QtWidgets.QDockWidget(
+            self.tr("3D View Controls"), self.main_window
+        )
+        self.view_controls_3d_dock.setObjectName("3DViewControls")
+        self.view_controls_3d_dock.setFeatures(features)
+        self.view_controls_3d_dock.setWidget(self.view_controls_3d)
+        self.view_controls_3d_dock.setStyleSheet(dock_title_style)
+        self.main_window.addDockWidget(
+            Qt.DockWidgetArea.RightDockWidgetArea, self.view_controls_3d_dock
+        )
+        self.view_controls_3d_dock.hide()  # Hidden until a mesh is loaded
+
         scroll_area = QtWidgets.QScrollArea()
         scroll_area.setWidget(self.canvas)
         scroll_area.setWidgetResizable(True)
@@ -288,7 +325,11 @@ class LabelingWidget(LabelDialog):
         self.canvas.selection_changed.connect(self.shape_selection_changed)
         self.canvas.drawing_polygon.connect(self.toggle_drawing_sensitive)
 
-        self._central_widget = scroll_area
+        self.central_stack = QtWidgets.QStackedWidget()
+        self.central_stack.addWidget(scroll_area)  # Index 0: 2D
+        self.central_stack.addWidget(self.canvas_3d)  # Index 1: 3D
+
+        self._central_widget = self.central_stack
 
         # Actions
         create_action = functools.partial(utils.new_action, self)
@@ -450,6 +491,22 @@ class LabelingWidget(LabelDialog):
             shortcuts["create_linestrip"],
             "line-strip",
             self.tr("Start drawing linestrip. Ctrl+LeftClick ends creation."),
+            enabled=False,
+        )
+        create_brush_3d = create_action(
+            self.tr("Brush 3D"),
+            lambda: self.toggle_draw_mode_3d(Canvas3D.BRUSH),
+            "Ctrl+B",
+            "brush",
+            self.tr("Paint on 3D mesh"),
+            enabled=False,
+        )
+        create_keypoint_3d = create_action(
+            self.tr("Keypoint 3D"),
+            lambda: self.toggle_draw_mode_3d(Canvas3D.KEYPOINT),
+            "Ctrl+K",
+            "point",
+            self.tr("Select point on 3D mesh"),
             enabled=False,
         )
         edit_mode = create_action(
@@ -827,6 +884,8 @@ class LabelingWidget(LabelDialog):
             create_line_mode=create_line_mode,
             create_point_mode=create_point_mode,
             create_line_strip_mode=create_line_strip_mode,
+            create_brush_3d=create_brush_3d,
+            create_keypoint_3d=create_keypoint_3d,
             zoom=zoom,
             zoom_in=zoom_in,
             zoom_out=zoom_out,
@@ -1039,6 +1098,8 @@ class LabelingWidget(LabelDialog):
             self.actions.create_line_mode,
             self.actions.create_point_mode,
             self.actions.create_line_strip_mode,
+            create_brush_3d,
+            create_keypoint_3d,
             edit_mode,
             delete,
             undo,
@@ -1155,7 +1216,7 @@ class LabelingWidget(LabelDialog):
 
         central_layout.addWidget(self.label_instruction)
         central_layout.addWidget(self.auto_labeling_widget)
-        central_layout.addWidget(scroll_area)
+        central_layout.addWidget(self.central_stack)
 
         # Set the central widget content
         center_widget = QtWidgets.QWidget()
@@ -1347,7 +1408,11 @@ class LabelingWidget(LabelDialog):
         self.actions.undo.setEnabled(self.canvas.is_shape_restorable)
 
         if self._config["auto_save"] or self.actions.save_auto.isChecked():
-            label_file = osp.splitext(self.image_path)[0] + ".json"
+            if is_mesh_file(self.image_path):
+                label_file = osp.splitext(self.image_path)[0] + ".anylabeling.json"
+            else:
+                label_file = osp.splitext(self.image_path)[0] + ".json"
+
             if self.output_dir:
                 label_file_without_path = osp.basename(label_file)
                 label_file = osp.join(self.output_dir, label_file_without_path)
@@ -1509,6 +1574,112 @@ class LabelingWidget(LabelDialog):
                 raise ValueError(f"Unsupported create_mode: {create_mode}")
         self.actions.edit_mode.setEnabled(not edit)
         self.label_instruction.setText(self.get_labeling_instruction())
+
+    def toggle_draw_mode_3d(self, mode):
+        """Toggle 3D draw mode"""
+        self.canvas_3d.set_mode(mode)
+        self.view_controls_3d.set_mode(mode)
+        self.actions.create_brush_3d.setEnabled(mode != Canvas3D.BRUSH)
+        self.actions.create_keypoint_3d.setEnabled(mode != Canvas3D.KEYPOINT)
+
+    def _add_label_manually(self):
+        """Add a new label to the unique label list via input dialog"""
+        text, ok = QtWidgets.QInputDialog.getText(
+            self, self.tr("Add Label"), self.tr("Label name:")
+        )
+        if ok and text:
+            text = text.strip()
+            if not text:
+                return
+            if self.unique_label_list.find_items_by_label(text):
+                return  # Already exists
+            item = self.unique_label_list.create_item_from_label(text)
+            self.unique_label_list.addItem(item)
+            rgb = self._get_rgb_by_label(text)
+            self.unique_label_list.set_item_label(item, text, rgb)
+            # Select the newly added label
+            self.unique_label_list.clearSelection()
+            item.setSelected(True)
+            self._save_folder_labels()
+
+    def _get_folder_settings_path(self):
+        """Get path to .anylabeling_settings.json in the current data folder"""
+        folder = self.output_dir or self.last_open_dir
+        if folder:
+            return osp.join(folder, ".anylabeling_settings.json")
+        return None
+
+    def _save_folder_labels(self):
+        """Save the current label list to the data folder settings file"""
+        settings_path = self._get_folder_settings_path()
+        if not settings_path:
+            return
+        # Read existing settings
+        data = {}
+        if osp.exists(settings_path):
+            try:
+                with open(settings_path, encoding="utf-8") as f:
+                    data = json.load(f)
+            except Exception:
+                pass
+        # Collect labels
+        labels = []
+        for i in range(self.unique_label_list.count()):
+            label = self.unique_label_list.item(i).data(Qt.ItemDataRole.UserRole)
+            if label:
+                labels.append(label)
+        data["labels"] = labels
+        try:
+            with open(settings_path, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            logger.warning("Failed to save folder labels: %s", e)
+
+    def _load_folder_labels(self):
+        """Load labels from the data folder settings file"""
+        settings_path = self._get_folder_settings_path()
+        if not settings_path or not osp.exists(settings_path):
+            return
+        try:
+            with open(settings_path, encoding="utf-8") as f:
+                data = json.load(f)
+            for label in data.get("labels", []):
+                if not self.unique_label_list.find_items_by_label(label):
+                    item = self.unique_label_list.create_item_from_label(label)
+                    self.unique_label_list.addItem(item)
+                    rgb = self._get_rgb_by_label(label)
+                    self.unique_label_list.set_item_label(item, label, rgb)
+        except Exception as e:
+            logger.warning("Failed to load folder labels: %s", e)
+
+    def _update_3d_active_label(self):
+        """Sync selected label from unique_label_list to canvas_3d"""
+        items = self.unique_label_list.selectedItems()
+        if items:
+            label = items[0].data(Qt.ItemDataRole.UserRole)
+            self.canvas_3d.active_label = label
+            # Sync label color to canvas_3d
+            rgb = self._get_rgb_by_label(label)
+            self.canvas_3d.set_label_color(label, rgb)
+        else:
+            self.canvas_3d.active_label = ""
+
+    def _sync_all_label_colors_3d(self):
+        """Push all known label colors to canvas_3d"""
+        for i in range(self.unique_label_list.count()):
+            label = self.unique_label_list.item(i).data(Qt.ItemDataRole.UserRole)
+            if label:
+                rgb = self._get_rgb_by_label(label)
+                self.canvas_3d.set_label_color(label, rgb)
+
+    def _on_new_shape_3d(self):
+        """Handle new shape from 3D canvas (label already set via active_label)"""
+        shape = self.canvas_3d.shapes[-1]
+        # Ensure color is synced for this label
+        rgb = self._get_rgb_by_label(shape.label)
+        self.canvas_3d.set_label_color(shape.label, rgb)
+        self.add_label(shape)
+        self.set_dirty()
 
     def set_edit_mode(self):
         # Disable auto labeling
@@ -1752,31 +1923,37 @@ class LabelingWidget(LabelDialog):
         self.label_list.clearSelection()
         self._no_selection_slot = False
         self.canvas.load_shapes(shapes, replace=replace)
+        self.canvas_3d.load_shapes(shapes, replace=replace)
 
     def load_labels(self, shapes):
         s = []
         for shape in shapes:
             label = shape["label"]
             text = shape.get("text", "")
-            points = shape["points"]
-            shape_type = shape["shape_type"]
-            flags = shape["flags"]
-            group_id = shape["group_id"]
-            other_data = shape["other_data"]
+            points = shape.get("points", [])
+            shape_type = shape.get("shape_type", "polygon")
+            flags = shape.get("flags", {})
+            group_id = shape.get("group_id")
+            other_data = shape.get("other_data", {})
+            vertex_indices = shape.get("vertex_indices", [])
 
-            if not points:
-                # skip point-empty shape
+            if not points and not vertex_indices:
+                # skip empty shape
                 continue
 
-            shape = Shape(
+            shape_obj = Shape(
                 label=label,
                 text=text,
                 shape_type=shape_type,
                 group_id=group_id,
+                vertex_indices=vertex_indices,
             )
-            for x, y in points:
-                shape.add_point(QtCore.QPointF(x, y))
-            shape.close()
+            for point in points:
+                if isinstance(point, (list, tuple)):
+                    shape_obj.add_point(QtCore.QPointF(*point))
+                else:
+                    shape_obj.add_point(point)
+            shape_obj.close()
 
             default_flags = {}
             if self._config["label_flags"]:
@@ -1784,12 +1961,12 @@ class LabelingWidget(LabelDialog):
                     if re.match(pattern, label):
                         for key in keys:
                             default_flags[key] = False
-            shape.flags = default_flags
+            shape_obj.flags = default_flags
             if flags:
-                shape.flags.update(flags)
-            shape.other_data = other_data
+                shape_obj.flags.update(flags)
+            shape_obj.other_data = other_data
 
-            s.append(shape)
+            s.append(shape_obj)
         self.load_shapes(s)
 
     def load_flags(self, flags):
@@ -1839,7 +2016,19 @@ class LabelingWidget(LabelDialog):
             flags[key] = flag
         try:
             image_path = osp.relpath(self.image_path, osp.dirname(filename))
-            image_data = self.image_data if self._config["store_data"] else None
+            if is_mesh_file(self.image_path):
+                image_data = None
+                image_height = None
+                image_width = None
+                # Include RLE-encoded vertex label ids for mesh files
+                self.other_data["vertex_label_ids"] = utils.encode_rle(
+                    self.canvas_3d.vertex_label_ids.tolist()
+                )
+            else:
+                image_data = self.image_data if self._config["store_data"] else None
+                image_height = self.image.height()
+                image_width = self.image.width()
+
             if osp.dirname(filename) and not osp.exists(osp.dirname(filename)):
                 os.makedirs(osp.dirname(filename))
             label_file.save(
@@ -1847,8 +2036,8 @@ class LabelingWidget(LabelDialog):
                 shapes=shapes,
                 image_path=image_path,
                 image_data=image_data,
-                image_height=self.image.height(),
-                image_width=self.image.width(),
+                image_height=image_height,
+                image_width=image_width,
                 other_data=self.other_data,
                 flags=flags,
             )
@@ -2136,6 +2325,65 @@ class LabelingWidget(LabelDialog):
         if self.output_dir:
             label_file_without_path = osp.basename(label_file)
             label_file = osp.join(self.output_dir, label_file_without_path)
+
+        # Handle mesh files
+        if is_mesh_file(filename):
+            self.central_stack.setCurrentIndex(1)
+            self.view_controls_3d_dock.show()
+            self.canvas_3d.load_mesh(filename)
+            self.actions.create_brush_3d.setEnabled(True)
+            self.actions.create_keypoint_3d.setEnabled(True)
+            self.filename = filename
+            self.image_path = filename
+            self.image_data = None
+            self.image = QtGui.QImage()  # Dummy image
+
+            # Prefer .anylabeling.json, fallback to .json
+            label_file_v2 = osp.splitext(filename)[0] + ".anylabeling.json"
+            if self.output_dir:
+                label_file_v2 = osp.join(self.output_dir, osp.basename(label_file_v2))
+
+            if QtCore.QFile.exists(label_file_v2) and LabelFile.is_label_file(
+                label_file_v2
+            ):
+                label_file = label_file_v2
+
+            # Load labels if exists
+            if QtCore.QFile.exists(label_file) and LabelFile.is_label_file(label_file):
+                try:
+                    self.label_file = LabelFile(label_file)
+                    self.other_data = self.label_file.other_data
+                    self.shape_text_edit.textChanged.disconnect()
+                    self.shape_text_edit.setPlainText(
+                        self.other_data.get("image_text", "")
+                    )
+                    self.shape_text_edit.textChanged.connect(self.shape_text_changed)
+                    self._sync_all_label_colors_3d()
+                    if "vertex_label_ids" in self.other_data:
+                        self.canvas_3d.load_vertex_label_ids(
+                            self.other_data["vertex_label_ids"]
+                        )
+                    self.load_labels(self.label_file.shapes)
+                    if self.label_file.flags is not None:
+                        flags = dict.fromkeys(self._config["flags"] or [], False)
+                        flags.update(self.label_file.flags)
+                        self.load_flags(flags)
+                except Exception as e:
+                    self.error_message(self.tr("Error opening label file"), str(e))
+            else:
+                self.label_file = None
+                self.canvas_3d.clear_shapes()
+                self.set_clean()
+            self._sync_all_label_colors_3d()
+
+            self.canvas.setEnabled(False)
+            self.actions.save.setEnabled(True)
+            self.actions.save_as.setEnabled(True)
+            return True
+        else:
+            self.central_stack.setCurrentIndex(0)
+            self.view_controls_3d_dock.hide()
+
         if QtCore.QFile.exists(label_file) and LabelFile.is_label_file(label_file):
             try:
                 self.label_file = LabelFile(label_file)
@@ -2408,8 +2656,9 @@ class LabelingWidget(LabelDialog):
             f"*.{fmt.data().decode()}"
             for fmt in QtGui.QImageReader.supportedImageFormats()
         ]
+        mesh_formats = [f"*{ext}" for ext in MESH_EXTENSIONS]
         filters = self.tr("Image & Label files (%s)") % " ".join(
-            formats + [f"*{LabelFile.suffix}"]
+            formats + mesh_formats + [f"*{LabelFile.suffix}"]
         )
         file_dialog = FileDialogPreview(self)
         file_dialog.setFileMode(FileDialogPreview.ExistingFile)
@@ -2524,7 +2773,10 @@ class LabelingWidget(LabelDialog):
         if self.filename.lower().endswith(".json"):
             label_file = self.filename
         else:
-            label_file = osp.splitext(self.filename)[0] + ".json"
+            if is_mesh_file(self.filename):
+                label_file = osp.splitext(self.filename)[0] + ".anylabeling.json"
+            else:
+                label_file = osp.splitext(self.filename)[0] + ".json"
 
         return label_file
 
@@ -2680,6 +2932,7 @@ class LabelingWidget(LabelDialog):
             f".{fmt.data().decode().lower()}"
             for fmt in QtGui.QImageReader.supportedImageFormats()
         ]
+        extensions.extend(MESH_EXTENSIONS)
 
         self.filename = None
         for file in image_files:
@@ -2711,6 +2964,7 @@ class LabelingWidget(LabelDialog):
             return
 
         self.last_open_dir = dirpath
+        self._load_folder_labels()
         self.filename = None
         self.file_list_widget.clear()
         for filename in self.scan_all_images(dirpath):
@@ -2735,6 +2989,7 @@ class LabelingWidget(LabelDialog):
             for fmt in QtGui.QImageReader.supportedImageFormats()
             if fmt.data().decode().lower() != "svg"
         ]
+        extensions.extend(MESH_EXTENSIONS)
 
         images = []
         for root, _, files in os.walk(folder_path):
