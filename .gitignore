@@ -11,3 +11,5 @@ anylabeling/data
 anylabeling/app_info.py-*
 zipped_models/*
 venv/
+labelme_jsons/
+labelme_review_items/
