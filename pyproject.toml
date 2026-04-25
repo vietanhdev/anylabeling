@@ -23,19 +23,19 @@ classifiers = [
 ]
 dependencies = [
     "imgviz>=2.0.0",
-    "natsort>=8.0.0",
+    "natsort>=8.4.0",
     "numpy>=2.0.0",
-    "Pillow>=10.0.0",
+    "Pillow>=11.0.0",
     "PyYAML>=6.0.2",
-    "termcolor>=2.0.0",
+    "termcolor>=2.4.0",
     "opencv-python-headless>=4.10.0",
-    "PyQt6>=6.5.0; platform_system != 'Darwin'",
+    "PyQt6>=6.7.0; platform_system != 'Darwin'",
     "onnx>=1.18.0",
     "onnxruntime>=1.20.0",
     "qimage2ndarray>=1.10.0",
     "darkdetect>=0.8.0",
-    "huggingface_hub",
-    "osam>=0.3.1",  # CLIP tokenizer for SAM3 language encoder
+    "huggingface_hub>=0.24.0",
+    "osam>=0.4.0",  # CLIP tokenizer for SAM3 language encoder
 ]
 
 [project.optional-dependencies]
@@ -51,6 +51,9 @@ macos = [
 dev = [
     "build>=1.2",
     "twine>=6.0",
+    # pyside6-rcc is the supported way to rebuild anylabeling/resources/resources.py
+    # — PyQt6 dropped its own pyrcc in the Qt6 line. Used by scripts/*_languages.py.
+    "PySide6-Essentials>=6.7.0",
 ]
 
 [project.urls]
