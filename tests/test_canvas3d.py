@@ -118,6 +118,50 @@ class TestCanvas3DDataModel(unittest.TestCase):
         self.canvas.set_brush_radius(0.42)
         self.assertEqual(self.canvas.brush_radius, 0.42)
 
+    def test_in_place_paint_avoids_actor_rebuild(self):
+        """After the first paint flips _scalar_mode_active to True, every
+        subsequent _apply_colors_and_render must skip _redraw_mesh and just
+        push the colour array to VTK in place. Regression test for the
+        per-stroke add_mesh slowdown on dense meshes."""
+        # First paint kicks off the switch from PBR to scalar shading.
+        self.canvas._scalar_mode_active = False
+        self.canvas._vertex_colors[0] = [10, 20, 30]
+        self.canvas._apply_colors_and_render()
+        self.assertTrue(self.canvas._scalar_mode_active)
+
+        # Subsequent paints must NOT rebuild — verify by spying on _redraw_mesh.
+        calls = {"n": 0}
+        original = self.canvas._redraw_mesh
+        self.canvas._redraw_mesh = lambda: calls.__setitem__("n", calls["n"] + 1)
+        try:
+            for _ in range(5):
+                self.canvas._vertex_colors[0] = [40, 50, 60]
+                self.canvas._apply_colors_and_render()
+            self.assertEqual(
+                calls["n"], 0,
+                "_apply_colors_and_render should not rebuild the actor "
+                "while scalar mode is already active",
+            )
+        finally:
+            self.canvas._redraw_mesh = original
+
+    def test_cursor_actor_is_reused(self):
+        """Brush cursor sphere must be one persistent actor that we just
+        reposition + scale, not a new actor per mouse-move."""
+        self.canvas._cursor_actor = None  # force first creation
+        self.canvas._show_cursor((0.0, 0.0, 0.0))
+        first = id(self.canvas._cursor_actor)
+        self.assertIsNotNone(self.canvas._cursor_actor)
+        for i in range(20):
+            self.canvas._show_cursor((float(i) * 0.05, 0.0, 0.0))
+        self.assertEqual(id(self.canvas._cursor_actor), first)
+
+    def test_mode_constants_reduced_to_view_and_brush(self):
+        """Keypoint mode was removed for simplicity; verify."""
+        self.assertEqual(Canvas3D.VIEW, "view")
+        self.assertEqual(Canvas3D.BRUSH, "brush")
+        self.assertFalse(hasattr(Canvas3D, "KEYPOINT"))
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

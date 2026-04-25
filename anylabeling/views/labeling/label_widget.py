@@ -501,12 +501,28 @@ class LabelingWidget(LabelDialog):
             self.tr("Paint on 3D mesh"),
             enabled=False,
         )
-        create_keypoint_3d = create_action(
-            self.tr("Keypoint 3D"),
-            lambda: self.toggle_draw_mode_3d(Canvas3D.KEYPOINT),
-            "Ctrl+K",
-            "point",
-            self.tr("Select point on 3D mesh"),
+        view_mode_3d = create_action(
+            self.tr("View 3D"),
+            lambda: self.toggle_draw_mode_3d(Canvas3D.VIEW),
+            "Escape",
+            "edit",
+            self.tr("Switch the 3D canvas back to view (orbit) mode"),
+            enabled=False,
+        )
+        decrease_brush_size_3d = create_action(
+            self.tr("Decrease 3D brush size"),
+            lambda: self._adjust_3d_brush_size(-1),
+            "[",
+            None,
+            self.tr("Make the 3D brush radius smaller"),
+            enabled=False,
+        )
+        increase_brush_size_3d = create_action(
+            self.tr("Increase 3D brush size"),
+            lambda: self._adjust_3d_brush_size(+1),
+            "]",
+            None,
+            self.tr("Make the 3D brush radius larger"),
             enabled=False,
         )
         edit_mode = create_action(
@@ -885,7 +901,9 @@ class LabelingWidget(LabelDialog):
             create_point_mode=create_point_mode,
             create_line_strip_mode=create_line_strip_mode,
             create_brush_3d=create_brush_3d,
-            create_keypoint_3d=create_keypoint_3d,
+            view_mode_3d=view_mode_3d,
+            decrease_brush_size_3d=decrease_brush_size_3d,
+            increase_brush_size_3d=increase_brush_size_3d,
             zoom=zoom,
             zoom_in=zoom_in,
             zoom_out=zoom_out,
@@ -1099,7 +1117,6 @@ class LabelingWidget(LabelDialog):
             self.actions.create_point_mode,
             self.actions.create_line_strip_mode,
             create_brush_3d,
-            create_keypoint_3d,
             edit_mode,
             delete,
             undo,
@@ -1580,7 +1597,16 @@ class LabelingWidget(LabelDialog):
         self.canvas_3d.set_mode(mode)
         self.view_controls_3d.set_mode(mode)
         self.actions.create_brush_3d.setEnabled(mode != Canvas3D.BRUSH)
-        self.actions.create_keypoint_3d.setEnabled(mode != Canvas3D.KEYPOINT)
+        self.actions.view_mode_3d.setEnabled(mode != Canvas3D.VIEW)
+
+    def _adjust_3d_brush_size(self, direction):
+        """Step the 3D brush radius via shortcut. Direction: -1 smaller, +1 larger."""
+        slider = getattr(self.view_controls_3d, "brush_size_slider", None)
+        if slider is None:
+            return
+        step = 1
+        new_value = max(slider.minimum(), min(slider.maximum(), slider.value() + direction * step))
+        slider.setValue(new_value)
 
     def _add_label_manually(self):
         """Add a new label to the unique label list via input dialog"""
@@ -2332,7 +2358,9 @@ class LabelingWidget(LabelDialog):
             self.view_controls_3d_dock.show()
             self.canvas_3d.load_mesh(filename)
             self.actions.create_brush_3d.setEnabled(True)
-            self.actions.create_keypoint_3d.setEnabled(True)
+            self.actions.view_mode_3d.setEnabled(True)
+            self.actions.decrease_brush_size_3d.setEnabled(True)
+            self.actions.increase_brush_size_3d.setEnabled(True)
             self.filename = filename
             self.image_path = filename
             self.image_data = None
