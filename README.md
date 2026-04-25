@@ -68,7 +68,7 @@ All models are downloaded automatically on first use from Hugging Face.
 
 ### Install from Pypi
 
-- Requirements: Python 3.10+. Recommended: Python 3.12.
+- Requirements: Python 3.11+. Recommended: Python 3.12.
 - Recommended: [Miniconda/Anaconda](https://docs.conda.io/en/latest/miniconda.html).
 
 - Create environment:

@@ -49,10 +49,10 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           body: ${{steps.github_release.outputs.changelog}}
-          draft: true
-          prerelease: true
+          draft: false
+          prerelease: false
           tag_name: ${{ github.ref_name }}
-          make_latest: 'false'
+          make_latest: 'true'
           fail_on_unmatched_files: false
 
   build:

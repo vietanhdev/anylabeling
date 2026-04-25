@@ -119,17 +119,14 @@ through conda. The macOS extra is `[macos]` (currently `coremltools==8.3.0`).
 
 - `anylabeling/resources/resources.qrc` (XML) compiles to `resources.py`.
 - `anylabeling/resources/translations/{en_US,vi_VN,zh_CN}.{ts,qm}`.
-- `scripts/generate_languages.py` extracts translatable strings into `.ts`
-  files and runs `pyuic6` on `.ui` files.
-- `scripts/compile_languages.py` calls `lrelease` to produce `.qm` files,
-  and then `pyrcc5` to rebuild `resources.py`.
-
-Note: the project migrated from PyQt5 to PyQt6 (commit `9735fe8`), but
-`scripts/compile_languages.py` still calls `pyrcc5`. PyQt6 does not ship a
-`pyrcc6`; one common workaround is to keep `pyrcc5` from a PyQt5-tools
-sideload, or vendor the resource bytes. `generate_languages.py` already
-references `pyrcc6`. Treat this script pair as inconsistent and fix
-deliberately when touching it.
+- `scripts/compile_languages.py` rebuilds `.qm` files and `resources.py`
+  from existing `.ts` files. Use after editing translations or icons.
+- `scripts/generate_languages.py` does the full extract: runs `pyuic6` on
+  `.ui` files, `pylupdate6` to refresh `.ts`, then the compile step.
+- Both shell out to `pyside6-rcc` and `pyside6-lrelease` (PyQt6 dropped
+  the standalone `pyrcc` in Qt6) and post-rewrite `from PySide6` to
+  `from PyQt6` so the generated module uses the runtime's Qt binding.
+  `PySide6-Essentials` is in the `[dev]` extras for this purpose only.
 
 ### Tests
 
