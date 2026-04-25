@@ -50,17 +50,11 @@ class ViewControls3D(QWidget):
         self.brush_btn.setCheckable(True)
         self.brush_btn.setFixedHeight(28)
 
-        self.keypoint_btn = QPushButton("Keypoint")
-        self.keypoint_btn.setCheckable(True)
-        self.keypoint_btn.setFixedHeight(28)
-
         self.mode_btn_group.addButton(self.view_btn, 0)
         self.mode_btn_group.addButton(self.brush_btn, 1)
-        self.mode_btn_group.addButton(self.keypoint_btn, 2)
 
         mode_layout.addWidget(self.view_btn)
         mode_layout.addWidget(self.brush_btn)
-        mode_layout.addWidget(self.keypoint_btn)
 
         mode_group.setLayout(mode_layout)
         layout.addWidget(mode_group)
@@ -294,13 +288,13 @@ class ViewControls3D(QWidget):
             self.canvas.set_brush_radius(diag * pct / 100.0)
 
     def _on_mode_clicked(self, btn_id):
-        mode_map = {0: Canvas3D.VIEW, 1: Canvas3D.BRUSH, 2: Canvas3D.KEYPOINT}
+        mode_map = {0: Canvas3D.VIEW, 1: Canvas3D.BRUSH}
         mode = mode_map.get(btn_id, Canvas3D.VIEW)
         self.canvas.set_mode(mode)
 
     def set_mode(self, mode):
         """Sync toggle buttons to reflect externally set mode"""
-        mode_to_id = {Canvas3D.VIEW: 0, Canvas3D.BRUSH: 1, Canvas3D.KEYPOINT: 2}
+        mode_to_id = {Canvas3D.VIEW: 0, Canvas3D.BRUSH: 1}
         btn_id = mode_to_id.get(mode, 0)
         self.mode_btn_group.button(btn_id).setChecked(True)
 
@@ -318,7 +312,6 @@ class Canvas3D(QtInteractor):
 
     VIEW = "view"
     BRUSH = "brush"
-    KEYPOINT = "keypoint"
 
     # Default rendering properties
     _DEFAULT_COLOR = "white"
@@ -367,6 +360,16 @@ class Canvas3D(QtInteractor):
         # Per-vertex RGB colors on the main mesh
         self._vertex_colors = None  # np.uint8 (n, 3) — current vertex colors
         self._base_color_rgb = np.array([255, 255, 255], dtype=np.uint8)
+        # True once the main mesh actor is rendering with per-vertex scalar
+        # colors (i.e. after the first paint stroke). While this is True the
+        # paint hot path mutates self._main_mesh.point_data in place rather
+        # than re-running self.add_mesh — the latter is O(actor rebuild) and
+        # makes painting feel laggy on dense meshes.
+        self._scalar_mode_active = False
+        # Reused cursor sphere actor — created once per load_mesh and just
+        # repositioned on mouse-move.
+        self._cursor_actor = None
+        self._cursor_radius_baseline = 1.0
 
         # Reusable picker (avoid re-creating per event)
         self._picker = vtk.vtkCellPicker()
@@ -435,6 +438,14 @@ class Canvas3D(QtInteractor):
         ):
             return
 
+        # add_mesh below replaces every actor that lives under our names —
+        # including the cursor sphere if it shared the renderer. Drop the
+        # cached cursor reference so _ensure_cursor_actor recreates it lazily.
+        self._cursor_actor = None
+        # add_mesh re-creates the actor, so the in-place scalar fast path
+        # has to re-bootstrap on the next paint.
+        self._scalar_mode_active = False
+
         has_paint = self._vertex_colors is not None and np.any(
             self._vertex_label_ids != self._NO_LABEL
         )
@@ -485,6 +496,9 @@ class Canvas3D(QtInteractor):
         self._shapes_by_label.clear()
         self._label_to_id.clear()
         self._id_to_label.clear()
+        # self.clear() removed all actors including any previous cursor sphere.
+        self._cursor_actor = None
+        self._scalar_mode_active = False
         self._setup_lighting()
         try:
             self._main_mesh = pv.read(filename)
@@ -844,30 +858,60 @@ class Canvas3D(QtInteractor):
     # --- Mesh overlay for painting & cursor ---
 
     def _apply_colors_and_render(self):
-        """Apply vertex colors to the mesh and re-render"""
-        self._redraw_mesh()
+        """Push current vertex colours to VTK and re-render in place.
 
-    def _show_cursor(self, center):
-        """Show a transparent sphere at the brush position"""
-        sphere = pv.Sphere(
-            radius=self.brush_radius,
-            center=center,
+        Hot path during a brush stroke. The first invocation switches the
+        main mesh from PBR shading to per-vertex scalar colouring (one
+        full add_mesh, unavoidable). Every subsequent invocation just
+        mutates ``self._main_mesh.point_data`` and triggers a re-render —
+        roughly O(n_painted_verts) for the numpy assign and O(1) extra
+        VTK overhead instead of rebuilding the actor.
+        """
+        if self._main_mesh is None or self._vertex_colors is None:
+            return
+        if not self._scalar_mode_active:
+            self._redraw_mesh()
+            self._scalar_mode_active = True
+            return
+        # Reassign — pyvista's wrapper marks the underlying VTK array
+        # modified, which is what the renderer needs to see new colours.
+        self._main_mesh.point_data["label_colors"] = self._vertex_colors
+        self._main_mesh.set_active_scalars("label_colors")
+        self.render()
+
+    def _ensure_cursor_actor(self):
+        """Create the brush-cursor sphere once and reuse it across moves."""
+        if self._cursor_actor is not None:
+            return
+        unit_sphere = pv.Sphere(
+            radius=1.0,
             theta_resolution=16,
             phi_resolution=16,
         )
-        self.add_mesh(
-            sphere,
+        self._cursor_actor = self.add_mesh(
+            unit_sphere,
             color="cyan",
             opacity=0.2,
             name=self._cursor_actor_name,
             pickable=False,
             reset_camera=False,
         )
+        # Hide until the first _show_cursor call positions it.
+        self._cursor_actor.SetVisibility(False)
+
+    def _show_cursor(self, center):
+        """Position and show the brush cursor sphere."""
+        self._ensure_cursor_actor()
+        if self._cursor_actor is None:
+            return
+        r = float(self.brush_radius)
+        self._cursor_actor.SetScale(r, r, r)
+        self._cursor_actor.SetPosition(float(center[0]), float(center[1]), float(center[2]))
+        self._cursor_actor.SetVisibility(True)
 
     def _hide_cursor(self):
-        """Remove the brush cursor sphere"""
-        if self._cursor_actor_name in self.renderer.actors:
-            self.remove_actor(self._cursor_actor_name)
+        if self._cursor_actor is not None:
+            self._cursor_actor.SetVisibility(False)
 
     # --- Vertex painting ---
 
@@ -882,16 +926,11 @@ class Canvas3D(QtInteractor):
 
     def _paint_at(self, point, screen_pos=None):
         """Paint vertices at a world-space point with immediate visual feedback."""
-        label = self.active_label or ("point" if self.mode == self.KEYPOINT else "mask")
+        label = self.active_label or "mask"
         lid = self._get_or_create_label_id(label)
         rgb = self._label_colors.get(label, (0, 255, 0))
 
-        if self.mode == self.KEYPOINT:
-            idx = self._locator_dataset.find_closest_point(point)
-            self._vertex_label_ids[idx] = lid
-            self._vertex_colors[idx] = [rgb[0], rgb[1], rgb[2]]
-            self._merge_into_shape(label, [int(idx)], "keypoint_3d")
-        elif self.mode == self.BRUSH:
+        if self.mode == self.BRUSH:
             # Interpolate between last position and current position for smooth strokes
             points_to_paint = [point]
             screens_to_paint = [screen_pos] if screen_pos is not None else [None]
@@ -1018,14 +1057,14 @@ class Canvas3D(QtInteractor):
                 to_remove = [
                     l
                     for l, s in self._shapes_by_label.items()
-                    if s.shape_type not in ("brush_3d", "keypoint_3d")
+                    if s.shape_type not in ("brush_3d",)
                 ]
                 for l in to_remove:
                     del self._shapes_by_label[l]
 
         n_verts = len(self._vertex_label_ids)
         for shape in shapes:
-            if shape.shape_type not in ("brush_3d", "keypoint_3d"):
+            if shape.shape_type not in ("brush_3d",):
                 # Handle other potential shape types if necessary
                 continue
 
