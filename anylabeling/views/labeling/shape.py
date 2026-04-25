@@ -51,11 +51,13 @@ class Shape:
         shape_type=None,
         flags=None,
         group_id=None,
+        vertex_indices=None,
     ):
         self.label = label
         self.text = text
         self.group_id = group_id
         self.points = []
+        self.vertex_indices = vertex_indices or []
         self.fill = False
         self.selected = False
         self.shape_type = shape_type
@@ -72,6 +74,10 @@ class Shape:
         self._vertex_fill_color = None
 
         self._closed = False
+
+        self._path = None  # Cache for QPainterPath
+        self._vrtx_path = None  # Cache for vertex QPainterPath
+        self._last_scale = None  # Track scale for vertex path invalidation
 
         if line_color is not None:
             # Override the class line_color attribute
@@ -98,6 +104,8 @@ class Shape:
             "line",
             "circle",
             "linestrip",
+            "brush_3d",
+            "keypoint_3d",
         ]:
             raise ValueError(f"Unexpected shape_type: {value}")
         self._shape_type = value
@@ -112,6 +120,8 @@ class Shape:
             self.close()
         else:
             self.points.append(point)
+        self._path = None
+        self._vrtx_path = None
 
     def can_add_point(self):
         """Check if shape supports more points"""
@@ -120,16 +130,22 @@ class Shape:
     def pop_point(self):
         """Remove and return the last point of the shape"""
         if self.points:
+            self._path = None
+            self._vrtx_path = None
             return self.points.pop()
         return None
 
     def insert_point(self, i, point):
         """Insert a point to a specific index"""
         self.points.insert(i, point)
+        self._path = None
+        self._vrtx_path = None
 
     def remove_point(self, i):
         """Remove point from a specific index"""
         self.points.pop(i)
+        self._path = None
+        self._vrtx_path = None
 
     def is_closed(self):
         """Check if the shape is closed"""
@@ -154,63 +170,65 @@ class Shape:
             pen.setWidth(max(1, int(round(2.0 / self.scale))))
             painter.setPen(pen)
 
-            line_path = QtGui.QPainterPath()
-            vrtx_path = QtGui.QPainterPath()
+            # Invalidate vertex path if scale changed (since vertex size depends on scale)
+            if self.scale != self._last_scale:
+                self._vrtx_path = None
+                self._last_scale = self.scale
 
-            if self.shape_type == "rectangle":
-                assert len(self.points) in [1, 2]
-                if len(self.points) == 2:
-                    rectangle = self.get_rect_from_line(*self.points)
-                    line_path.addRect(rectangle)
-                if self.selected:
-                    for i in range(len(self.points)):
-                        self.draw_vertex(vrtx_path, i)
-            elif self.shape_type == "circle":
-                assert len(self.points) in [1, 2]
-                if len(self.points) == 2:
-                    rectangle = self.get_circle_rect_from_line(self.points)
-                    line_path.addEllipse(rectangle)
-                if self.selected:
-                    for i in range(len(self.points)):
-                        self.draw_vertex(vrtx_path, i)
-            elif self.shape_type == "linestrip":
-                line_path.moveTo(self.points[0])
-                if self.selected:
-                    self.draw_vertex(vrtx_path, 0)
+            if self._path is None or (self.selected and self._vrtx_path is None):
+                self._path = QtGui.QPainterPath()
+                self._vrtx_path = QtGui.QPainterPath()
 
-                # Small improvement to start at the 2nd point and technically correct
-                for i, p in enumerate(self.points[1:], start=1):
-                    line_path.lineTo(p)
+                if self.shape_type == "rectangle":
+                    assert len(self.points) in [1, 2]
+                    if len(self.points) == 2:
+                        rectangle = self.get_rect_from_line(*self.points)
+                        self._path.addRect(rectangle)
                     if self.selected:
-                        self.draw_vertex(vrtx_path, i)
-
-            elif self.shape_type == "point":
-                assert len(self.points) == 1
-                self.draw_vertex(vrtx_path, 0)
-            else:
-                line_path.moveTo(self.points[0])
-                # Uncommenting the following line will draw 2 paths
-                # for the 1st vertex, and make it non-filled, which
-                # may be desirable.
-                self.draw_vertex(vrtx_path, 0)
-
-                # Small improvement to start at the 2nd point and technically correct
-                for i, p in enumerate(self.points[1:], start=1):
-                    line_path.lineTo(p)
+                        for i in range(len(self.points)):
+                            self.draw_vertex(self._vrtx_path, i)
+                elif self.shape_type == "circle":
+                    assert len(self.points) in [1, 2]
+                    if len(self.points) == 2:
+                        rectangle = self.get_circle_rect_from_line(self.points)
+                        self._path.addEllipse(rectangle)
                     if self.selected:
-                        self.draw_vertex(vrtx_path, i)
+                        for i in range(len(self.points)):
+                            self.draw_vertex(self._vrtx_path, i)
+                elif self.shape_type == "linestrip":
+                    self._path.moveTo(self.points[0])
+                    if self.selected:
+                        self.draw_vertex(self._vrtx_path, 0)
 
-                if self.is_closed():
-                    # Properly close the path
-                    line_path.closeSubpath()
+                    # Small improvement to start at the 2nd point and technically correct
+                    for i, p in enumerate(self.points[1:], start=1):
+                        self._path.lineTo(p)
+                        if self.selected:
+                            self.draw_vertex(self._vrtx_path, i)
 
-            painter.drawPath(line_path)
-            painter.drawPath(vrtx_path)
+                elif self.shape_type == "point":
+                    assert len(self.points) == 1
+                    self.draw_vertex(self._vrtx_path, 0)
+                else:
+                    self._path.moveTo(self.points[0])
+                    # Always draw first vertex for non-special shapes
+                    self.draw_vertex(self._vrtx_path, 0)
+
+                    for i, p in enumerate(self.points[1:], start=1):
+                        self._path.lineTo(p)
+                        if self.selected:
+                            self.draw_vertex(self._vrtx_path, i)
+
+                    if self.is_closed():
+                        self._path.closeSubpath()
+
+            painter.drawPath(self._path)
+            painter.drawPath(self._vrtx_path)
             if self._vertex_fill_color is not None:
-                painter.fillPath(vrtx_path, self._vertex_fill_color)
+                painter.fillPath(self._vrtx_path, self._vertex_fill_color)
             if self.fill:
                 color = self.select_fill_color if self.selected else self.fill_color
-                painter.fillPath(line_path, color)
+                painter.fillPath(self._path, color)
 
     def draw_vertex(self, path, i):
         """Draw a vertex"""
@@ -262,7 +280,9 @@ class Shape:
 
     def contains_point(self, point):
         """Check if shape contains a point"""
-        return self.make_path().contains(point)
+        if self._path is None:
+            self._path = self.make_path()
+        return self._path.contains(point)
 
     def get_circle_rect_from_line(self, line):
         """Computes parameters to draw with `QPainterPath::addEllipse`"""
@@ -299,10 +319,14 @@ class Shape:
     def move_by(self, offset):
         """Move all points by an offset"""
         self.points = [p + offset for p in self.points]
+        self._path = None
+        self._vrtx_path = None
 
     def move_vertex_by(self, i, offset):
         """Move a specific vertex by an offset"""
         self.points[i] = self.points[i] + offset
+        self._path = None
+        self._vrtx_path = None
 
     def highlight_vertex(self, i, action):
         """Highlight a vertex appropriately based on the current action
@@ -314,10 +338,12 @@ class Shape:
         """
         self._highlight_index = i
         self._highlight_mode = action
+        self._vrtx_path = None
 
     def highlight_clear(self):
         """Clear the highlighted point"""
         self._highlight_index = None
+        self._vrtx_path = None
 
     def copy(self):
         """Copy shape"""
