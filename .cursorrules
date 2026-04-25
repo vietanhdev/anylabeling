@@ -1,4 +1,44 @@
-- Use PyQt6 for GUI.
-- Split code into files when possible.
-- Make code clean and understandable.
-- Optimize code for performance and memory usage.
+# anylabeling — guidance for AI assistants
+
+This is a desktop image-annotation app on PyQt6, with an auto-labeling
+backend that runs ONNX models (YOLOv5/v8, SAM1/MobileSAM, SAM2, SAM3)
+and a CoreML path for SAM2 on macOS. PyPI ships two parallel packages
+from the same source tree: `anylabeling` (CPU, default) and
+`anylabeling-gpu` (Linux/Windows, swaps in `onnxruntime-gpu`).
+
+## Conventions
+- Use **PyQt6** (not PyQt5). The migration happened in commit 9735fe8.
+- The macOS install path **excludes PyQt6** from `pyproject.toml`
+  (`platform_system != 'Darwin'`); macOS users get it via conda.
+  Don't add a Darwin-side floor without changing the install story.
+- Keep code split into focused files; avoid growing `label_widget.py`
+  (already ~3.2k LOC) further when a new widget would do.
+
+## Architecture cheat sheet
+- Entry point: `anylabeling/app.py` → `MainWindow` → `LabelingWrapper` →
+  `LabelingWidget` (the "god widget" — owns canvas, file list, toolbars).
+- Auto-labeling: `anylabeling/services/auto_labeling/`
+  - `registry.py` → `@ModelRegistry.register("type-name")` decorator
+  - `model_manager.py` → loads `models.yaml`, downloads weights to
+    `~/anylabeling_data/models/`, dispatches `predict_shapes_threading()`
+  - `models.yaml` (`anylabeling/configs/auto_labeling/`) is the model
+    catalog the UI reads. New model = new entry **and** registered class.
+  - `segment_anything.py` auto-detects SAM1/SAM2/SAM3 from ONNX inputs.
+- CPU/GPU duality: `setup.py` reads `__preferred_device__` from
+  `anylabeling/app_info.py`; publish workflows `sed` it before `python -m build`.
+
+## Pre-publish gate
+- `.github/workflows/tests.yml` runs a 9-cell matrix (Ubuntu/Windows/macOS
+  × py3.11/3.12/3.13). All publish/release workflows declare `needs: test`.
+- Why it exists: `anylabeling-gpu==0.4.30` shipped to PyPI broken because
+  no automated step ran `pip install .` against current dep floors before
+  publish (issue #227, `imgviz>=2.0` returned a read-only colormap).
+- Always run `python -m unittest discover -s tests` in a fresh venv before
+  tagging a release. See `CLAUDE.md` for the full pre-publish playbook.
+
+## Resource regeneration
+- PyQt6 dropped `pyrcc`. To rebuild `anylabeling/resources/resources.py`
+  use `python scripts/compile_languages.py` — it shells out to
+  `pyside6-rcc` and `pyside6-lrelease` and rewrites imports back to PyQt6.
+- `PySide6-Essentials` is a `[dev]` extra for this reason only; runtime
+  has no PySide6 dependency.

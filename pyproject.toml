@@ -51,6 +51,9 @@ macos = [
 dev = [
     "build>=1.2",
     "twine>=6.0",
+    # pyside6-rcc is the supported way to rebuild anylabeling/resources/resources.py
+    # — PyQt6 dropped its own pyrcc in the Qt6 line. Used by scripts/*_languages.py.
+    "PySide6-Essentials>=6.7.0",
 ]
 
 [project.urls]
