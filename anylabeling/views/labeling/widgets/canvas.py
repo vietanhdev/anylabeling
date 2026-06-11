@@ -623,8 +623,11 @@ class Canvas(QtWidgets.QWidget):  # pylint: disable=too-many-public-methods, too
         index, shape = self.h_vertex, self.h_hape
         point = shape[index]
         if self.out_off_pixmap(pos):
-            pos = self.intersection_point(point, pos)
-        shape.move_vertex_by(index, pos - point)
+            ip = self.intersection_point(point, pos)
+            # intersection_point returns QPoint, convert to QPointF for subtraction
+            pos = QtCore.QPointF(float(ip.x()), float(ip.y()))
+        offset = QtCore.QPointF(pos) - QtCore.QPointF(point)
+        shape.move_vertex_by(index, offset)
 
     def bounded_move_shapes(self, shapes, pos):
         """Move shapes. Adjust position to be bounded by pixmap border"""
@@ -632,12 +635,14 @@ class Canvas(QtWidgets.QWidget):  # pylint: disable=too-many-public-methods, too
             return False  # No need to move
         o1 = pos + self.offsets[0]
         if self.out_off_pixmap(o1):
-            pos -= QtCore.QPoint(min(0, int(o1.x())), min(0, int(o1.y())))
+            pos -= QtCore.QPointF(
+                float(min(0, int(o1.x()))), float(min(0, int(o1.y())))
+            )
         o2 = pos + self.offsets[1]
         if self.out_off_pixmap(o2):
-            pos += QtCore.QPoint(
-                min(0, int(self.pixmap.width() - o2.x())),
-                min(0, int(self.pixmap.height() - o2.y())),
+            pos += QtCore.QPointF(
+                float(min(0, int(self.pixmap.width() - o2.x()))),
+                float(min(0, int(self.pixmap.height() - o2.y()))),
             )
         # XXX: The next line tracks the new position of the cursor
         # relative to the shape, but also results in making it
