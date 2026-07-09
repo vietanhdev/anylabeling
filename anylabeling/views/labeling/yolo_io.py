@@ -49,10 +49,16 @@ def read_dataset_yaml(yaml_path):
 def read_yolo_label(txt_path, img_w, img_h, id_to_label, label_to_id=None):
     """Parse a YOLO-format .txt label file into AnyLabeling shape dicts.
 
-    Each line in the file is expected to follow the YOLO detection
-    format::
+    Supports two YOLO formats — detection (bounding box) and segmentation
+    (polygon) — detected by the number of values on each line:
+
+    * **Detection** (5 values)::
 
         <class_id> <x_center> <y_center> <width> <height>
+
+    * **Segmentation** (7+ values, even coordinate count)::
+
+        <class_id> <x1> <y1> <x2> <y2> … <xn> <yn>
 
     Coordinates are normalised (0-1).  Returns a list of dicts ready
     to be passed to ``LabelingWidget.load_labels()``.
@@ -75,21 +81,6 @@ def read_yolo_label(txt_path, img_w, img_h, id_to_label, label_to_id=None):
                 continue
 
             class_id = int(parts[0])
-            x_center = float(parts[1])
-            y_center = float(parts[2])
-            width = float(parts[3])
-            height = float(parts[4])
-
-            # Normalised → absolute pixel coords
-            w_abs = width * img_w
-            h_abs = height * img_h
-            cx_abs = x_center * img_w
-            cy_abs = y_center * img_h
-
-            x1 = cx_abs - w_abs / 2.0
-            y1 = cy_abs - h_abs / 2.0
-            x2 = cx_abs + w_abs / 2.0
-            y2 = cy_abs + h_abs / 2.0
 
             label = id_to_label.get(class_id)
             if label is None:
@@ -98,15 +89,53 @@ def read_yolo_label(txt_path, img_w, img_h, id_to_label, label_to_id=None):
             if label_to_id is not None and label not in label_to_id:
                 label_to_id[label] = class_id
 
-            shape = {
-                "label": label,
-                "text": "",
-                "points": [[x1, y1], [x2, y2]],
-                "shape_type": "rectangle",
-                "group_id": None,
-                "flags": {},
-                "other_data": {},
-            }
+            # Detection format (exactly 5 values) vs segmentation (7+ values)
+            if len(parts) == 5:
+                # YOLO detection: class_id x_center y_center width height
+                x_center = float(parts[1])
+                y_center = float(parts[2])
+                width = float(parts[3])
+                height = float(parts[4])
+
+                # Normalised → absolute pixel coords
+                w_abs = width * img_w
+                h_abs = height * img_h
+                cx_abs = x_center * img_w
+                cy_abs = y_center * img_h
+
+                x1 = cx_abs - w_abs / 2.0
+                y1 = cy_abs - h_abs / 2.0
+                x2 = cx_abs + w_abs / 2.0
+                y2 = cy_abs + h_abs / 2.0
+
+                shape = {
+                    "label": label,
+                    "text": "",
+                    "points": [[x1, y1], [x2, y2]],
+                    "shape_type": "rectangle",
+                    "group_id": None,
+                    "flags": {},
+                    "other_data": {},
+                }
+            elif len(parts) >= 7 and (len(parts) - 1) % 2 == 0:
+                # YOLO segmentation: class_id x1 y1 x2 y2 … xn yn
+                coords = [float(v) for v in parts[1:]]
+                points = [
+                    [coords[i] * img_w, coords[i + 1] * img_h]
+                    for i in range(0, len(coords), 2)
+                ]
+                shape = {
+                    "label": label,
+                    "text": "",
+                    "points": points,
+                    "shape_type": "polygon",
+                    "group_id": None,
+                    "flags": {},
+                    "other_data": {},
+                }
+            else:
+                continue
+
             shapes.append(shape)
 
     return shapes
@@ -118,6 +147,11 @@ def write_yolo_label(txt_path, shapes, img_w, img_h, label_to_id):
     *label_to_id* is mutated in-place: labels that are not already
     present receive the next unused integer class ID so that saving
     never silently drops annotations.
+
+    Output format is *mixed-mode*:
+    * Rectangles → YOLO detection format (5 values)
+    * Polygons   → YOLO segmentation format (variable values)
+    * Other shape types are skipped (not representable in YOLO format)
     """
     used_ids = set(label_to_id.values())
     next_id = 0
@@ -126,11 +160,8 @@ def write_yolo_label(txt_path, shapes, img_w, img_h, label_to_id):
 
     lines = []
     for shape in shapes:
-        if shape["shape_type"] not in ("rectangle",):
-            continue
+        shape_type = shape["shape_type"]
         points = shape["points"]
-        if len(points) < 2:
-            continue
 
         label = shape["label"]
 
@@ -143,18 +174,29 @@ def write_yolo_label(txt_path, shapes, img_w, img_h, label_to_id):
 
         class_id = label_to_id[label]
 
-        # Absolute pixel coords → normalised YOLO format
-        x1, y1 = points[0]
-        x2, y2 = points[1]
+        if shape_type == "rectangle" and len(points) >= 2:
+            # YOLO detection: class_id x_center y_center width height
+            x1, y1 = points[0]
+            x2, y2 = points[1]
 
-        x_center = ((x1 + x2) / 2.0) / img_w
-        y_center = ((y1 + y2) / 2.0) / img_h
-        width = abs(x2 - x1) / img_w
-        height = abs(y2 - y1) / img_h
+            x_center = ((x1 + x2) / 2.0) / img_w
+            y_center = ((y1 + y2) / 2.0) / img_h
+            width = abs(x2 - x1) / img_w
+            height = abs(y2 - y1) / img_h
 
-        lines.append(
-            f"{class_id} {x_center:.6f} {y_center:.6f} {width:.6f} {height:.6f}"
-        )
+            lines.append(
+                f"{class_id} {x_center:.6f} {y_center:.6f} {width:.6f} {height:.6f}"
+            )
+
+        elif shape_type == "polygon" and len(points) >= 3:
+            # YOLO segmentation: class_id x1 y1 x2 y2 … xn yn
+            normalized = []
+            for x, y in points:
+                normalized.append(f"{x / img_w:.6f}")
+                normalized.append(f"{y / img_h:.6f}")
+            lines.append(f"{class_id} {' '.join(normalized)}")
+
+        # Circles, lines, linestrips, points — not representable in YOLO
 
     with open(txt_path, "w", encoding="utf-8") as f:
         f.write("\n".join(lines))
