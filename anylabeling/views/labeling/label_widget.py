@@ -2838,9 +2838,16 @@ class LabelingWidget(LabelDialog):
                 )
                 self._yolo_config_path = config_path
                 self._yolo_config_type = config_type
-                # Populate the label dialog with YOLO class names
+                # Populate the label dialog and the unique label list
+                # with YOLO class names so users can select them from
+                # the sidebar and have them remembered for the next shape.
                 for name in self._yolo_label_to_id:
                     self.label_dialog.add_label_history(name)
+                    if not self.unique_label_list.find_items_by_label(name):
+                        item = self.unique_label_list.create_item_from_label(name)
+                        self.unique_label_list.addItem(item)
+                        rgb = self._get_rgb_by_label(name)
+                        self.unique_label_list.set_item_label(item, name, rgb)
 
         self.last_open_dir = dirpath
         self.filename = None
