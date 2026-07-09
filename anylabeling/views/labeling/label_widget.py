@@ -1417,8 +1417,6 @@ class LabelingWidget(LabelDialog):
         self.label_file = None
         self.other_data = {}
         self._yolo_label_path = None
-        self._yolo_config_path = None
-        self._yolo_config_type = None
         self.canvas.reset_state()
 
     def current_item(self):
@@ -2228,6 +2226,17 @@ class LabelingWidget(LabelDialog):
             resolve_yolo_label_path(filename)
             if self.label_file is None else None
         )
+        # For a new image in a YOLO dataset (no .txt yet), construct
+        # the expected .txt path so annotations save in YOLO format.
+        if self._yolo_label_path is None and self._yolo_config_path is not None:
+            stem = osp.splitext(osp.basename(filename))[0]
+            img_dir = osp.dirname(filename)
+            candidate = osp.join(img_dir, stem + ".txt")
+            parent = osp.dirname(img_dir)
+            labels_dir = osp.join(parent, "labels")
+            if osp.isdir(labels_dir):
+                candidate = osp.join(labels_dir, stem + ".txt")
+            self._yolo_label_path = candidate
         image = QtGui.QImage.fromData(self.image_data)
 
         if image.isNull():
@@ -2826,6 +2835,9 @@ class LabelingWidget(LabelDialog):
                 )
                 self._yolo_config_path = config_path
                 self._yolo_config_type = config_type
+                # Populate the label dialog with YOLO class names
+                for name in self._yolo_label_to_id:
+                    self.label_dialog.add_label_history(name)
 
         self.last_open_dir = dirpath
         self.filename = None
