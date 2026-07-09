@@ -25,6 +25,13 @@ from anylabeling.services.auto_labeling.types import AutoLabelingMode
 from anylabeling.styles import AppTheme
 from anylabeling.views.labeling import utils
 from anylabeling.views.labeling.label_file import LabelFile, LabelFileError
+from anylabeling.views.labeling.yolo_io import (
+    find_dataset_yaml,
+    read_dataset_yaml,
+    read_yolo_label,
+    write_yolo_label,
+    resolve_yolo_label_path,
+)
 from anylabeling.views.labeling.logger import logger
 from anylabeling.views.labeling.shape import Shape
 from anylabeling.views.labeling.widgets import (
@@ -1196,6 +1203,11 @@ class LabelingWidget(LabelDialog):
         self.output_file = output_file
         self.output_dir = output_dir
 
+        # YOLO-format annotation state
+        self._yolo_label_path = None
+        self._yolo_label_to_id = {}
+        self._yolo_id_to_label = {}
+
         # Application state.
         self.image = QtGui.QImage()
         self.image_path = None
@@ -1399,6 +1411,7 @@ class LabelingWidget(LabelDialog):
         self.image_data = None
         self.label_file = None
         self.other_data = {}
+        self._yolo_label_path = None
         self.canvas.reset_state()
 
     def current_item(self):
@@ -1837,6 +1850,26 @@ class LabelingWidget(LabelDialog):
             key = item.text()
             flag = item.checkState() == Qt.CheckState.Checked
             flags[key] = flag
+
+        # Save to YOLO .txt when in YOLO mode
+        if self._yolo_label_path is not None:
+            write_yolo_label(
+                self._yolo_label_path,
+                shapes,
+                self.image.width(),
+                self.image.height(),
+                self._yolo_label_to_id,
+            )
+            self.label_file = None
+            items = self.file_list_widget.findItems(
+                self.image_path, Qt.MatchFlag.MatchExactly
+            )
+            if len(items) > 0:
+                if len(items) != 1:
+                    raise RuntimeError("There are duplicate files.")
+                items[0].setCheckState(Qt.CheckState.Checked)
+            return True
+
         try:
             image_path = osp.relpath(self.image_path, osp.dirname(filename))
             image_data = self.image_data if self._config["store_data"] else None
@@ -2185,6 +2218,27 @@ class LabelingWidget(LabelDialog):
             prev_shapes = self.canvas.shapes
         self.canvas.load_pixmap(QtGui.QPixmap.fromImage(image))
         flags = dict.fromkeys(self._config["flags"] or [], False)
+
+        # Try loading YOLO .txt annotations when no .json was found
+        if self.label_file is None and self._yolo_label_path is None:
+            yolo_txt_path = resolve_yolo_label_path(filename)
+            if yolo_txt_path is not None:
+                self._yolo_label_path = yolo_txt_path
+                # Ensure label_to_id is in sync with id_to_label
+                if self._yolo_id_to_label and not self._yolo_label_to_id:
+                    self._yolo_label_to_id = {
+                        v: k for k, v in self._yolo_id_to_label.items()
+                    }
+                yolo_shapes = read_yolo_label(
+                    yolo_txt_path,
+                    self.image.width(),
+                    self.image.height(),
+                    self._yolo_id_to_label,
+                    self._yolo_label_to_id,
+                )
+                if yolo_shapes:
+                    self.load_labels(yolo_shapes)
+
         if self.label_file:
             self.load_labels(self.label_file.shapes)
             if self.label_file.flags is not None:
@@ -2521,6 +2575,8 @@ class LabelingWidget(LabelDialog):
         self.actions.save_as.setEnabled(False)
 
     def get_label_file(self):
+        if self._yolo_label_path is not None:
+            return self._yolo_label_path
         if self.filename.lower().endswith(".json"):
             label_file = self.filename
         else:
@@ -2693,6 +2749,8 @@ class LabelingWidget(LabelDialog):
             item.setFlags(Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable)
             if QtCore.QFile.exists(label_file) and LabelFile.is_label_file(label_file):
                 item.setCheckState(Qt.CheckState.Checked)
+            elif resolve_yolo_label_path(file) is not None:
+                item.setCheckState(Qt.CheckState.Checked)
             else:
                 item.setCheckState(Qt.CheckState.Unchecked)
             self.file_list_widget.addItem(item)
@@ -2710,6 +2768,19 @@ class LabelingWidget(LabelDialog):
         if not self.may_continue() or not dirpath:
             return
 
+        # Detect YOLO dataset — look for data.yaml nearby
+        self._yolo_label_path = None
+        self._yolo_label_to_id = {}
+        self._yolo_id_to_label = {}
+        yaml_path = find_dataset_yaml(dirpath)
+        if yaml_path:
+            _, _, id_to_label = read_dataset_yaml(yaml_path)
+            if id_to_label:
+                self._yolo_id_to_label = id_to_label
+                self._yolo_label_to_id = {
+                    v: k for k, v in id_to_label.items()
+                }
+
         self.last_open_dir = dirpath
         self.filename = None
         self.file_list_widget.clear()
@@ -2723,6 +2794,8 @@ class LabelingWidget(LabelDialog):
             item = QtWidgets.QListWidgetItem(filename)
             item.setFlags(Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable)
             if QtCore.QFile.exists(label_file) and LabelFile.is_label_file(label_file):
+                item.setCheckState(Qt.CheckState.Checked)
+            elif resolve_yolo_label_path(filename) is not None:
                 item.setCheckState(Qt.CheckState.Checked)
             else:
                 item.setCheckState(Qt.CheckState.Unchecked)
