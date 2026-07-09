@@ -162,6 +162,95 @@ def write_yolo_label(txt_path, shapes, img_w, img_h, label_to_id):
             f.write("\n")
 
 
+def find_dataset_config(dirpath):
+    """Walk up from dirpath looking for a YOLO dataset config file.
+
+    Checks, in order:
+    1.  ``data.yaml``  (YOLO dataset descriptor, YAML format)
+    2.  ``classes.txt`` (one class name per line, plain text)
+
+    Searches up to 5 parent directories.  Returns ``(path, type)``
+    where *type* is ``"yaml"`` or ``"txt"``, or ``(None, None)``.
+    """
+    current = osp.abspath(dirpath)
+    for _ in range(5):
+        for filename, cfg_type in (("data.yaml", "yaml"), ("classes.txt", "txt")):
+            candidate = osp.join(current, filename)
+            if osp.exists(candidate):
+                return candidate, cfg_type
+        parent = osp.dirname(current)
+        if parent == current:
+            break
+        current = parent
+    return None, None
+
+
+def read_classes_txt(txt_path):
+    """Parse a classes.txt file (one class name per line).
+
+    Returns ``(nc, names_list, id_to_label_dict)``.
+    """
+    names = []
+    with open(txt_path, "r", encoding="utf-8") as f:
+        for line in f:
+            name = line.strip()
+            if name and not name.startswith("#"):
+                names.append(name)
+    nc = len(names)
+    id_to_label = {i: name for i, name in enumerate(names)}
+    return nc, names, id_to_label
+
+
+def update_dataset_config(config_path, config_type, label_to_id):
+    """Write updated class names back to a YOLO dataset config file.
+
+    * For ``"yaml"``: only the ``nc:`` and ``names:`` lines are
+      replaced in-place via regex — every other line (comments,
+      train/val paths, roboflow metadata, blank lines) is preserved
+      character-for-character.
+
+    * For ``"txt"``: the file is rewritten with one class name per
+      line in class-ID order.
+
+    *label_to_id* is a ``{name: class_id}`` mapping.
+    """
+    if not label_to_id:
+        return
+    max_id = max(label_to_id.values())
+    id_to_label = {}
+    for name, cid in label_to_id.items():
+        id_to_label[cid] = name
+    ordered_names = [id_to_label.get(i, "") for i in range(max_id + 1)]
+    for i, name in enumerate(ordered_names):
+        if not name:
+            ordered_names[i] = f"class_{i}"
+
+    if config_type == "yaml":
+        import re
+
+        with open(config_path, "r", encoding="utf-8") as f:
+            content = f.read()
+        content = re.sub(
+            r"^nc:\s*\d+",
+            f"nc: {len(ordered_names)}",
+            content,
+            flags=re.MULTILINE,
+        )
+        names_str = repr(ordered_names)
+        content = re.sub(
+            r"^names:\s*\[.*?\]|^names:\s*\n(\s+- .*\n?)*",
+            f"names: {names_str}",
+            content,
+            flags=re.MULTILINE | re.DOTALL,
+        )
+        with open(config_path, "w", encoding="utf-8") as f:
+            f.write(content)
+    else:
+        with open(config_path, "w", encoding="utf-8") as f:
+            for name in ordered_names:
+                f.write(name + "\n")
+
+
 def resolve_yolo_label_path(image_path):
     """Locate the YOLO .txt label file that corresponds to *image_path*.
 

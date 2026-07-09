@@ -26,11 +26,13 @@ from anylabeling.styles import AppTheme
 from anylabeling.views.labeling import utils
 from anylabeling.views.labeling.label_file import LabelFile, LabelFileError
 from anylabeling.views.labeling.yolo_io import (
-    find_dataset_yaml,
+    find_dataset_config,
+    read_classes_txt,
     read_dataset_yaml,
     read_yolo_label,
     write_yolo_label,
     resolve_yolo_label_path,
+    update_dataset_config,
 )
 from anylabeling.views.labeling.logger import logger
 from anylabeling.views.labeling.shape import Shape
@@ -1207,6 +1209,9 @@ class LabelingWidget(LabelDialog):
         self._yolo_label_path = None
         self._yolo_label_to_id = {}
         self._yolo_id_to_label = {}
+        self._yolo_config_path = None
+        self._yolo_config_type = None
+        self._yolo_original_label_to_id = {}
 
         # Application state.
         self.image = QtGui.QImage()
@@ -1412,6 +1417,8 @@ class LabelingWidget(LabelDialog):
         self.label_file = None
         self.other_data = {}
         self._yolo_label_path = None
+        self._yolo_config_path = None
+        self._yolo_config_type = None
         self.canvas.reset_state()
 
     def current_item(self):
@@ -1853,14 +1860,35 @@ class LabelingWidget(LabelDialog):
 
         # Save to YOLO .txt when in YOLO mode
         if self._yolo_label_path is not None:
-            write_yolo_label(
-                self._yolo_label_path,
-                shapes,
-                self.image.width(),
-                self.image.height(),
-                self._yolo_label_to_id,
-            )
-            self.label_file = None
+            try:
+                write_yolo_label(
+                    self._yolo_label_path,
+                    shapes,
+                    self.image.width(),
+                    self.image.height(),
+                    self._yolo_label_to_id,
+                )
+                self.label_file = None
+                if (
+                    self._yolo_config_path
+                    and self._yolo_label_to_id.keys()
+                    != self._yolo_original_label_to_id.keys()
+                ):
+                    update_dataset_config(
+                        self._yolo_config_path,
+                        self._yolo_config_type,
+                        self._yolo_label_to_id,
+                    )
+                    self._yolo_original_label_to_id = dict(
+                        self._yolo_label_to_id
+                    )
+            except Exception:
+                logger.warning(
+                    "Failed to save YOLO labels to %s",
+                    self._yolo_label_path,
+                    exc_info=True,
+                )
+                return False
             items = self.file_list_widget.findItems(
                 self.image_path, Qt.MatchFlag.MatchExactly
             )
@@ -2196,6 +2224,10 @@ class LabelingWidget(LabelDialog):
             if self.image_data:
                 self.image_path = filename
             self.label_file = None
+        self._yolo_label_path = (
+            resolve_yolo_label_path(filename)
+            if self.label_file is None else None
+        )
         image = QtGui.QImage.fromData(self.image_data)
 
         if image.isNull():
@@ -2220,17 +2252,14 @@ class LabelingWidget(LabelDialog):
         flags = dict.fromkeys(self._config["flags"] or [], False)
 
         # Try loading YOLO .txt annotations when no .json was found
-        if self.label_file is None and self._yolo_label_path is None:
-            yolo_txt_path = resolve_yolo_label_path(filename)
-            if yolo_txt_path is not None:
-                self._yolo_label_path = yolo_txt_path
-                # Ensure label_to_id is in sync with id_to_label
+        if self._yolo_label_path is not None:
+            try:
                 if self._yolo_id_to_label and not self._yolo_label_to_id:
                     self._yolo_label_to_id = {
                         v: k for k, v in self._yolo_id_to_label.items()
                     }
                 yolo_shapes = read_yolo_label(
-                    yolo_txt_path,
+                    self._yolo_label_path,
                     self.image.width(),
                     self.image.height(),
                     self._yolo_id_to_label,
@@ -2238,6 +2267,12 @@ class LabelingWidget(LabelDialog):
                 )
                 if yolo_shapes:
                     self.load_labels(yolo_shapes)
+            except Exception:
+                logger.warning(
+                    "Failed to load YOLO labels from %s",
+                    self._yolo_label_path,
+                    exc_info=True,
+                )
 
         if self.label_file:
             self.load_labels(self.label_file.shapes)
@@ -2768,18 +2803,29 @@ class LabelingWidget(LabelDialog):
         if not self.may_continue() or not dirpath:
             return
 
-        # Detect YOLO dataset — look for data.yaml nearby
+        # Detect YOLO dataset — look for data.yaml or classes.txt nearby
         self._yolo_label_path = None
         self._yolo_label_to_id = {}
         self._yolo_id_to_label = {}
-        yaml_path = find_dataset_yaml(dirpath)
-        if yaml_path:
-            _, _, id_to_label = read_dataset_yaml(yaml_path)
+        self._yolo_config_path = None
+        self._yolo_config_type = None
+        self._yolo_original_label_to_id = {}
+        config_path, config_type = find_dataset_config(dirpath)
+        if config_path:
+            if config_type == "yaml":
+                _, _, id_to_label = read_dataset_yaml(config_path)
+            else:
+                _, _, id_to_label = read_classes_txt(config_path)
             if id_to_label:
                 self._yolo_id_to_label = id_to_label
                 self._yolo_label_to_id = {
                     v: k for k, v in id_to_label.items()
                 }
+                self._yolo_original_label_to_id = dict(
+                    self._yolo_label_to_id
+                )
+                self._yolo_config_path = config_path
+                self._yolo_config_type = config_type
 
         self.last_open_dir = dirpath
         self.filename = None
