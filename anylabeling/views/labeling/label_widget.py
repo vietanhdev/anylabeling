@@ -1880,6 +1880,9 @@ class LabelingWidget(LabelDialog):
                     self._yolo_original_label_to_id = dict(
                         self._yolo_label_to_id
                     )
+                    self._yolo_id_to_label = {
+                        v: k for k, v in self._yolo_label_to_id.items()
+                    }
             except Exception:
                 logger.warning(
                     "Failed to save YOLO labels to %s",
