@@ -2017,6 +2017,7 @@ class LabelingWidget(LabelDialog):
                     "points": [(p.x(), p.y()) for p in s.points],
                     "group_id": s.group_id,
                     "shape_type": s.shape_type,
+                    "vertex_indices": s.vertex_indices,
                     "flags": s.flags,
                 }
             )
@@ -2354,9 +2355,17 @@ class LabelingWidget(LabelDialog):
 
         # Handle mesh files
         if is_mesh_file(filename):
+            if not self.canvas_3d.load_mesh(filename):
+                self.central_stack.setCurrentIndex(0)
+                self.view_controls_3d_dock.hide()
+                self.error_message(
+                    self.tr("Error opening mesh file"),
+                    self.tr("Could not load <b>%s</b> as a mesh. See the log for details.")
+                    % filename,
+                )
+                return False
             self.central_stack.setCurrentIndex(1)
             self.view_controls_3d_dock.show()
-            self.canvas_3d.load_mesh(filename)
             self.actions.create_brush_3d.setEnabled(True)
             self.actions.view_mode_3d.setEnabled(True)
             self.actions.decrease_brush_size_3d.setEnabled(True)
@@ -2387,15 +2396,23 @@ class LabelingWidget(LabelDialog):
                     )
                     self.shape_text_edit.textChanged.connect(self.shape_text_changed)
                     self._sync_all_label_colors_3d()
+                    # Load shapes/labels FIRST: this registers canvas_3d's
+                    # label<->id mapping (via _get_or_create_label_id).
+                    # load_vertex_label_ids() resolves numeric ids back to
+                    # label strings using that same mapping, so calling it
+                    # before shapes are loaded means every id resolves to
+                    # nothing and the reconstructed vertex labels are
+                    # silently dropped.
+                    self.load_labels(self.label_file.shapes)
                     if "vertex_label_ids" in self.other_data:
                         self.canvas_3d.load_vertex_label_ids(
                             self.other_data["vertex_label_ids"]
                         )
-                    self.load_labels(self.label_file.shapes)
                     if self.label_file.flags is not None:
                         flags = dict.fromkeys(self._config["flags"] or [], False)
                         flags.update(self.label_file.flags)
                         self.load_flags(flags)
+                    self.set_clean()
                 except Exception as e:
                     self.error_message(self.tr("Error opening label file"), str(e))
             else:
@@ -2411,6 +2428,10 @@ class LabelingWidget(LabelDialog):
         else:
             self.central_stack.setCurrentIndex(0)
             self.view_controls_3d_dock.hide()
+            self.actions.create_brush_3d.setEnabled(False)
+            self.actions.view_mode_3d.setEnabled(False)
+            self.actions.decrease_brush_size_3d.setEnabled(False)
+            self.actions.increase_brush_size_3d.setEnabled(False)
 
         if QtCore.QFile.exists(label_file) and LabelFile.is_label_file(label_file):
             try:

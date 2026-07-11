@@ -48,5 +48,18 @@ jobs:
           python -m pip install --upgrade pip
           pip install .
 
+      - name: Swap in vtk-osmesa (Linux, Python 3.11/3.12 — no wheel for 3.13 yet)
+        # Software-rendered VTK build; lets tests/test_canvas3d.py run its
+        # live-render-window tests safely with no display. The regular vtk
+        # wheel here can hard-crash the whole process (uncatchable native
+        # abort) instead of a clean test failure, so this MUST be the
+        # matching osmesa build, not just "some vtk". pyvista/pyvistaqt
+        # import vtk by name at runtime, not by pinned file hash, so they
+        # don't need reinstalling after the swap.
+        if: runner.os == 'Linux' && matrix.python-version != '3.13'
+        run: |
+          pip uninstall -y vtk
+          pip install --index-url https://wheels.vtk.org vtk-osmesa --no-deps
+
       - name: Run unit tests
         run: python -m unittest discover -s tests -v

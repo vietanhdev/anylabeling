@@ -43,11 +43,21 @@ def encode_rle(data):
 
 
 def decode_rle(rle):
-    """Decode data using Run-Length Encoding"""
+    """Decode data using Run-Length Encoding
+
+    Raises ValueError on malformed input (odd length, negative/non-integer
+    counts) instead of failing silently (a negative count would otherwise
+    just produce a truncated result via `[val] * count == []`) or raising
+    an opaque IndexError.
+    """
+    if len(rle) % 2 != 0:
+        raise ValueError(f"decode_rle: expected an even-length [value, count, ...] list, got length {len(rle)}")
     res = []
     for i in range(0, len(rle), 2):
         val = rle[i]
         count = rle[i + 1]
+        if not isinstance(count, int) or count < 0:
+            raise ValueError(f"decode_rle: invalid count {count!r} at position {i + 1}")
         res.extend([val] * count)
     return res
 

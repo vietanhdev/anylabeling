@@ -17,6 +17,7 @@ from PyQt6.QtWidgets import (
 from pyvistaqt import QtInteractor
 
 from .. import utils
+from ..logger import logger
 from ..shape import Shape
 
 
@@ -502,7 +503,7 @@ class Canvas3D(QtInteractor):
         self.render()
 
     def load_mesh(self, filename):
-        """Load and display a mesh file"""
+        """Load and display a mesh file. Returns True on success, False on failure."""
         self.clear()
         self._shapes_by_label.clear()
         self._label_to_id.clear()
@@ -510,14 +511,20 @@ class Canvas3D(QtInteractor):
         # self.clear() removed all actors including any previous cursor sphere.
         self._cursor_actor = None
         self._scalar_mode_active = False
+        # Reset before the try block: if pv.read()/validation below fails,
+        # _main_mesh must not keep pointing at a mesh the scene no longer
+        # displays (self.clear() already wiped the actors above).
+        self._main_mesh = None
         self._setup_lighting()
         try:
-            self._main_mesh = pv.read(filename)
-            if not self._main_mesh.n_points:
+            mesh = pv.read(filename)
+            if not mesh.n_points:
                 raise ValueError("Mesh has no points")
 
-            self._main_mesh.compute_normals(inplace=True)
-            n = self._main_mesh.n_points
+            mesh.compute_normals(inplace=True)
+            n = mesh.n_points
+
+            self._main_mesh = mesh
 
             # Stable copy of vertex positions (survives add_mesh transforms)
             self._mesh_points = np.array(self._main_mesh.points, copy=True)
@@ -541,9 +548,12 @@ class Canvas3D(QtInteractor):
                 - np.array([bounds[0], bounds[2], bounds[4]])
             )
             self.brush_radius = diag * 0.02
+            return True
 
         except Exception as e:
-            print(f"Error loading mesh: {e}")
+            logger.error("Failed to load mesh %s: %s", filename, e)
+            self._main_mesh = None
+            return False
 
     def _build_point_locator(self):
         """Build a VTK static point locator for O(log n) radius queries"""
@@ -593,7 +603,6 @@ class Canvas3D(QtInteractor):
         # Build shapes from label ids
         self._shapes_by_label.clear()
         unique_lids = np.unique(self._vertex_label_ids)
-        new_labels = []
         for lid in unique_lids:
             if lid == self._NO_LABEL:
                 continue
@@ -609,11 +618,14 @@ class Canvas3D(QtInteractor):
                     vertex_indices=sorted(indices.tolist()),
                     label=label,
                 )
-                new_labels.append(label)
 
         self._refresh_vertex_colors()
-        for _ in new_labels:
-            self.new_shape.emit()
+        # No new_shape emission here: this is only ever called during file
+        # deserialization (label_widget.py's load_file), after
+        # load_labels()/load_shapes() has already added every label to the
+        # UI label list. Emitting here would add duplicate label-list
+        # entries and mark the just-opened file dirty via
+        # _on_new_shape_3d()'s set_dirty() call.
 
     def _get_or_create_label_id(self, label):
         """Get numeric id for a label string, creating if needed"""
@@ -1081,7 +1093,7 @@ class Canvas3D(QtInteractor):
     def load_shapes(self, shapes, replace=True):
         if replace:
             # If we already have vertex labels, we don't want to clear them here
-            # as they were likely loaded via load_vertex_label_ids already.
+            # as they may have been loaded via load_vertex_label_ids already.
             # We only clear if no vertex labels are present.
             if np.all(self._vertex_label_ids == self._NO_LABEL):
                 self.clear_shapes()
@@ -1095,17 +1107,21 @@ class Canvas3D(QtInteractor):
                 for l in to_remove:
                     del self._shapes_by_label[l]
 
+        # If vertex labels already exist (e.g. some other loading path ran
+        # first), skip brush_3d shapes entirely to avoid double-applying.
+        # Must be evaluated ONCE up front, not per-shape inside the loop
+        # below: the loop itself writes into _vertex_label_ids, so a
+        # per-shape check would see "already has labels" as soon as the
+        # FIRST shape is processed and silently skip every shape after it.
+        already_has_vertex_labels = not np.all(self._vertex_label_ids == self._NO_LABEL)
+
         n_verts = len(self._vertex_label_ids)
         for shape in shapes:
             if shape.shape_type not in ("brush_3d",):
                 # Handle other potential shape types if necessary
                 continue
 
-            # If it's a brush shape but we already have labels from vertex_label_ids,
-            # we skip it to avoid redundancy/overwriting with potentially older data.
-            if shape.shape_type == "brush_3d" and not np.all(
-                self._vertex_label_ids == self._NO_LABEL
-            ):
+            if already_has_vertex_labels:
                 continue
 
             if not shape.vertex_indices:
@@ -1130,9 +1146,11 @@ class Canvas3D(QtInteractor):
                     label=label,
                 )
         self._refresh_vertex_colors()
-        # Emit new_shape once per label for the label list
-        for label in self._shapes_by_label:
-            self.new_shape.emit()
+        # No new_shape emission here: LabelingWidget.load_shapes() (the only
+        # caller) already calls add_label() for every shape in `shapes`
+        # before calling this method. Emitting here would add duplicate
+        # label-list entries and mark the just-loaded file dirty via
+        # _on_new_shape_3d()'s set_dirty() call.
 
     def clear_shapes(self):
         if len(self._vertex_label_ids) > 0:
