@@ -371,6 +371,17 @@ class Canvas3D(QtInteractor):
         self._cursor_actor = None
         self._cursor_radius_baseline = 1.0
 
+        # Render throttle. Mouse-move + paint can fire >100 Hz; rendering at
+        # that rate on Wayland or any composited desktop saturates the
+        # compositor and makes the canvas freeze. Coalesce paint renders
+        # behind a Qt single-shot timer so we draw at most ~60 Hz, with the
+        # latest pending colour state. _on_left_release forces a final draw.
+        self._render_pending = False
+        self._render_timer = QtCore.QTimer(self)
+        self._render_timer.setSingleShot(True)
+        self._render_timer.setInterval(16)  # ~60 fps cap
+        self._render_timer.timeout.connect(self._do_paint_render)
+
         # Reusable picker (avoid re-creating per event)
         self._picker = vtk.vtkCellPicker()
         self._picker.SetTolerance(0.005)
@@ -771,6 +782,8 @@ class Canvas3D(QtInteractor):
 
     def _on_left_release(self, obj, event):
         if self._painting and self._stroke_dirty:
+            # Stroke ended — guarantee the latest paint state is on screen.
+            self._flush_paint_render()
             self.shapes_updated.emit()
         self._painting = False
         self._stroke_dirty = False
@@ -858,26 +871,46 @@ class Canvas3D(QtInteractor):
     # --- Mesh overlay for painting & cursor ---
 
     def _apply_colors_and_render(self):
-        """Push current vertex colours to VTK and re-render in place.
+        """Schedule a paint-driven re-render, throttled to ~60 fps.
 
-        Hot path during a brush stroke. The first invocation switches the
-        main mesh from PBR shading to per-vertex scalar colouring (one
-        full add_mesh, unavoidable). Every subsequent invocation just
-        mutates ``self._main_mesh.point_data`` and triggers a re-render —
-        roughly O(n_painted_verts) for the numpy assign and O(1) extra
-        VTK overhead instead of rebuilding the actor.
+        Mouse-move + brush can fire >100 Hz; rendering at that rate
+        saturates the compositor (especially on Wayland) and the canvas
+        feels frozen. We coalesce all pending paint changes behind a
+        Qt single-shot timer so the renderer sees at most ~60 fps with
+        the latest colour state. _on_left_release forces a final flush.
         """
         if self._main_mesh is None or self._vertex_colors is None:
             return
         if not self._scalar_mode_active:
+            # First paint must do the full PBR -> scalar switch
+            # immediately so the user sees feedback right away.
             self._redraw_mesh()
             self._scalar_mode_active = True
+            return
+        self._render_pending = True
+        if not self._render_timer.isActive():
+            self._render_timer.start()
+
+    def _do_paint_render(self):
+        """Actual VTK render call. Fired by the throttle timer or directly."""
+        if not self._render_pending or self._main_mesh is None or self._vertex_colors is None:
             return
         # Reassign — pyvista's wrapper marks the underlying VTK array
         # modified, which is what the renderer needs to see new colours.
         self._main_mesh.point_data["label_colors"] = self._vertex_colors
         self._main_mesh.set_active_scalars("label_colors")
-        self.render()
+        self._render_pending = False
+        try:
+            self.render()
+        except Exception:
+            pass
+
+    def _flush_paint_render(self):
+        """Force any pending throttled render through immediately."""
+        if self._render_timer.isActive():
+            self._render_timer.stop()
+        if self._render_pending:
+            self._do_paint_render()
 
     def _ensure_cursor_actor(self):
         """Create the brush-cursor sphere once and reuse it across moves."""
