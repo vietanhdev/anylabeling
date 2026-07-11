@@ -632,12 +632,14 @@ class Canvas(QtWidgets.QWidget):  # pylint: disable=too-many-public-methods, too
             return False  # No need to move
         o1 = pos + self.offsets[0]
         if self.out_off_pixmap(o1):
-            pos -= QtCore.QPoint(min(0, int(o1.x())), min(0, int(o1.y())))
+            pos -= QtCore.QPointF(
+                float(min(0, int(o1.x()))), float(min(0, int(o1.y())))
+            )
         o2 = pos + self.offsets[1]
         if self.out_off_pixmap(o2):
-            pos += QtCore.QPoint(
-                min(0, int(self.pixmap.width() - o2.x())),
-                min(0, int(self.pixmap.height() - o2.y())),
+            pos += QtCore.QPointF(
+                float(min(0, int(self.pixmap.width() - o2.x()))),
+                float(min(0, int(self.pixmap.height() - o2.y()))),
             )
         # XXX: The next line tracks the new position of the cursor
         # relative to the shape, but also results in making it
