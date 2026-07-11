@@ -154,8 +154,15 @@ class TestCanvas3DDataModel(unittest.TestCase):
         subsequent _apply_colors_and_render must skip _redraw_mesh and just
         push the colour array to VTK in place. Regression test for the
         per-stroke add_mesh slowdown on dense meshes."""
-        # First paint kicks off the switch from PBR to scalar shading.
+        # First paint kicks off the switch from PBR to scalar shading. A
+        # real paint sets both _vertex_label_ids and _vertex_colors
+        # together (see _paint_at) — _scalar_mode_active is now derived
+        # from has_paint (_vertex_label_ids), so the test must set both to
+        # realistically simulate "something got painted", not just the
+        # color array.
         self.canvas._scalar_mode_active = False
+        lid = self.canvas._get_or_create_label_id("in_place_paint_regress")
+        self.canvas._vertex_label_ids[0] = lid
         self.canvas._vertex_colors[0] = [10, 20, 30]
         self.canvas._apply_colors_and_render()
         self.assertTrue(self.canvas._scalar_mode_active)
@@ -175,6 +182,32 @@ class TestCanvas3DDataModel(unittest.TestCase):
             )
         finally:
             self.canvas._redraw_mesh = original
+
+    def test_scalar_coloring_survives_clear_then_load_shapes(self):
+        """Regression, found via manual video-recording verification, not
+        code reading: clear_shapes() (called at the top of load_shapes()
+        when reopening a freshly-loaded, still-unpainted mesh) invokes
+        _apply_colors_and_render() while has_paint is False, which builds
+        a PBR (non-scalar-colored) actor. _apply_colors_and_render() used
+        to then unconditionally set _scalar_mode_active = True regardless
+        of which branch _redraw_mesh() actually took. The very next call
+        in the same load_shapes() — the one that has real label data —
+        would then see _scalar_mode_active already True and take the fast
+        in-place point_data mutation path against an actor whose mapper
+        was never configured for scalar coloring, so the paint colors
+        were written to the mesh's data but never actually rendered."""
+        self.canvas.load_mesh(self.mesh_path)  # fresh: definitely unpainted
+        shapes = [
+            Shape(shape_type="brush_3d", vertex_indices=[0, 1, 2], label="scalar_regress")
+        ]
+        self.canvas.load_shapes(shapes)  # clear_shapes() runs first internally
+        actor = self.canvas._get_main_actor()
+        self.assertEqual(
+            actor.GetMapper().GetScalarVisibility(),
+            1,
+            "actor's mapper must be in scalar-coloring mode after loading "
+            "real vertex labels, not left in PBR mode from clear_shapes()",
+        )
 
     def test_cursor_actor_is_reused(self):
         """Brush cursor sphere must be one persistent actor that we just

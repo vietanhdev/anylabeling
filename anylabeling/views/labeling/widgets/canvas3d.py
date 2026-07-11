@@ -454,13 +454,20 @@ class Canvas3D(QtInteractor):
         # including the cursor sphere if it shared the renderer. Drop the
         # cached cursor reference so _ensure_cursor_actor recreates it lazily.
         self._cursor_actor = None
-        # add_mesh re-creates the actor, so the in-place scalar fast path
-        # has to re-bootstrap on the next paint.
-        self._scalar_mode_active = False
 
         has_paint = self._vertex_colors is not None and np.any(
             self._vertex_label_ids != self._NO_LABEL
         )
+        # Single source of truth for whether the actor's mapper is actually
+        # configured for scalar/rgb coloring right now. Callers (notably
+        # _apply_colors_and_render) must not set this independently: doing
+        # so previously caused a real bug — clear_shapes() can call this
+        # method while nothing is painted yet (has_paint=False, PBR actor
+        # configured), and a caller blindly setting the flag to True right
+        # after made every subsequent paint stroke in the same load_shapes()
+        # call take the fast in-place-mutate path against an actor that was
+        # never told to use scalar coloring, so the paint never rendered.
+        self._scalar_mode_active = has_paint
 
         if has_paint:
             # Explicitly set scalars on the mesh object and ensure they are active
@@ -896,8 +903,10 @@ class Canvas3D(QtInteractor):
         if not self._scalar_mode_active:
             # First paint must do the full PBR -> scalar switch
             # immediately so the user sees feedback right away.
+            # _redraw_mesh() sets _scalar_mode_active itself, based on
+            # whether the mesh actually has paint right now — do not set
+            # it here too (see the comment in _redraw_mesh for why).
             self._redraw_mesh()
-            self._scalar_mode_active = True
             return
         self._render_pending = True
         if not self._render_timer.isActive():
