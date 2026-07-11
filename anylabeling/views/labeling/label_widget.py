@@ -291,25 +291,44 @@ class LabelingWidget(LabelDialog):
         )
         self.canvas.zoom_request.connect(self.zoom_request)
 
-        # 3D Canvas
-        self.canvas_3d = Canvas3D(parent=self)
-        self.canvas_3d.new_shape.connect(self._on_new_shape_3d)
-        self.canvas_3d.shapes_updated.connect(self.set_dirty)
-        # self.canvas_3d.selection_changed.connect(self.shape_selection_changed)
+        # 3D Canvas. Constructing this touches VTK/pyvistaqt, which can fail
+        # or (in environments without a working GL context) hard-crash the
+        # process outright — a native abort, not a catchable Python
+        # exception, so this try/except only helps for the subset of
+        # failures VTK itself reports cleanly. Still worth doing: without
+        # it, ANY catchable failure here (e.g. a broken pyvistaqt install)
+        # takes down app startup entirely for every user, including those
+        # who never touch mesh labeling. On failure, self.canvas_3d stays
+        # None and mesh-file support is disabled for the rest of the
+        # session; see the None-guards in load_file(), load_shapes(),
+        # _update_3d_active_label(), and _sync_all_label_colors_3d().
+        self.canvas_3d = None
+        self.view_controls_3d = None
+        self.view_controls_3d_dock = None
+        try:
+            self.canvas_3d = Canvas3D(parent=self)
+            self.canvas_3d.new_shape.connect(self._on_new_shape_3d)
+            self.canvas_3d.shapes_updated.connect(self.set_dirty)
+            # self.canvas_3d.selection_changed.connect(self.shape_selection_changed)
 
-        # 3D View Controls dock
-        self.view_controls_3d = ViewControls3D(self.canvas_3d)
-        self.view_controls_3d_dock = QtWidgets.QDockWidget(
-            self.tr("3D View Controls"), self.main_window
-        )
-        self.view_controls_3d_dock.setObjectName("3DViewControls")
-        self.view_controls_3d_dock.setFeatures(features)
-        self.view_controls_3d_dock.setWidget(self.view_controls_3d)
-        self.view_controls_3d_dock.setStyleSheet(dock_title_style)
-        self.main_window.addDockWidget(
-            Qt.DockWidgetArea.RightDockWidgetArea, self.view_controls_3d_dock
-        )
-        self.view_controls_3d_dock.hide()  # Hidden until a mesh is loaded
+            # 3D View Controls dock
+            self.view_controls_3d = ViewControls3D(self.canvas_3d)
+            self.view_controls_3d_dock = QtWidgets.QDockWidget(
+                self.tr("3D View Controls"), self.main_window
+            )
+            self.view_controls_3d_dock.setObjectName("3DViewControls")
+            self.view_controls_3d_dock.setFeatures(features)
+            self.view_controls_3d_dock.setWidget(self.view_controls_3d)
+            self.view_controls_3d_dock.setStyleSheet(dock_title_style)
+            self.main_window.addDockWidget(
+                Qt.DockWidgetArea.RightDockWidgetArea, self.view_controls_3d_dock
+            )
+            self.view_controls_3d_dock.hide()  # Hidden until a mesh is loaded
+        except Exception as e:
+            logger.error("3D mesh labeling unavailable (Canvas3D failed to initialize): %s", e)
+            self.canvas_3d = None
+            self.view_controls_3d = None
+            self.view_controls_3d_dock = None
 
         scroll_area = QtWidgets.QScrollArea()
         scroll_area.setWidget(self.canvas)
@@ -327,7 +346,9 @@ class LabelingWidget(LabelDialog):
 
         self.central_stack = QtWidgets.QStackedWidget()
         self.central_stack.addWidget(scroll_area)  # Index 0: 2D
-        self.central_stack.addWidget(self.canvas_3d)  # Index 1: 3D
+        # Index 1: 3D, or an inert placeholder if Canvas3D failed to
+        # initialize — keeps the index stable either way.
+        self.central_stack.addWidget(self.canvas_3d or QtWidgets.QWidget())
 
         self._central_widget = self.central_stack
 
@@ -1594,6 +1615,8 @@ class LabelingWidget(LabelDialog):
 
     def toggle_draw_mode_3d(self, mode):
         """Toggle 3D draw mode"""
+        if self.canvas_3d is None:
+            return
         self.canvas_3d.set_mode(mode)
         self.view_controls_3d.set_mode(mode)
         self.actions.create_brush_3d.setEnabled(mode != Canvas3D.BRUSH)
@@ -1680,6 +1703,8 @@ class LabelingWidget(LabelDialog):
 
     def _update_3d_active_label(self):
         """Sync selected label from unique_label_list to canvas_3d"""
+        if self.canvas_3d is None:
+            return
         items = self.unique_label_list.selectedItems()
         if items:
             label = items[0].data(Qt.ItemDataRole.UserRole)
@@ -1692,6 +1717,8 @@ class LabelingWidget(LabelDialog):
 
     def _sync_all_label_colors_3d(self):
         """Push all known label colors to canvas_3d"""
+        if self.canvas_3d is None:
+            return
         for i in range(self.unique_label_list.count()):
             label = self.unique_label_list.item(i).data(Qt.ItemDataRole.UserRole)
             if label:
@@ -1949,7 +1976,8 @@ class LabelingWidget(LabelDialog):
         self.label_list.clearSelection()
         self._no_selection_slot = False
         self.canvas.load_shapes(shapes, replace=replace)
-        self.canvas_3d.load_shapes(shapes, replace=replace)
+        if self.canvas_3d is not None:
+            self.canvas_3d.load_shapes(shapes, replace=replace)
 
     def load_labels(self, shapes):
         s = []
@@ -2355,6 +2383,17 @@ class LabelingWidget(LabelDialog):
 
         # Handle mesh files
         if is_mesh_file(filename):
+            if self.canvas_3d is None:
+                self.error_message(
+                    self.tr("3D mesh labeling unavailable"),
+                    self.tr(
+                        "Could not load <b>%s</b>: 3D mesh support failed to "
+                        "initialize at startup (see the log). Only image "
+                        "files can be opened this session."
+                    )
+                    % filename,
+                )
+                return False
             if not self.canvas_3d.load_mesh(filename):
                 self.central_stack.setCurrentIndex(0)
                 self.view_controls_3d_dock.hide()
@@ -2427,7 +2466,8 @@ class LabelingWidget(LabelDialog):
             return True
         else:
             self.central_stack.setCurrentIndex(0)
-            self.view_controls_3d_dock.hide()
+            if self.view_controls_3d_dock is not None:
+                self.view_controls_3d_dock.hide()
             self.actions.create_brush_3d.setEnabled(False)
             self.actions.view_mode_3d.setEnabled(False)
             self.actions.decrease_brush_size_3d.setEnabled(False)
