@@ -34,7 +34,6 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 try:
     import numpy as np
     import pyvista as pv
-    import vtk
     from PyQt6.QtWidgets import QApplication
 
     pv.OFF_SCREEN = True
@@ -50,14 +49,25 @@ except Exception as exc:  # pragma: no cover - environment-dependent
 
 
 def _has_safe_render_backend():
-    """True only if VTK is actually running on vtkOSOpenGLRenderWindow
-    (the vtk-osmesa software backend). This is a runtime capability check,
-    not an environment guess (CI env var / platform name / DISPLAY
-    presence) — those were tried and found unreliable."""
+    """True only if the vtk-osmesa distribution is installed.
+
+    This MUST be a pure package-metadata check — it must never construct
+    a live VTK object, not even a bare vtk.vtkRenderWindow() just to read
+    its class name. That was the first version of this check, and it was
+    itself unsafe: on Windows CI (no GPU, no osmesa.dll), instantiating
+    vtkRenderWindow() to ask its class immediately triggers a fatal Win32
+    pixel-format negotiation failure that kills the whole process before
+    any Python-level exception can fire — confirmed by this exact check
+    crashing Windows CI the first time it shipped. Checking distribution
+    metadata touches no VTK C++ code at all, so it's safe everywhere."""
     if Canvas3D is None:
         return False
     try:
-        return vtk.vtkRenderWindow().GetClassName() == "vtkOSOpenGLRenderWindow"
+        import importlib.metadata
+        importlib.metadata.distribution("vtk-osmesa")
+        return True
+    except importlib.metadata.PackageNotFoundError:
+        return False
     except Exception:
         return False
 
