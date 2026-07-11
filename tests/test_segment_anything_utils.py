@@ -128,16 +128,28 @@ class _FakeQPointF:
         self.y_ = y
 
 
-def _sa_with_mocks(output_mode="polygon"):
-    """Create a minimal SegmentAnything instance suitable for post_process."""
+def _sa_with_mocks(test_case, output_mode="polygon"):
+    """Create a minimal SegmentAnything instance suitable for post_process.
+
+    Uses patch.object (with addCleanup) rather than raw attribute
+    assignment: PyQt6.QtCore may already be the *real* module by the time
+    this runs (e.g. under `unittest discover`, once some other test file
+    has imported real PyQt6), in which case an unrestored assignment here
+    would permanently clobber the real QPointF for every test that runs
+    afterward in the same process.
+    """
     sa = SegmentAnything.__new__(SegmentAnything)
     sa.output_mode = output_mode
 
-    # Patch the Shape class and QPointF inside the module
     import anylabeling.services.auto_labeling.segment_anything as _sa_mod
-    _sa_mod.Shape = _FakeShape
     import PyQt6.QtCore as _qtc
-    _qtc.QPointF = _FakeQPointF
+
+    shape_patcher = patch.object(_sa_mod, "Shape", _FakeShape)
+    qpointf_patcher = patch.object(_qtc, "QPointF", _FakeQPointF)
+    shape_patcher.start()
+    qpointf_patcher.start()
+    test_case.addCleanup(shape_patcher.stop)
+    test_case.addCleanup(qpointf_patcher.stop)
 
     return sa
 
@@ -151,79 +163,79 @@ class TestPostProcess(unittest.TestCase):
         return mask
 
     def test_bool_mask_produces_shapes(self):
-        sa = _sa_with_mocks("polygon")
+        sa = _sa_with_mocks(self, "polygon")
         mask = self._simple_mask().astype(np.bool_)
         shapes = sa.post_process(mask)
         self.assertGreater(len(shapes), 0)
 
     def test_float_mask_produces_shapes(self):
-        sa = _sa_with_mocks("polygon")
+        sa = _sa_with_mocks(self, "polygon")
         mask = self._simple_mask()  # float32, values 0 or 1
         shapes = sa.post_process(mask)
         self.assertGreater(len(shapes), 0)
 
     def test_uint8_mask_produces_shapes(self):
-        sa = _sa_with_mocks("polygon")
+        sa = _sa_with_mocks(self, "polygon")
         mask = (self._simple_mask() * 255).astype(np.uint8)
         shapes = sa.post_process(mask)
         self.assertGreater(len(shapes), 0)
 
     def test_blank_mask_returns_no_shapes(self):
-        sa = _sa_with_mocks("polygon")
+        sa = _sa_with_mocks(self, "polygon")
         mask = np.zeros((100, 100), dtype=np.float32)
         shapes = sa.post_process(mask)
         self.assertEqual(len(shapes), 0)
 
     def test_polygon_shape_type(self):
-        sa = _sa_with_mocks("polygon")
+        sa = _sa_with_mocks(self, "polygon")
         mask = self._simple_mask()
         shapes = sa.post_process(mask)
         for s in shapes:
             self.assertEqual(s.shape_type, "polygon")
 
     def test_rectangle_shape_type(self):
-        sa = _sa_with_mocks("rectangle")
+        sa = _sa_with_mocks(self, "rectangle")
         mask = self._simple_mask()
         shapes = sa.post_process(mask)
         self.assertGreater(len(shapes), 0)
         self.assertEqual(shapes[0].shape_type, "rectangle")
 
     def test_polygon_has_at_least_3_points(self):
-        sa = _sa_with_mocks("polygon")
+        sa = _sa_with_mocks(self, "polygon")
         mask = self._simple_mask()
         shapes = sa.post_process(mask)
         for s in shapes:
             self.assertGreaterEqual(len(s.points), 3)
 
     def test_label_propagated(self):
-        sa = _sa_with_mocks("polygon")
+        sa = _sa_with_mocks(self, "polygon")
         mask = self._simple_mask()
         shapes = sa.post_process(mask, label="my_object")
         for s in shapes:
             self.assertEqual(s.label, "my_object")
 
     def test_default_label(self):
-        sa = _sa_with_mocks("polygon")
+        sa = _sa_with_mocks(self, "polygon")
         mask = self._simple_mask()
         shapes = sa.post_process(mask)
         for s in shapes:
             self.assertEqual(s.label, "AUTOLABEL_OBJECT")
 
     def test_mask_values_255_also_detected(self):
-        sa = _sa_with_mocks("polygon")
+        sa = _sa_with_mocks(self, "polygon")
         mask = (self._simple_mask() * 255).astype(np.float32)
         shapes = sa.post_process(mask)
         self.assertGreater(len(shapes), 0)
 
     def test_rectangle_mode_returns_one_shape(self):
         """Rectangle mode merges all contours into one bounding box."""
-        sa = _sa_with_mocks("rectangle")
+        sa = _sa_with_mocks(self, "rectangle")
         mask = self._simple_mask()
         shapes = sa.post_process(mask)
         self.assertEqual(len(shapes), 1)
 
     def test_rectangle_shape_has_two_points(self):
-        sa = _sa_with_mocks("rectangle")
+        sa = _sa_with_mocks(self, "rectangle")
         mask = self._simple_mask()
         shapes = sa.post_process(mask)
         self.assertEqual(len(shapes[0].points), 2)

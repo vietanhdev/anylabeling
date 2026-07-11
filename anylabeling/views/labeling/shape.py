@@ -78,6 +78,7 @@ class Shape:
         self._path = None  # Cache for QPainterPath
         self._vrtx_path = None  # Cache for vertex QPainterPath
         self._last_scale = None  # Track scale for vertex path invalidation
+        self._last_selected = None  # Track selected state for vertex path invalidation
 
         if line_color is not None:
             # Override the class line_color attribute
@@ -175,7 +176,15 @@ class Shape:
                 self._vrtx_path = None
                 self._last_scale = self.scale
 
-            if self._path is None or (self.selected and self._vrtx_path is None):
+            # Invalidate vertex path if selection state changed (vertices are
+            # only drawn into it while selected) — otherwise a shape painted
+            # once while unselected never shows vertex handles after being
+            # selected, since _vrtx_path stays non-None but empty.
+            if self.selected != self._last_selected:
+                self._vrtx_path = None
+                self._last_selected = self.selected
+
+            if self._path is None or self._vrtx_path is None:
                 self._path = QtGui.QPainterPath()
                 self._vrtx_path = QtGui.QPainterPath()
 
@@ -280,9 +289,12 @@ class Shape:
 
     def contains_point(self, point):
         """Check if shape contains a point"""
-        if self._path is None:
-            self._path = self.make_path()
-        return self._path.contains(point)
+        # Read the paint() cache if it's already populated, but don't write
+        # make_path()'s output into it: make_path() builds different
+        # geometry than paint() does for several shape types (e.g. "point"),
+        # so caching it here would corrupt what paint() later draws.
+        path = self._path if self._path is not None else self.make_path()
+        return path.contains(point)
 
     def get_circle_rect_from_line(self, line):
         """Computes parameters to draw with `QPainterPath::addEllipse`"""
