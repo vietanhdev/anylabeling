@@ -152,7 +152,7 @@ If you want to contribute to **AnyLabeling**, please read [Contribution Guidelin
 
 ## Star history
 
-[![Star History Chart](https://api.star-history.com/svg?repos=vietanhdev/anylabeling&type=Date)](https://star-history.com/#vietanhdev/anylabeling&Date)
+[![Star History Chart](https://www.vietanh.dev/api/stars/vietanhdev/anylabeling.svg)](https://github.com/vietanhdev/anylabeling/stargazers)
 
 ## References
 
