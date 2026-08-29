@@ -95,7 +95,7 @@ class TestSAM3RealInference(unittest.TestCase):
         _, bgr = _test_img()
         cls.rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
         cls.H, cls.W = cls.rgb.shape[:2]
-        print(f"\n[SAM3] Image: {cls.W}×{cls.H}")
+        print(f"\n[SAM3] Image: {cls.W}x{cls.H}")
 
     def _skip_if_no_model(self):
         if self.model is None:
@@ -108,7 +108,7 @@ class TestSAM3RealInference(unittest.TestCase):
         self.assertEqual(emb["language_mask"].shape, (1, 32))
         self.assertEqual(emb["language_features"].shape, (32, 1, 256))
         self.assertEqual(emb["original_size"], (self.H, self.W))
-        print(f"  encode OK — image {self.W}×{self.H}")
+        print(f"  encode OK - image {self.W}x{self.H}")
 
     def test_02_text_only_detection(self):
         self._skip_if_no_model()
@@ -162,7 +162,7 @@ class TestSAM3RealInference(unittest.TestCase):
         mask_2d[mask_2d > 0.0] = 255
         mask_uint8 = mask_2d.astype(np.uint8)
         self.assertEqual(mask_uint8.max(), 255)
-        print(f"  bool→uint8 conversion OK, max={mask_uint8.max()}")
+        print(f"  bool->uint8 conversion OK, max={mask_uint8.max()}")
 
 
 # ---------------------------------------------------------------------------
@@ -183,7 +183,7 @@ class TestSAM2RealInference(unittest.TestCase):
         # so pass the BGR image directly from cv2.imread.
         cls.bgr = bgr
         cls.H, cls.W = bgr.shape[:2]
-        print(f"\n[SAM2] Image: {cls.W}×{cls.H}")
+        print(f"\n[SAM2] Image: {cls.W}x{cls.H}")
 
     def _skip_if_no_model(self):
         if self.model is None:
@@ -196,7 +196,7 @@ class TestSAM2RealInference(unittest.TestCase):
         self.assertIn("high_res_feats_0", emb)
         self.assertIn("high_res_feats_1", emb)
         self.assertEqual(emb["original_size"], (self.H, self.W))
-        print(f"  encode OK — embedding shape: {emb['image_embedding'].shape}")
+        print(f"  encode OK - embedding shape: {emb['image_embedding'].shape}")
 
     def test_02_point_prompt(self):
         self._skip_if_no_model()
@@ -225,7 +225,7 @@ class TestSAM2RealInference(unittest.TestCase):
         mask_h, mask_w = masks.shape[-2], masks.shape[-1]
         self.assertEqual(mask_h, self.H)
         self.assertEqual(mask_w, self.W)
-        print(f"  mask size {mask_w}×{mask_h} matches image {self.W}×{self.H} ✓")
+        print(f"  mask size {mask_w}x{mask_h} matches image {self.W}x{self.H} OK")
 
 
 # ---------------------------------------------------------------------------
@@ -264,7 +264,7 @@ class TestSAM1MobileSAMRealInference(unittest.TestCase):
         path, bgr = _test_img()
         cls.bgr = bgr
         cls.H, cls.W = bgr.shape[:2]
-        print(f"\n[MobileSAM] enc={os.path.basename(enc)}  img: {cls.W}×{cls.H}")
+        print(f"\n[MobileSAM] enc={os.path.basename(enc)}  img: {cls.W}x{cls.H}")
 
     def _skip_if_no_model(self):
         if self.model is None:
@@ -275,7 +275,7 @@ class TestSAM1MobileSAMRealInference(unittest.TestCase):
         emb = self.model.encode(self.bgr)
         self.assertIn("image_embedding", emb)
         self.assertIn("original_size", emb)
-        print(f"  encode OK — embedding shape: {emb['image_embedding'].shape}")
+        print(f"  encode OK - embedding shape: {emb['image_embedding'].shape}")
 
     def test_02_point_prompt(self):
         self._skip_if_no_model()
@@ -337,7 +337,7 @@ class TestYOLOv8RealInference(unittest.TestCase):
         path, bgr = _test_img()
         cls.bgr = bgr
         cls.H, cls.W = bgr.shape[:2]
-        print(f"\n[YOLOv8] model={os.path.basename(cls.model_path)}  img: {cls.W}×{cls.H}")
+        print(f"\n[YOLOv8] model={os.path.basename(cls.model_path)}  img: {cls.W}x{cls.H}")
 
     def _skip_if_no_model(self):
         if self.model_path is None:
@@ -412,7 +412,7 @@ class TestYOLOv8RealInference(unittest.TestCase):
                 self.assertLess(cx, self.W * 1.1)
                 self.assertGreater(cy, -self.H * 0.1)
                 self.assertLess(cy, self.H * 1.1)
-        print("  all bounding-box centres within image bounds ✓")
+        print("  all bounding-box centres within image bounds OK")
 
 
 # ---------------------------------------------------------------------------
@@ -436,7 +436,7 @@ def _print_summary():
     }
     print("\n=== Model availability ===")
     for name, avail in models_status.items():
-        print(f"  {'✓' if avail else '✗'} {name}")
+        print(f"  {'OK' if avail else 'MISSING'} {name}")
 
 
 if __name__ == "__main__":
