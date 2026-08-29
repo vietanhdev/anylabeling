@@ -417,21 +417,22 @@ class ModelManager(QObject):
 
         model_config = copy.deepcopy(self.model_configs[model_id])
 
-        # Download and extract model
-        if not model_config.get("has_downloaded", True):
-            model_config = self._download_and_extract_model(model_config)
-            if model_config is None:
-                return
-
-            self.model_configs[model_id].update(model_config)
-
-        model_type = model_config["type"]
-        model_class = ModelRegistry.get(model_type)
-
-        if not model_class:
-            raise Exception(f"Unknown model type: {model_type}")
-
         try:
+            # Download, extract, and initialize under one error boundary. An
+            # invalid archive or partially downloaded model must not escape the
+            # Qt worker slot and strand its thread.
+            if not model_config.get("has_downloaded", True):
+                model_config = self._download_and_extract_model(model_config)
+                if model_config is None:
+                    return
+
+                self.model_configs[model_id].update(model_config)
+
+            model_type = model_config["type"]
+            model_class = ModelRegistry.get(model_type)
+            if not model_class:
+                raise ValueError(f"Unknown model type: {model_type}")
+
             model_config["model"] = model_class(
                 model_config, on_message=self.new_model_status.emit
             )
@@ -445,9 +446,11 @@ class ModelManager(QObject):
             else:
                 self.auto_segmentation_model_unselected.emit()
 
-        except Exception as e:  # noqa
-            self.new_model_status.emit(self.tr(f"Error in loading model: {str(e)}"))
-            print(f"Error in loading model: {str(e)}")
+        except Exception as error:  # noqa
+            logging.exception("Error loading auto-labeling model")
+            self.new_model_status.emit(
+                self.tr("Error in loading model: {error}").format(error=error)
+            )
             return
 
         self.loaded_model_config = model_config
