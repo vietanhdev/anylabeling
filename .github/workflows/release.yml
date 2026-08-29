@@ -93,7 +93,7 @@ jobs:
       run: |
         pip install .
         pip uninstall -y onnxruntime
-        pip install "onnxruntime-gpu>=1.20.0"
+        pip install "onnxruntime-gpu[cuda,cudnn]>=1.20.0,<1.27"
 
     - name: Verify selected ONNX Runtime provider
       shell: bash -l {0}

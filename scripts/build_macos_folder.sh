@@ -18,6 +18,7 @@ cat > anylabeling_folder.spec << EOL
 # vim: ft=python
 
 import sys
+from importlib.util import find_spec
 
 from PyInstaller.utils.hooks import collect_data_files, collect_dynamic_libs
 
@@ -25,6 +26,8 @@ sys.setrecursionlimit(5000)  # required on Windows
 
 _osam_datas = collect_data_files('osam')
 _ort_binaries = collect_dynamic_libs('onnxruntime')
+if find_spec('nvidia') is not None:
+    _ort_binaries += collect_dynamic_libs('nvidia')
 
 a = Analysis(
     ['anylabeling/app.py'],

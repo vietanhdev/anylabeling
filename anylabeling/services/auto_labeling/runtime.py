@@ -107,6 +107,14 @@ def get_onnx_providers(preferred_device=None):
 def create_inference_session(model_path, preferred_device=None, **kwargs):
     """Create an ONNX Runtime session with controlled accelerator fallback."""
     providers = get_onnx_providers(preferred_device)
+    if CUDA_PROVIDER in providers:
+        preload_dlls = getattr(onnxruntime, "preload_dlls", None)
+        if preload_dlls is not None:
+            try:
+                # Empty string means NVIDIA's pip-installed runtime packages.
+                preload_dlls(directory="")
+            except Exception as error:
+                logging.warning("Could not preload CUDA runtime libraries: %s", error)
     logging.info("Loading %s with ONNX providers %s", model_path, providers)
     return onnxruntime.InferenceSession(model_path, providers=providers, **kwargs)
 

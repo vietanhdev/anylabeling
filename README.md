@@ -110,6 +110,10 @@ packages can be selected with `ANYLABELING_DEVICE`; supported values include
 `CANN`, `QNN`, `VITISAI`, and `WEBGPU`. On Windows PowerShell, set the override
 with `$env:ANYLABELING_DEVICE = "DIRECTML"`.
 
+The GPU distribution includes pip-managed CUDA 12 and cuDNN runtime libraries,
+so a compatible NVIDIA driver is sufficient; a system CUDA toolkit is not
+required.
+
 - Start labeling:
 
 ```bash

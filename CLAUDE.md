@@ -22,7 +22,7 @@ pip install -e ".[dev]"
 # NVIDIA dev (dedicated environment):
 #   pip install -e ".[dev]"
 #   pip uninstall -y onnxruntime
-#   pip install "onnxruntime-gpu>=1.20.0"
+#   pip install "onnxruntime-gpu[cuda,cudnn]>=1.20.0,<1.27"
 # macOS dev:  pip install -e ".[macos,dev]"  # plus conda install -c conda-forge pyqt=6
 
 # Lint + format (ruff config is in pyproject.toml)

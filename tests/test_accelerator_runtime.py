@@ -8,6 +8,7 @@ import numpy as np
 
 from anylabeling.services.auto_labeling.runtime import (
     OnnxRuntimeModel,
+    create_inference_session,
     get_onnx_providers,
     select_onnx_providers,
 )
@@ -105,6 +106,31 @@ class TestSelectOnnxProviders(unittest.TestCase):
 
 
 class TestOnnxRuntimeModel(unittest.TestCase):
+    @mock.patch(
+        "anylabeling.services.auto_labeling.runtime.onnxruntime.InferenceSession"
+    )
+    @mock.patch(
+        "anylabeling.services.auto_labeling.runtime.onnxruntime.preload_dlls",
+        create=True,
+    )
+    @mock.patch("anylabeling.services.auto_labeling.runtime.get_onnx_providers")
+    def test_preloads_pip_cuda_libraries(
+        self, get_providers, preload_dlls, inference_session
+    ):
+        get_providers.return_value = [
+            "CUDAExecutionProvider",
+            "CPUExecutionProvider",
+        ]
+
+        session = create_inference_session("model.onnx")
+
+        preload_dlls.assert_called_once_with(directory="")
+        inference_session.assert_called_once_with(
+            "model.onnx",
+            providers=["CUDAExecutionProvider", "CPUExecutionProvider"],
+        )
+        self.assertIs(session, inference_session.return_value)
+
     @mock.patch("anylabeling.services.auto_labeling.runtime.create_inference_session")
     def test_matches_opencv_single_output_interface(self, create_session):
         session = create_session.return_value

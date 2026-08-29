@@ -12,7 +12,10 @@ class TestReleaseWorkflow(unittest.TestCase):
 
     def test_nvidia_build_replaces_cpu_onnx_runtime(self):
         self.assertIn("pip uninstall -y onnxruntime", self.source)
-        self.assertIn('pip install "onnxruntime-gpu>=1.20.0"', self.source)
+        self.assertIn(
+            'pip install "onnxruntime-gpu[cuda,cudnn]>=1.20.0,<1.27"',
+            self.source,
+        )
         self.assertIn("CUDAExecutionProvider", self.source)
 
     def test_macos_gpu_build_installs_and_checks_coreml(self):

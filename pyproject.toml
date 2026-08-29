@@ -41,7 +41,8 @@ dependencies = [
 [project.optional-dependencies]
 # Windows/Linux GPU — replaces onnxruntime with GPU variant
 gpu = [
-    "onnxruntime-gpu>=1.20.0",
+    # ORT 1.27+ requires CUDA 13; keep broad driver compatibility on CUDA 12.
+    "onnxruntime-gpu[cuda,cudnn]>=1.20.0,<1.27",
 ]
 # macOS extras (CoreML support)
 macos = [
