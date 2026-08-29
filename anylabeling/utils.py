@@ -1,4 +1,19 @@
+import os
+
 from PyQt6.QtCore import QObject, pyqtSignal, pyqtSlot
+
+# Common polygonal-mesh formats pyvista.read() supports. Deliberately a
+# curated subset, not pyvista's full reader list — that list also includes
+# non-mesh formats (images, volumes, CFD data) that must not be routed
+# through the 3D mesh-loading path.
+MESH_EXTENSIONS = [".obj", ".stl", ".ply", ".vtk", ".vtp", ".vtu", ".glb", ".gltf"]
+
+
+def is_mesh_file(filename):
+    """Check if the filename is a mesh file"""
+    if not filename:
+        return False
+    return os.path.splitext(filename)[1].lower() in MESH_EXTENSIONS
 
 
 class GenericWorker(QObject):

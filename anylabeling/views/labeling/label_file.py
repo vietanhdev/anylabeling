@@ -6,6 +6,8 @@ import os.path as osp
 
 import PIL.Image
 
+from anylabeling.utils import is_mesh_file
+
 from ...app_info import __version__
 from . import utils
 from .logger import logger
@@ -31,12 +33,17 @@ class LabelFile:
         self.shapes = []
         self.image_path = None
         self.image_data = None
+        self.flags = {}
+        self.other_data = {}
         if filename is not None:
             self.load(filename)
         self.filename = filename
 
     @staticmethod
     def load_image_file(filename):
+        if is_mesh_file(filename):
+            return None
+
         try:
             image_pil = PIL.Image.open(filename)
         except OSError:
@@ -74,6 +81,7 @@ class LabelFile:
             "group_id",
             "shape_type",
             "flags",
+            "vertex_indices",
         ]
         try:
             with io_open(filename, "r") as f:
@@ -82,30 +90,36 @@ class LabelFile:
             if version is None:
                 logger.warning("Loading JSON file (%s) of unknown version", filename)
 
-            if data["imageData"] is not None:
+            image_path = data.get("imagePath", "")
+            if is_mesh_file(image_path):
+                image_data = None
+            elif data.get("imageData") is not None:
                 image_data = base64.b64decode(data["imageData"])
-            else:
+            elif image_path:
                 # relative path from label file to relative path from cwd
-                image_path = osp.join(osp.dirname(filename), data["imagePath"])
-                image_data = self.load_image_file(image_path)
+                abs_image_path = osp.join(osp.dirname(filename), image_path)
+                image_data = self.load_image_file(abs_image_path)
+            else:
+                image_data = None
             flags = data.get("flags") or {}
-            image_path = data["imagePath"]
-            self._check_image_height_and_width(
-                base64.b64encode(image_data).decode("utf-8"),
-                data.get("imageHeight"),
-                data.get("imageWidth"),
-            )
+            if image_data:
+                self._check_image_height_and_width(
+                    base64.b64encode(image_data).decode("utf-8"),
+                    data.get("imageHeight"),
+                    data.get("imageWidth"),
+                )
             shapes = [
                 {
-                    "label": s["label"],
+                    "label": s.get("label", ""),
                     "text": s.get("text", ""),
-                    "points": s["points"],
+                    "points": s.get("points", []),
                     "shape_type": s.get("shape_type", "polygon"),
+                    "vertex_indices": s.get("vertex_indices", []),
                     "flags": s.get("flags", {}),
                     "group_id": s.get("group_id"),
                     "other_data": {k: v for k, v in s.items() if k not in shape_keys},
                 }
-                for s in data["shapes"]
+                for s in data.get("shapes", [])
             ]
         except Exception as e:  # noqa
             raise LabelFileError(e) from e

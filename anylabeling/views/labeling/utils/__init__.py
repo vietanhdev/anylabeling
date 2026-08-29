@@ -22,6 +22,46 @@ from .qt import (
     new_button,
     new_icon,
 )
+
+
+def encode_rle(data):
+    """Encode data using Run-Length Encoding"""
+    if len(data) == 0:
+        return []
+    res = []
+    current_val = data[0]
+    current_count = 0
+    for val in data:
+        if val == current_val:
+            current_count += 1
+        else:
+            res.extend([int(current_val), int(current_count)])
+            current_val = val
+            current_count = 1
+    res.extend([int(current_val), int(current_count)])
+    return res
+
+
+def decode_rle(rle):
+    """Decode data using Run-Length Encoding
+
+    Raises ValueError on malformed input (odd length, negative/non-integer
+    counts) instead of failing silently (a negative count would otherwise
+    just produce a truncated result via `[val] * count == []`) or raising
+    an opaque IndexError.
+    """
+    if len(rle) % 2 != 0:
+        raise ValueError(f"decode_rle: expected an even-length [value, count, ...] list, got length {len(rle)}")
+    res = []
+    for i in range(0, len(rle), 2):
+        val = rle[i]
+        count = rle[i + 1]
+        if not isinstance(count, int) or count < 0:
+            raise ValueError(f"decode_rle: invalid count {count!r} at position {i + 1}")
+        res.extend([val] * count)
+    return res
+
+
 from .shape import (
     masks_to_bboxes,
     polygons_to_mask,
