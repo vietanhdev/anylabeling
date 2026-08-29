@@ -49,6 +49,15 @@ LABEL_COLORMAP[2] = LABEL_COLORMAP[1]
 LABEL_COLORMAP[1] = [0, 180, 33]
 
 
+def supported_image_formats():
+    """Return raster formats that the Pillow-based loader can open."""
+    return [
+        fmt.data().decode().lower()
+        for fmt in QtGui.QImageReader.supportedImageFormats()
+        if fmt.data().decode().lower() != "svg"
+    ]
+
+
 class LabelingWidget(LabelDialog):
     """The main widget for labeling images"""
 
@@ -2166,10 +2175,7 @@ class LabelingWidget(LabelDialog):
         image = QtGui.QImage.fromData(self.image_data)
 
         if image.isNull():
-            formats = [
-                f"*.{fmt.data().decode()}"
-                for fmt in QtGui.QImageReader.supportedImageFormats()
-            ]
+            formats = [f"*.{fmt}" for fmt in supported_image_formats()]
             self.error_message(
                 self.tr("Error opening file"),
                 self.tr(
@@ -2314,10 +2320,7 @@ class LabelingWidget(LabelDialog):
 
     # QT Overload
     def dragEnterEvent(self, event):
-        extensions = [
-            f".{fmt.data().decode().lower()}"
-            for fmt in QtGui.QImageReader.supportedImageFormats()
-        ]
+        extensions = [f".{fmt}" for fmt in supported_image_formats()]
         if event.mimeData().hasUrls():
             items = [i.toLocalFile() for i in event.mimeData().urls()]
             if any(i.lower().endswith(tuple(extensions)) for i in items):
@@ -2404,10 +2407,7 @@ class LabelingWidget(LabelDialog):
         if not self.may_continue():
             return
         path = osp.dirname(str(self.filename)) if self.filename else "."
-        formats = [
-            f"*.{fmt.data().decode()}"
-            for fmt in QtGui.QImageReader.supportedImageFormats()
-        ]
+        formats = [f"*.{fmt}" for fmt in supported_image_formats()]
         filters = self.tr("Image & Label files (%s)") % " ".join(
             formats + [f"*{LabelFile.suffix}"]
         )
@@ -2676,10 +2676,7 @@ class LabelingWidget(LabelDialog):
         return lst
 
     def import_dropped_image_files(self, image_files):
-        extensions = [
-            f".{fmt.data().decode().lower()}"
-            for fmt in QtGui.QImageReader.supportedImageFormats()
-        ]
+        extensions = [f".{fmt}" for fmt in supported_image_formats()]
 
         self.filename = None
         for file in image_files:
@@ -2730,11 +2727,7 @@ class LabelingWidget(LabelDialog):
         self.open_next_image(load=load)
 
     def scan_all_images(self, folder_path):
-        extensions = [
-            f".{fmt.data().decode().lower()}"
-            for fmt in QtGui.QImageReader.supportedImageFormats()
-            if fmt.data().decode().lower() != "svg"
-        ]
+        extensions = [f".{fmt}" for fmt in supported_image_formats()]
 
         images = []
         for root, _, files in os.walk(folder_path):
