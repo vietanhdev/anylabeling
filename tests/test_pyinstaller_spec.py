@@ -66,6 +66,8 @@ class TestPyInstallerSpec(unittest.TestCase):
             library_dir.mkdir(parents=True)
             nvidia_library = library_dir / "libcublas.so.12"
             nvidia_library.touch()
+            optional_duplicate = library_dir / "libnvblas.so.12"
+            optional_duplicate.touch()
             nvidia_spec = SimpleNamespace(submodule_search_locations=[str(nvidia_root)])
 
             spec_path = Path(__file__).parents[1] / "anylabeling.spec"
@@ -81,6 +83,10 @@ class TestPyInstallerSpec(unittest.TestCase):
         self.assertTrue(set(ort_binaries).issubset(analysis_arguments["binaries"]))
         self.assertIn(
             (str(nvidia_library), "nvidia/cublas/lib"),
+            analysis_arguments["binaries"],
+        )
+        self.assertNotIn(
+            (str(optional_duplicate), "nvidia/cublas/lib"),
             analysis_arguments["binaries"],
         )
 

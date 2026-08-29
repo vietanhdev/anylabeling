@@ -19,8 +19,18 @@ if _nvidia_spec is not None and _nvidia_spec.submodule_search_locations:
         _root = Path(_root_name)
         for _source in _root.rglob('*'):
             _name = _source.name.lower()
-            if _source.is_file() and (
+            _is_runtime_library = (
                 _name.endswith(('.dll', '.dylib', '.so')) or '.so.' in _name
+            )
+            _is_optional_duplicate = (
+                '.alt.' in _name
+                or _name.startswith(('libnvblas.', 'nvblas'))
+                or _name.startswith(('libcufftw.', 'cufftw'))
+            )
+            if (
+                _source.is_file()
+                and _is_runtime_library
+                and not _is_optional_duplicate
             ):
                 _destination = _source.parent.relative_to(_root.parent)
                 _ort_binaries.append((str(_source), _destination.as_posix()))
