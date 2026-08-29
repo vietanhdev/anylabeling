@@ -148,6 +148,33 @@ jobs:
                 raise SystemExit(f"{asset} exceeds GitHub's 2 GiB asset limit")
         PY
 
+    - name: Verify frozen application launches
+      shell: bash -l {0}
+      run: |
+        python - <<'PY'
+        import os
+        import pathlib
+        import subprocess
+
+        asset = next(pathlib.Path("dist").glob("AnyLabeling-*"))
+        env = os.environ.copy()
+        env["QT_QPA_PLATFORM"] = "offscreen"
+        process = subprocess.Popen(
+            [str(asset.resolve())],
+            env=env,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        try:
+            return_code = process.wait(timeout=15)
+        except subprocess.TimeoutExpired:
+            process.terminate()
+            process.wait(timeout=10)
+            print(f"{asset} stayed alive for 15 seconds")
+        else:
+            raise SystemExit(f"{asset} exited early with {return_code}")
+        PY
+
     - name: Upload Linux/Windows Release Assets
       uses: softprops/action-gh-release@v2
       env:

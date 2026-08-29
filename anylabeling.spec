@@ -13,6 +13,16 @@ sys.setrecursionlimit(5000)  # required on Windows
 # Collect all ONNX Runtime provider libraries.  This includes CUDA/TensorRT shared
 # libraries on accelerator builds, not only the two DLLs needed by a CPU build.
 _ort_binaries = collect_dynamic_libs('onnxruntime')
+
+# Conda's Python 3.12 pyexpat extension uses APIs from the libexpat shipped in
+# that environment. PyInstaller otherwise treats libexpat as a system library,
+# so the frozen app can load an older host copy and fail with an undefined
+# XML_SetAllocTrackerActivationThreshold symbol.
+if sys.platform.startswith('linux'):
+    _conda_expat = Path(sys.prefix) / 'lib' / 'libexpat.so.1'
+    if _conda_expat.is_file():
+        _ort_binaries.append((str(_conda_expat), '.'))
+
 _nvidia_spec = find_spec('nvidia')
 if _nvidia_spec is not None and _nvidia_spec.submodule_search_locations:
     for _root_name in _nvidia_spec.submodule_search_locations:

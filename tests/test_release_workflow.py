@@ -21,6 +21,13 @@ class TestReleaseWorkflow(unittest.TestCase):
         self.assertIn("libegl1", self.source)
         self.assertIn("limit = 2 * 1024**3", self.source)
 
+    def test_linux_and_windows_frozen_apps_are_launched_before_upload(self):
+        launch_gate = self.source.index("Verify frozen application launches")
+        upload = self.source.index("Upload Linux/Windows Release Assets")
+        self.assertLess(launch_gate, upload)
+        self.assertIn("process.wait(timeout=15)", self.source[:upload])
+        self.assertIn("exited early with", self.source[:upload])
+
     def test_macos_gpu_build_installs_and_checks_coreml(self):
         self.assertIn('pip install -e ".[macos]"', self.source)
         self.assertIn("CoreMLExecutionProvider", self.source)
