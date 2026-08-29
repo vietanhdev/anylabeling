@@ -237,10 +237,54 @@ jobs:
       run: |
         mv dist/AnyLabeling-Folder${{ matrix.device == 'GPU' && '-GPU' || '' }} dist/AnyLabeling-macOS-${{ matrix.device }}
 
-    - name: Create zip archive
+    - name: Create zip archive preserving symlinks
       shell: bash -l {0}
       run: |
-        cd dist && zip -r AnyLabeling-macOS-${{ matrix.device }}.zip AnyLabeling-macOS-${{ matrix.device }}/
+        cd dist
+        ditto -c -k --sequesterRsrc --keepParent \
+          AnyLabeling-macOS-${{ matrix.device }} \
+          AnyLabeling-macOS-${{ matrix.device }}.zip
+
+    - name: Verify extracted macOS archive launches
+      shell: bash -l {0}
+      run: |
+        python - <<'PY'
+        import os
+        import pathlib
+        import subprocess
+
+        device = "${{ matrix.device }}"
+        archive = pathlib.Path(f"dist/AnyLabeling-macOS-{device}.zip")
+        extract_root = pathlib.Path("dist/archive-smoke-test")
+        subprocess.run(
+            ["ditto", "-x", "-k", str(archive), str(extract_root)],
+            check=True,
+        )
+        app_dir = extract_root / f"AnyLabeling-macOS-{device}"
+        symlink_count = sum(path.is_symlink() for path in app_dir.rglob("*"))
+        print(f"Preserved symlinks: {symlink_count}")
+        if symlink_count == 0:
+            raise SystemExit("macOS archive lost PyInstaller symlinks")
+
+        env = os.environ.copy()
+        env["QT_QPA_PLATFORM"] = "offscreen"
+        process = subprocess.Popen(
+            [str(app_dir / "anylabeling")],
+            env=env,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        try:
+            return_code = process.wait(timeout=15)
+        except subprocess.TimeoutExpired:
+            process.terminate()
+            process.wait(timeout=10)
+            print("Extracted macOS application stayed alive for 15 seconds")
+        else:
+            raise SystemExit(
+                f"Extracted macOS application exited early with {return_code}"
+            )
+        PY
 
     - name: Upload macOS Folder Build Assets
       uses: softprops/action-gh-release@v2

@@ -27,6 +27,13 @@ class TestReleaseWorkflow(unittest.TestCase):
         self.assertIn('get_onnx_providers("${{ matrix.device }}")', self.source)
         self.assertIn("_MLModelProxy", self.source)
 
+    def test_macos_archive_preserves_symlinks_and_launches(self):
+        self.assertIn("ditto -c -k --sequesterRsrc --keepParent", self.source)
+        self.assertNotIn("zip -r AnyLabeling-macOS-", self.source)
+        self.assertIn("macOS archive lost PyInstaller symlinks", self.source)
+        self.assertIn("process.wait(timeout=15)", self.source)
+        self.assertIn("Extracted macOS application exited early", self.source)
+
 
 if __name__ == "__main__":
     unittest.main()
