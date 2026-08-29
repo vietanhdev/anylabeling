@@ -167,6 +167,11 @@ class ModelManager(QObject):
         else:
             self.model_loaded.emit({})
 
+    def _report_model_load_error(self, message):
+        """Report a load error and return the model picker to an idle state."""
+        self.new_model_status.emit(message)
+        self.model_loaded.emit({})
+
     def load_custom_model(self, config_file):
         """Run custom model loading in a thread"""
         config_file = os.path.normpath(os.path.abspath(config_file))
@@ -179,28 +184,33 @@ class ModelManager(QObject):
 
         # Check config file path
         if not config_file or not os.path.isfile(config_file):
-            self.new_model_status.emit(
+            self._report_model_load_error(
                 self.tr("Error in loading custom model: Invalid path.")
             )
             return
 
         # Check config file content
-        model_config = {}
-        with open(config_file, encoding="utf-8-sig") as f:
-            model_config = yaml.safe_load(f)
-            model_config["config_file"] = os.path.abspath(config_file)
-        if not model_config:
-            self.new_model_status.emit(
+        try:
+            with open(config_file, encoding="utf-8-sig") as f:
+                model_config = yaml.safe_load(f)
+        except (OSError, yaml.YAMLError):
+            self._report_model_load_error(
                 self.tr("Error in loading custom model: Invalid config file.")
             )
             return
+        if not isinstance(model_config, dict):
+            self._report_model_load_error(
+                self.tr("Error in loading custom model: Invalid config file.")
+            )
+            return
+        model_config["config_file"] = os.path.abspath(config_file)
         if (
             "type" not in model_config
             or "display_name" not in model_config
             or "name" not in model_config
             or model_config["type"] not in ["segment_anything", "yolov5", "yolov8"]
         ):
-            self.new_model_status.emit(
+            self._report_model_load_error(
                 self.tr("Error in loading custom model: Invalid config file format.")
             )
             return
@@ -267,7 +277,7 @@ class ModelManager(QObject):
                 model_id = i
                 break
         if model_id is None:
-            self.new_model_status.emit(
+            self._report_model_load_error(
                 self.tr("Error in loading model: Invalid model name.")
             )
             return
