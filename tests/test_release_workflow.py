@@ -17,12 +17,14 @@ class TestReleaseWorkflow(unittest.TestCase):
             self.source,
         )
         self.assertIn("CUDAExecutionProvider", self.source)
-        self.assertIn("matrix.device == 'GPU' && 'conv'", self.source)
+        self.assertIn("--selection-only", self.source)
+        self.assertIn("libegl1", self.source)
         self.assertIn("limit = 2 * 1024**3", self.source)
 
     def test_macos_gpu_build_installs_and_checks_coreml(self):
         self.assertIn('pip install -e ".[macos]"', self.source)
         self.assertIn("CoreMLExecutionProvider", self.source)
+        self.assertIn('get_onnx_providers("${{ matrix.device }}")', self.source)
         self.assertIn("_MLModelProxy", self.source)
 
 

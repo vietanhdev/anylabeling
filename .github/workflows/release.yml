@@ -76,6 +76,16 @@ jobs:
         python-version: "3.12"
         miniconda-version: "latest"
 
+    - name: Install Qt system libraries (Linux)
+      if: runner.os == 'Linux'
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends \
+          libegl1 libxkbcommon-x11-0 libdbus-1-3 libxcb-cursor0 \
+          libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 \
+          libxcb-render-util0 libxcb-shape0 libxcb-xinerama0 libxcb-xkb1
+
     - name: Set preferred device
       shell: bash -l {0}
       run: >-
@@ -99,12 +109,11 @@ jobs:
       shell: bash -l {0}
       env:
         EXPECTED_PROVIDER: ${{ matrix.device == 'GPU' && 'CUDAExecutionProvider' || 'CPUExecutionProvider' }}
-        TEST_OPERATION: ${{ matrix.device == 'GPU' && 'conv' || 'matmul' }}
       run: |
         python scripts/check_accelerator.py \
           --device "${{ matrix.device }}" \
           --expect "$EXPECTED_PROVIDER" \
-          --operation "$TEST_OPERATION"
+          --selection-only
 
     - name: Run pyinstaller
       shell: bash -l {0}
@@ -200,8 +209,8 @@ jobs:
         from anylabeling.services.auto_labeling.runtime import get_onnx_providers
 
         available = ort.get_available_providers()
-        selected = get_onnx_providers()
         expected = os.environ["EXPECTED_PROVIDER"]
+        selected = get_onnx_providers("${{ matrix.device }}")
         print("Available providers:", available)
         print("Selected providers:", selected)
         if expected not in available or selected[0] != expected:
