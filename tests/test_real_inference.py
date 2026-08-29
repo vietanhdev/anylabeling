@@ -35,6 +35,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 from anylabeling.services.auto_labeling.sam3_onnx import SegmentAnything3ONNX
 from anylabeling.services.auto_labeling.sam2_onnx import SegmentAnything2ONNX
 from anylabeling.services.auto_labeling.sam_onnx import SegmentAnythingONNX
+from anylabeling.services.auto_labeling.runtime import OnnxRuntimeModel
 
 # ---------------------------------------------------------------------------
 # Paths
@@ -327,7 +328,7 @@ class TestYOLOv8RealInference(unittest.TestCase):
         if cls.model_path is None:
             print(f"\n[YOLOv8] No ONNX file in {YOLOv8_DIR}")
             return
-        cls.net = cv2.dnn.readNet(cls.model_path)
+        cls.net = OnnxRuntimeModel(cls.model_path)
         cls.input_w = cls.config.get("input_width", 640)
         cls.input_h = cls.config.get("input_height", 640)
         cls.conf_thr = cls.config.get("confidence_threshold", 0.25)

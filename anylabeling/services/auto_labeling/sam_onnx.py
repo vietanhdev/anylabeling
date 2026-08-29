@@ -2,7 +2,8 @@ from copy import deepcopy
 
 import cv2
 import numpy as np
-import onnxruntime
+
+from .runtime import create_inference_session
 
 
 class SegmentAnythingONNX:
@@ -12,11 +13,11 @@ class SegmentAnythingONNX:
         self.target_size = 1024
         self.input_size = (684, 1024)
 
-        self.encoder_session = onnxruntime.InferenceSession(encoder_model_path)
+        self.encoder_session = create_inference_session(encoder_model_path)
         encoder_input = self.encoder_session.get_inputs()[0]
         self.encoder_input_name = encoder_input.name
         self.encoder_input_type = encoder_input.type
-        self.decoder_session = onnxruntime.InferenceSession(decoder_model_path)
+        self.decoder_session = create_inference_session(decoder_model_path)
 
     def get_input_points(self, prompt):
         """Get input points"""

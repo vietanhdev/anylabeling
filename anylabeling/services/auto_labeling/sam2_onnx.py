@@ -5,8 +5,9 @@ from typing import Any
 
 import cv2
 import numpy as np
-import onnxruntime
 from numpy import ndarray
+
+from .runtime import create_inference_session
 
 
 class SegmentAnything2ONNX:
@@ -79,9 +80,7 @@ class SegmentAnything2ONNX:
 class SAM2ImageEncoder:
     def __init__(self, path: str) -> None:
         # Initialize model
-        self.session = onnxruntime.InferenceSession(
-            path, providers=onnxruntime.get_available_providers()
-        )
+        self.session = create_inference_session(path)
 
         # Get model info
         self.get_input_details()
@@ -154,9 +153,7 @@ class SAM2ImageDecoder:
         mask_threshold: float = 0.0,
     ) -> None:
         # Initialize model
-        self.session = onnxruntime.InferenceSession(
-            path, providers=onnxruntime.get_available_providers()
-        )
+        self.session = create_inference_session(path)
 
         self.orig_im_size = (
             orig_im_size if orig_im_size is not None else encoder_input_size

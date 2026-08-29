@@ -85,8 +85,30 @@ conda install -c conda-forge pyqt=6
 - Install anylabeling:
 
 ```bash
-pip install anylabeling # or pip install anylabeling-gpu for GPU support
+pip install anylabeling
 ```
+
+For NVIDIA CUDA inference on Linux or Windows, use the GPU distribution in a
+fresh environment:
+
+```bash
+pip install anylabeling-gpu
+```
+
+Apple Silicon users can enable both ONNX Runtime CoreML and native CoreML SAM2
+models with:
+
+```bash
+pip install "anylabeling[macos]"
+export ANYLABELING_DEVICE=COREML
+```
+
+AnyLabeling automatically selects CUDA for GPU builds and CoreML on macOS,
+with CPU fallback for unsupported model operations. Advanced ONNX Runtime
+packages can be selected with `ANYLABELING_DEVICE`; supported values include
+`CUDA`, `COREML`, `DIRECTML`, `ROCM`, `MIGRAPHX`, `OPENVINO`, `TENSORRT`,
+`CANN`, `QNN`, `VITISAI`, and `WEBGPU`. On Windows PowerShell, set the override
+with `$env:ANYLABELING_DEVICE = "DIRECTML"`.
 
 - Start labeling:
 

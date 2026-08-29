@@ -6,12 +6,12 @@ import numpy as np
 from PyQt6 import QtCore
 from PyQt6.QtCore import QCoreApplication
 
-from anylabeling.app_info import __preferred_device__
 from anylabeling.views.labeling.shape import Shape
 from anylabeling.views.labeling.utils.opencv import qt_img_to_rgb_cv_img
 
 from .model import Model
 from .registry import ModelRegistry
+from .runtime import OnnxRuntimeModel
 from .types import AutoLabelingResult
 
 
@@ -50,10 +50,7 @@ class YOLOv5(Model):
                 )
             )
 
-        self.net = cv2.dnn.readNet(model_abs_path)
-        if __preferred_device__ == "GPU":
-            self.net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
-            self.net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
+        self.net = OnnxRuntimeModel(model_abs_path)
         self.classes = self.config["classes"]
 
     def pre_process(self, input_image, net):

@@ -45,7 +45,7 @@ gpu = [
 ]
 # macOS extras (CoreML support)
 macos = [
-    "coremltools==8.3.0",
+    "coremltools>=9.0",
 ]
 # Developer tooling
 dev = [

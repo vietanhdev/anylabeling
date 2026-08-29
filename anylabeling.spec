@@ -4,13 +4,16 @@
 import os
 import sys
 
-from PyInstaller.utils.hooks import collect_data_files
+from PyInstaller.utils.hooks import collect_data_files, collect_dynamic_libs
 
 sys.setrecursionlimit(5000)  # required on Windows
 
-# Collect onnxruntime native DLLs (onnxruntime.dll, onnxruntime_providers_shared.dll).
-# PyInstaller resolves imports but does NOT automatically bundle the DLLs that sit
-# next to the .pyd extension inside the onnxruntime/capi package directory.
+# Collect all ONNX Runtime provider libraries.  This includes CUDA/TensorRT shared
+# libraries on accelerator builds, not only the two DLLs needed by a CPU build.
+_ort_binaries = collect_dynamic_libs('onnxruntime')
+
+# Windows also needs the core ONNX Runtime DLLs at the bundle root because ORT's
+# internal LoadLibrary calls do not use Python's AddDllDirectory search path.
 try:
     import onnxruntime as _ort
     _ort_capi = os.path.join(os.path.dirname(_ort.__file__), 'capi')
@@ -22,12 +25,9 @@ try:
     # Place DLLs in both locations:
     #   onnxruntime/capi/ — matches package structure, found via DLL_LOAD_DIR
     #   .  (root _MEIPASS)  — found via PyInstaller's SetDllDirectory(_MEIPASS)
-    _ort_binaries = (
-        [(dll, 'onnxruntime/capi') for dll in _ort_dlls]
-        + [(dll, '.') for dll in _ort_dlls]
-    )
+    _ort_binaries += [(dll, '.') for dll in _ort_dlls]
 except Exception:
-    _ort_binaries = []
+    pass
 
 _osam_datas = collect_data_files('osam')
 

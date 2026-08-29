@@ -18,9 +18,17 @@ class TestPyInstallerSpec(unittest.TestCase):
             )
         ]
         collect_data_files = mock.Mock(return_value=collected_data)
+        collected_binaries = [
+            (
+                "/site-packages/onnxruntime/capi/libonnxruntime_providers_cuda.so",
+                "onnxruntime/capi",
+            )
+        ]
+        collect_dynamic_libs = mock.Mock(return_value=collected_binaries)
 
         hooks = types.ModuleType("PyInstaller.utils.hooks")
         hooks.collect_data_files = collect_data_files
+        hooks.collect_dynamic_libs = collect_dynamic_libs
         utils = types.ModuleType("PyInstaller.utils")
         utils.hooks = hooks
         pyinstaller = types.ModuleType("PyInstaller")
@@ -56,7 +64,11 @@ class TestPyInstallerSpec(unittest.TestCase):
             runpy.run_path(str(spec_path), init_globals=fake_globals)
 
         collect_data_files.assert_called_once_with("osam")
+        collect_dynamic_libs.assert_called_once_with("onnxruntime")
         self.assertTrue(set(collected_data).issubset(analysis_arguments["datas"]))
+        self.assertTrue(
+            set(collected_binaries).issubset(analysis_arguments["binaries"])
+        )
 
 
 if __name__ == "__main__":

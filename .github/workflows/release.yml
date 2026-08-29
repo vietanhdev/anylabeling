@@ -81,10 +81,39 @@ jobs:
       run: >-
         sed -i'' -e 's/\_\_preferred_device\_\_[ ]*=[ ]*\"[A-Za-z0-9]*\"/__preferred_device__ = "${{ matrix.device }}"/g' anylabeling/app_info.py
 
-    - name: Install main
+    - name: Install main (CPU)
+      if: matrix.device == 'CPU'
       shell: bash -l {0}
       run: |
         pip install .
+
+    - name: Install main (NVIDIA GPU)
+      if: matrix.device == 'GPU'
+      shell: bash -l {0}
+      run: |
+        pip install .
+        pip uninstall -y onnxruntime
+        pip install "onnxruntime-gpu>=1.20.0"
+
+    - name: Verify selected ONNX Runtime provider
+      shell: bash -l {0}
+      env:
+        EXPECTED_PROVIDER: ${{ matrix.device == 'GPU' && 'CUDAExecutionProvider' || 'CPUExecutionProvider' }}
+      run: |
+        python - <<'PY'
+        import os
+        import onnxruntime as ort
+
+        from anylabeling.services.auto_labeling.runtime import get_onnx_providers
+
+        available = ort.get_available_providers()
+        selected = get_onnx_providers()
+        expected = os.environ["EXPECTED_PROVIDER"]
+        print("Available providers:", available)
+        print("Selected providers:", selected)
+        if expected not in available or selected[0] != expected:
+            raise SystemExit(f"Expected {expected} to be the selected provider")
+        PY
 
     - name: Run pyinstaller
       shell: bash -l {0}
@@ -142,10 +171,42 @@ jobs:
       run: |
         pip install PyQt6
 
-    - name: Install main
+    - name: Install main (CPU)
+      if: matrix.device == 'CPU'
       shell: bash -l {0}
       run: |
         pip install -e .
+
+    - name: Install main (Apple CoreML)
+      if: matrix.device == 'GPU'
+      shell: bash -l {0}
+      run: |
+        pip install -e ".[macos]"
+
+    - name: Verify selected ONNX Runtime provider
+      shell: bash -l {0}
+      env:
+        EXPECTED_PROVIDER: ${{ matrix.device == 'GPU' && 'CoreMLExecutionProvider' || 'CPUExecutionProvider' }}
+      run: |
+        python - <<'PY'
+        import os
+        import onnxruntime as ort
+
+        from anylabeling.services.auto_labeling.runtime import get_onnx_providers
+
+        available = ort.get_available_providers()
+        selected = get_onnx_providers()
+        expected = os.environ["EXPECTED_PROVIDER"]
+        print("Available providers:", available)
+        print("Selected providers:", selected)
+        if expected not in available or selected[0] != expected:
+            raise SystemExit(f"Expected {expected} to be the selected provider")
+        if expected == "CoreMLExecutionProvider":
+            from coremltools.models.model import _MLModelProxy
+
+            if _MLModelProxy is None:
+                raise SystemExit("coremltools native runtime is unavailable")
+        PY
 
     - name: Make build script executable
       shell: bash -l {0}

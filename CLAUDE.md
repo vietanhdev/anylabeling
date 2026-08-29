@@ -19,7 +19,10 @@ anylabeling
 
 # Editable install for development (CPU)
 pip install -e ".[dev]"
-# GPU dev:    pip install -e ".[gpu,dev]"
+# NVIDIA dev (dedicated environment):
+#   pip install -e ".[dev]"
+#   pip uninstall -y onnxruntime
+#   pip install "onnxruntime-gpu>=1.20.0"
 # macOS dev:  pip install -e ".[macos,dev]"  # plus conda install -c conda-forge pyqt=6
 
 # Lint + format (ruff config is in pyproject.toml)
@@ -113,7 +116,8 @@ just before building, so both wheels come out of the same source tree.
 
 `pyproject.toml` excludes `PyQt6` on Darwin
 (`PyQt6>=...; platform_system != 'Darwin'`). macOS users install PyQt
-through conda. The macOS extra is `[macos]` (currently `coremltools==8.3.0`).
+through conda. The macOS extra is `[macos]` (currently `coremltools>=9.0` so
+Python 3.13 receives a native Apple Silicon wheel).
 
 ### Qt resources and translations
 
