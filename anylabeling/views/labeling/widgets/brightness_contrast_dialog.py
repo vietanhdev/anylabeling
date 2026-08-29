@@ -1,11 +1,29 @@
 """This module defines brightness/contrast dialog"""
 
+import numpy as np
 import PIL.Image
 import PIL.ImageEnhance
 from PyQt6 import QtGui, QtWidgets
 from PyQt6.QtCore import Qt
 
 from .. import utils
+
+
+def enhance_image(img, brightness, contrast):
+    """Apply brightness and contrast while preserving 16-bit grayscale data."""
+    if not img.mode.startswith("I;16"):
+        img = PIL.ImageEnhance.Brightness(img).enhance(brightness)
+        return PIL.ImageEnhance.Contrast(img).enhance(contrast)
+
+    values = np.asarray(img)
+    adjusted = values.astype(np.float64)
+    adjusted *= brightness
+    mean = adjusted.mean()
+    adjusted = mean + contrast * (adjusted - mean)
+
+    limits = np.iinfo(values.dtype)
+    adjusted = np.clip(np.rint(adjusted), limits.min, limits.max)
+    return PIL.Image.fromarray(adjusted.astype(values.dtype))
 
 
 class BrightnessContrastDialog(QtWidgets.QDialog):
@@ -33,9 +51,7 @@ class BrightnessContrastDialog(QtWidgets.QDialog):
         brightness = self.slider_brightness.value() / 50.0
         contrast = self.slider_contrast.value() / 50.0
 
-        img = self.img
-        img = PIL.ImageEnhance.Brightness(img).enhance(brightness)
-        img = PIL.ImageEnhance.Contrast(img).enhance(contrast)
+        img = enhance_image(self.img, brightness, contrast)
 
         img_data = utils.img_pil_to_data(img)
         qimage = QtGui.QImage.fromData(img_data)
