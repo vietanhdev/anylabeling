@@ -1202,6 +1202,11 @@ class Canvas(QtWidgets.QWidget):  # pylint: disable=too-many-public-methods, too
         self.restore_cursor()
         self.pixmap = None
         self.shapes_backups = []
+        for shape in self.selected_shapes:
+            shape.selected = False
+        self.selected_shapes = []
+        self.selected_shapes_copy = []
+        self.moving_shape = False
         self.update()
 
     def set_show_cross_line(self, enabled):
