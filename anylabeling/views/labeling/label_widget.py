@@ -2296,6 +2296,9 @@ class LabelingWidget(LabelDialog):
         self._config["store_data"] = enabled
         self.actions.save_with_image_data.setChecked(enabled)
 
+    def reject(self):
+        """Keep Escape from hiding the labeling workspace like a dialog."""
+
     # QT Overload
     def closeEvent(self, event):
         if not self.may_continue():
