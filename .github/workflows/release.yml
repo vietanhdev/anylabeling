@@ -125,6 +125,20 @@ jobs:
           fi
         fi
 
+    - name: Verify release asset size
+      shell: bash -l {0}
+      run: |
+        python - <<'PY'
+        from pathlib import Path
+
+        limit = 2 * 1024**3
+        for asset in Path("dist").glob("AnyLabeling-*"):
+            size = asset.stat().st_size
+            print(f"{asset}: {size} bytes")
+            if size >= limit:
+                raise SystemExit(f"{asset} exceeds GitHub's 2 GiB asset limit")
+        PY
+
     - name: Upload Linux/Windows Release Assets
       uses: softprops/action-gh-release@v2
       env:
