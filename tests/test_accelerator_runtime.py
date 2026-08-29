@@ -1,11 +1,15 @@
 """Tests for accelerator selection and ONNX Runtime DNN execution."""
 
 import os
+import tempfile
 import unittest
+from pathlib import Path
+from types import SimpleNamespace
 from unittest import mock
 
 import numpy as np
 
+from anylabeling.services.auto_labeling import runtime
 from anylabeling.services.auto_labeling.runtime import (
     OnnxRuntimeModel,
     create_inference_session,
@@ -151,6 +155,31 @@ class TestSelectOnnxProviders(unittest.TestCase):
 
 
 class TestOnnxRuntimeModel(unittest.TestCase):
+    def test_registers_pip_nvidia_windows_directories(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            nvidia_root = Path(tmp) / "nvidia"
+            cudnn_bin = nvidia_root / "cudnn" / "bin"
+            cudnn_bin.mkdir(parents=True)
+            nvidia_spec = SimpleNamespace(submodule_search_locations=[str(nvidia_root)])
+
+            with (
+                mock.patch.object(runtime.sys, "platform", "win32"),
+                mock.patch.object(runtime, "find_spec", return_value=nvidia_spec),
+                mock.patch.object(
+                    runtime.os, "add_dll_directory", create=True
+                ) as add_directory,
+                mock.patch.dict(os.environ, {"PATH": "existing"}, clear=True),
+                mock.patch.object(runtime, "_CUDA_DLL_DIRECTORY_HANDLES", []),
+                mock.patch.object(runtime, "_CUDA_DLL_DIRECTORIES", set()),
+            ):
+                runtime._register_nvidia_dll_directories()
+
+                self.assertEqual(
+                    os.environ["PATH"].split(os.pathsep)[0],
+                    str(cudnn_bin.resolve()),
+                )
+                add_directory.assert_called_once_with(str(cudnn_bin.resolve()))
+
     @mock.patch(
         "anylabeling.services.auto_labeling.runtime.onnxruntime.InferenceSession"
     )
@@ -177,9 +206,12 @@ class TestOnnxRuntimeModel(unittest.TestCase):
         "anylabeling.services.auto_labeling.runtime.onnxruntime.preload_dlls",
         create=True,
     )
+    @mock.patch(
+        "anylabeling.services.auto_labeling.runtime._register_nvidia_dll_directories"
+    )
     @mock.patch("anylabeling.services.auto_labeling.runtime.get_onnx_providers")
     def test_preloads_pip_cuda_libraries(
-        self, get_providers, preload_dlls, inference_session
+        self, get_providers, register_directories, preload_dlls, inference_session
     ):
         get_providers.return_value = [
             "CUDAExecutionProvider",
@@ -188,6 +220,7 @@ class TestOnnxRuntimeModel(unittest.TestCase):
 
         session = create_inference_session("model.onnx")
 
+        register_directories.assert_called_once_with()
         preload_dlls.assert_called_once_with(directory="")
         inference_session.assert_called_once_with(
             "model.onnx",

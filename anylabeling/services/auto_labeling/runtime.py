@@ -2,6 +2,9 @@
 
 import logging
 import os
+import sys
+from importlib.util import find_spec
+from pathlib import Path
 
 import onnxruntime
 
@@ -14,6 +17,9 @@ OPENVINO_PROVIDER = "OpenVINOExecutionProvider"
 QNN_PROVIDER = "QNNExecutionProvider"
 VITISAI_PROVIDER = "VitisAIExecutionProvider"
 CANN_PROVIDER = "CANNExecutionProvider"
+
+_CUDA_DLL_DIRECTORY_HANDLES = []
+_CUDA_DLL_DIRECTORIES = set()
 
 _PROVIDER_ALIASES = {
     "CUDA": CUDA_PROVIDER,
@@ -143,6 +149,55 @@ def get_onnx_provider_options(providers, preferred_device=None):
     return options
 
 
+def _find_nvidia_binary_directories():
+    roots = []
+    nvidia_spec = find_spec("nvidia")
+    if nvidia_spec is not None and nvidia_spec.submodule_search_locations:
+        roots.extend(Path(root) for root in nvidia_spec.submodule_search_locations)
+
+    # Namespace-package discovery is not guaranteed inside every freezer. The
+    # nvidia directory is adjacent to onnxruntime in both wheels and _MEIPASS.
+    roots.append(Path(onnxruntime.__file__).resolve().parent.parent / "nvidia")
+
+    directories = []
+    seen = set()
+    for root in roots:
+        if not root.is_dir():
+            continue
+        for directory in root.glob("*/bin"):
+            resolved = str(directory.resolve())
+            key = resolved.casefold()
+            if directory.is_dir() and key not in seen:
+                directories.append(resolved)
+                seen.add(key)
+    return directories
+
+
+def _register_nvidia_dll_directories():
+    """Make pip-installed CUDA/cuDNN sublibraries discoverable on Windows."""
+    if sys.platform != "win32":
+        return
+
+    directories = _find_nvidia_binary_directories()
+    if not directories:
+        return
+
+    path_entries = os.environ.get("PATH", "").split(os.pathsep)
+    existing = {entry.casefold() for entry in path_entries if entry}
+    additions = [entry for entry in directories if entry.casefold() not in existing]
+    if additions:
+        os.environ["PATH"] = os.pathsep.join(additions + path_entries)
+
+    add_dll_directory = getattr(os, "add_dll_directory", None)
+    if add_dll_directory is None:
+        return
+    for directory in directories:
+        key = directory.casefold()
+        if key not in _CUDA_DLL_DIRECTORIES:
+            _CUDA_DLL_DIRECTORY_HANDLES.append(add_dll_directory(directory))
+            _CUDA_DLL_DIRECTORIES.add(key)
+
+
 def create_inference_session(model_path, preferred_device=None, **kwargs):
     """Create an ONNX Runtime session with controlled accelerator fallback."""
     providers = get_onnx_providers(preferred_device)
@@ -150,6 +205,7 @@ def create_inference_session(model_path, preferred_device=None, **kwargs):
     if any(provider_options) and "provider_options" not in kwargs:
         kwargs["provider_options"] = provider_options
     if CUDA_PROVIDER in providers:
+        _register_nvidia_dll_directories()
         preload_dlls = getattr(onnxruntime, "preload_dlls", None)
         if preload_dlls is not None:
             try:
