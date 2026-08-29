@@ -2,14 +2,17 @@
 
 import tempfile
 import unittest
+from pathlib import Path
 
 from anylabeling.config import get_config
 
 
 class TestGetConfig(unittest.TestCase):
     def test_empty_config_file_uses_defaults(self):
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml") as config_file:
-            config = get_config(config_file.name)
+        with tempfile.TemporaryDirectory() as config_dir:
+            config_path = Path(config_dir) / "empty.yaml"
+            config_path.touch()
+            config = get_config(str(config_path))
 
         self.assertIsInstance(config, dict)
         self.assertIn("shortcuts", config)
