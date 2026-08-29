@@ -24,13 +24,29 @@ class TestPyInstallerSpec(unittest.TestCase):
                 "onnxruntime/capi",
             )
         ]
+        nvidia_packages = [
+            "nvidia.cublas",
+            "nvidia.cuda_nvrtc",
+            "nvidia.cuda_runtime",
+            "nvidia.cudnn",
+            "nvidia.cufft",
+            "nvidia.curand",
+            "nvidia.nvjitlink",
+        ]
         nvidia_binaries = [
             (
-                "/site-packages/nvidia/cublas/lib/libcublas.so.12",
-                "nvidia/cublas/lib",
+                f"/site-packages/{package.replace('.', '/')}/lib/runtime.so",
+                f"{package.replace('.', '/')}/lib",
             )
+            for package in nvidia_packages
         ]
-        collect_dynamic_libs = mock.Mock(side_effect=[ort_binaries, nvidia_binaries])
+
+        def collect_binaries(package):
+            if package == "onnxruntime":
+                return ort_binaries
+            return [nvidia_binaries[nvidia_packages.index(package)]]
+
+        collect_dynamic_libs = mock.Mock(side_effect=collect_binaries)
 
         hooks = types.ModuleType("PyInstaller.utils.hooks")
         hooks.collect_data_files = collect_data_files
@@ -75,7 +91,8 @@ class TestPyInstallerSpec(unittest.TestCase):
         collect_data_files.assert_called_once_with("osam")
         self.assertEqual(
             collect_dynamic_libs.call_args_list,
-            [mock.call("onnxruntime"), mock.call("nvidia")],
+            [mock.call("onnxruntime")]
+            + [mock.call(package) for package in nvidia_packages],
         )
         self.assertTrue(set(collected_data).issubset(analysis_arguments["datas"]))
         self.assertTrue(

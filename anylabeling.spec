@@ -12,8 +12,18 @@ sys.setrecursionlimit(5000)  # required on Windows
 # Collect all ONNX Runtime provider libraries.  This includes CUDA/TensorRT shared
 # libraries on accelerator builds, not only the two DLLs needed by a CPU build.
 _ort_binaries = collect_dynamic_libs('onnxruntime')
-if find_spec('nvidia') is not None:
-    _ort_binaries += collect_dynamic_libs('nvidia')
+_nvidia_runtime_packages = (
+    'nvidia.cublas',
+    'nvidia.cuda_nvrtc',
+    'nvidia.cuda_runtime',
+    'nvidia.cudnn',
+    'nvidia.cufft',
+    'nvidia.curand',
+    'nvidia.nvjitlink',
+)
+for _package in _nvidia_runtime_packages:
+    if find_spec(_package) is not None:
+        _ort_binaries += collect_dynamic_libs(_package)
 
 # Windows also needs the core ONNX Runtime DLLs at the bundle root because ORT's
 # internal LoadLibrary calls do not use Python's AddDllDirectory search path.

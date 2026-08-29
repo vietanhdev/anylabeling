@@ -26,8 +26,18 @@ sys.setrecursionlimit(5000)  # required on Windows
 
 _osam_datas = collect_data_files('osam')
 _ort_binaries = collect_dynamic_libs('onnxruntime')
-if find_spec('nvidia') is not None:
-    _ort_binaries += collect_dynamic_libs('nvidia')
+_nvidia_runtime_packages = (
+    'nvidia.cublas',
+    'nvidia.cuda_nvrtc',
+    'nvidia.cuda_runtime',
+    'nvidia.cudnn',
+    'nvidia.cufft',
+    'nvidia.curand',
+    'nvidia.nvjitlink',
+)
+for _package in _nvidia_runtime_packages:
+    if find_spec(_package) is not None:
+        _ort_binaries += collect_dynamic_libs(_package)
 
 a = Analysis(
     ['anylabeling/app.py'],
