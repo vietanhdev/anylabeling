@@ -14,9 +14,7 @@
 [![Documentation](https://img.shields.io/badge/Read-Documentation-green)](https://anylabeling.nrl.ai/)
 [![Follow](https://img.shields.io/badge/+Follow-vietanhdev-blue)]([[https://anylabeling.nrl.ai/](https://twitter.com/vietanhdev)](https://twitter.com/vietanhdev))
 
-[![AnyLearning-Banner](https://github.com/user-attachments/assets/c2de3534-3e04-439b-bdca-19f6fcb9fc61)](https://anylearning.nrl.ai/)
-
-[![ai-flow 62b3c222](https://github.com/user-attachments/assets/a47a0eea-ec59-4c59-9733-737b1977e56b)](https://anylearning.nrl.ai/)
+[![AnyLearning — label data and train models locally, with no account or activation](assets/anylearning-oss-banner.webp)](https://anylearning-oss.nrl.ai/)
 
 
 <a href="https://youtu.be/5qVJiYNX5Kk">
