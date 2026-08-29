@@ -813,8 +813,8 @@ class Canvas(QtWidgets.QWidget):  # pylint: disable=too-many-public-methods, too
 
         if (
             self.fill_drawing()
-            and self.create_mode == "polygon"
             and self.current is not None
+            and self.current.shape_type == "polygon"
             and len(self.current.points) >= 2
         ):
             drawing_shape = self.current.copy()
