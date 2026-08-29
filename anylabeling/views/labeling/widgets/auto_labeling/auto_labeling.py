@@ -210,6 +210,7 @@ class AutoLabelingWidget(QWidget):
     def unload_and_hide(self):
         """Unload model and hide widget"""
         self.model_select_combobox.setCurrentIndex(0)
+        self.parent.set_edit_mode()
         self.hide()
 
     def on_new_model_status(self, status):
