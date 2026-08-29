@@ -99,21 +99,12 @@ jobs:
       shell: bash -l {0}
       env:
         EXPECTED_PROVIDER: ${{ matrix.device == 'GPU' && 'CUDAExecutionProvider' || 'CPUExecutionProvider' }}
+        TEST_OPERATION: ${{ matrix.device == 'GPU' && 'conv' || 'matmul' }}
       run: |
-        python - <<'PY'
-        import os
-        import onnxruntime as ort
-
-        from anylabeling.services.auto_labeling.runtime import get_onnx_providers
-
-        available = ort.get_available_providers()
-        selected = get_onnx_providers()
-        expected = os.environ["EXPECTED_PROVIDER"]
-        print("Available providers:", available)
-        print("Selected providers:", selected)
-        if expected not in available or selected[0] != expected:
-            raise SystemExit(f"Expected {expected} to be the selected provider")
-        PY
+        python scripts/check_accelerator.py \
+          --device "${{ matrix.device }}" \
+          --expect "$EXPECTED_PROVIDER" \
+          --operation "$TEST_OPERATION"
 
     - name: Run pyinstaller
       shell: bash -l {0}

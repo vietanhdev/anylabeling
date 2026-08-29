@@ -23,7 +23,7 @@ if _nvidia_spec is not None and _nvidia_spec.submodule_search_locations:
                 _name.endswith(('.dll', '.dylib', '.so')) or '.so.' in _name
             ):
                 _destination = _source.parent.relative_to(_root.parent)
-                _ort_binaries.append((str(_source), str(_destination)))
+                _ort_binaries.append((str(_source), _destination.as_posix()))
 
 # Windows also needs the core ONNX Runtime DLLs at the bundle root because ORT's
 # internal LoadLibrary calls do not use Python's AddDllDirectory search path.

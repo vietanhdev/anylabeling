@@ -16,13 +16,36 @@ from anylabeling.services.auto_labeling.runtime import (
 )
 
 
-def _make_model(path: Path) -> None:
-    weights = numpy_helper.from_array(np.eye(4, dtype=np.float32), "weights")
+def _make_model(path: Path, operation: str) -> None:
+    if operation == "conv":
+        weights = numpy_helper.from_array(
+            np.ones((2, 3, 3, 3), dtype=np.float32), "weights"
+        )
+        nodes = [
+            helper.make_node(
+                "Conv",
+                ["input", "weights"],
+                ["output"],
+                pads=[1, 1, 1, 1],
+            )
+        ]
+        inputs = [
+            helper.make_tensor_value_info("input", TensorProto.FLOAT, [1, 3, 16, 16])
+        ]
+        outputs = [
+            helper.make_tensor_value_info("output", TensorProto.FLOAT, [1, 2, 16, 16])
+        ]
+    else:
+        weights = numpy_helper.from_array(np.eye(4, dtype=np.float32), "weights")
+        nodes = [helper.make_node("MatMul", ["input", "weights"], ["output"])]
+        inputs = [helper.make_tensor_value_info("input", TensorProto.FLOAT, [1, 4])]
+        outputs = [helper.make_tensor_value_info("output", TensorProto.FLOAT, [1, 4])]
+
     graph = helper.make_graph(
-        [helper.make_node("MatMul", ["input", "weights"], ["output"])],
+        nodes,
         "accelerator-smoke-test",
-        [helper.make_tensor_value_info("input", TensorProto.FLOAT, [1, 4])],
-        [helper.make_tensor_value_info("output", TensorProto.FLOAT, [1, 4])],
+        inputs,
+        outputs,
         [weights],
     )
     model = helper.make_model(
@@ -37,6 +60,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--device", default=None)
     parser.add_argument("--expect", default=None)
+    parser.add_argument("--operation", choices=("matmul", "conv"), default="matmul")
     args = parser.parse_args()
 
     selected = get_onnx_providers(args.device)
@@ -49,8 +73,8 @@ def main() -> None:
         )
 
     with tempfile.TemporaryDirectory(prefix="anylabeling-accelerator-") as tmp:
-        model_path = Path(tmp) / "matmul.onnx"
-        _make_model(model_path)
+        model_path = Path(tmp) / f"{args.operation}.onnx"
+        _make_model(model_path, args.operation)
         options = ort.SessionOptions()
         options.enable_profiling = True
         options.profile_file_prefix = str(Path(tmp) / "profile")
@@ -59,9 +83,15 @@ def main() -> None:
             preferred_device=args.device,
             sess_options=options,
         )
-        value = np.arange(4, dtype=np.float32).reshape(1, 4)
+        if args.operation == "conv":
+            value = np.ones((1, 3, 16, 16), dtype=np.float32)
+        else:
+            value = np.arange(4, dtype=np.float32).reshape(1, 4)
         output = session.run(None, {"input": value})[0]
-        np.testing.assert_array_equal(output, value)
+        if args.operation == "matmul":
+            np.testing.assert_array_equal(output, value)
+        elif output.shape != (1, 2, 16, 16):
+            raise AssertionError(f"Unexpected convolution output shape: {output.shape}")
         profile_path = Path(session.end_profiling())
         profile = json.loads(profile_path.read_text(encoding="utf-8"))
         configured = session.get_providers()

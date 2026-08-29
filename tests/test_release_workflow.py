@@ -17,6 +17,7 @@ class TestReleaseWorkflow(unittest.TestCase):
             self.source,
         )
         self.assertIn("CUDAExecutionProvider", self.source)
+        self.assertIn("matrix.device == 'GPU' && 'conv'", self.source)
 
     def test_macos_gpu_build_installs_and_checks_coreml(self):
         self.assertIn('pip install -e ".[macos]"', self.source)
