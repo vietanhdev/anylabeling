@@ -40,7 +40,7 @@ jobs:
     - name: Rewrite pyproject.toml for the GPU package
       run: |
         sed -i 's/^name = "anylabeling"$/name = "anylabeling-gpu"/' pyproject.toml
-        sed -i 's/"onnxruntime>=1.20.0"/"onnxruntime-gpu>=1.20.0"/' pyproject.toml
+        sed -i 's/"onnxruntime>=1.20.0"/"onnxruntime-gpu[cuda,cudnn]>=1.20.0,<1.27"/' pyproject.toml
         echo "--- after rewrite ---"
         grep -E '^name|onnxruntime' pyproject.toml
 

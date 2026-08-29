@@ -3,14 +3,46 @@
 
 import os
 import sys
+from importlib.util import find_spec
+from pathlib import Path
 
-from PyInstaller.utils.hooks import collect_data_files
+from PyInstaller.utils.hooks import collect_data_files, collect_dynamic_libs
 
 sys.setrecursionlimit(5000)  # required on Windows
 
-# Collect onnxruntime native DLLs (onnxruntime.dll, onnxruntime_providers_shared.dll).
-# PyInstaller resolves imports but does NOT automatically bundle the DLLs that sit
-# next to the .pyd extension inside the onnxruntime/capi package directory.
+# Collect all ONNX Runtime provider libraries.  This includes CUDA/TensorRT shared
+# libraries on accelerator builds, not only the two DLLs needed by a CPU build.
+_ort_binaries = collect_dynamic_libs('onnxruntime')
+_nvidia_spec = find_spec('nvidia')
+if _nvidia_spec is not None and _nvidia_spec.submodule_search_locations:
+    for _root_name in _nvidia_spec.submodule_search_locations:
+        _root = Path(_root_name)
+        for _source in _root.rglob('*'):
+            _name = _source.name.lower()
+            _package = _source.relative_to(_root).parts[0]
+            _is_runtime_library = (
+                _name.endswith(('.dll', '.dylib', '.so')) or '.so.' in _name
+            )
+            # NVRTC/JitLink are compiler tooling and are not linked by ORT's
+            # CUDA/cuDNN inference libraries. Wrapper and alternate binaries
+            # are also unnecessary and can push release assets over 2 GiB.
+            _is_optional_duplicate = (
+                _package in {'cuda_nvrtc', 'nvjitlink'}
+                or '.alt.' in _name
+                or _name.startswith(('libnvblas.', 'nvblas'))
+                or _name.startswith(('libcufftw.', 'cufftw'))
+            )
+            if (
+                _source.is_file()
+                and _is_runtime_library
+                and not _is_optional_duplicate
+            ):
+                _destination = _source.parent.relative_to(_root.parent)
+                _ort_binaries.append((str(_source), _destination.as_posix()))
+
+# Ensure Windows core DLLs are present under onnxruntime/capi. The runtime hook
+# preloads them from there by absolute path, so a duplicate bundle-root copy is
+# unnecessary and would add hundreds of megabytes to GPU executables.
 try:
     import onnxruntime as _ort
     _ort_capi = os.path.join(os.path.dirname(_ort.__file__), 'capi')
@@ -19,15 +51,14 @@ try:
         for f in os.listdir(_ort_capi)
         if f.endswith('.dll')
     ]
-    # Place DLLs in both locations:
-    #   onnxruntime/capi/ — matches package structure, found via DLL_LOAD_DIR
-    #   .  (root _MEIPASS)  — found via PyInstaller's SetDllDirectory(_MEIPASS)
-    _ort_binaries = (
-        [(dll, 'onnxruntime/capi') for dll in _ort_dlls]
-        + [(dll, '.') for dll in _ort_dlls]
-    )
+    _existing_binaries = {str(Path(source).resolve()) for source, _ in _ort_binaries}
+    _ort_binaries += [
+        (dll, 'onnxruntime/capi')
+        for dll in _ort_dlls
+        if str(Path(dll).resolve()) not in _existing_binaries
+    ]
 except Exception:
-    _ort_binaries = []
+    pass
 
 _osam_datas = collect_data_files('osam')
 

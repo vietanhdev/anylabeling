@@ -2,7 +2,8 @@ from typing import Any
 
 import cv2
 import numpy as np
-import onnxruntime
+
+from .runtime import create_inference_session
 
 
 class SegmentAnything3ONNX:
@@ -168,9 +169,7 @@ class SAM3ImageEncoder:
     """
 
     def __init__(self, path: str) -> None:
-        self.session = onnxruntime.InferenceSession(
-            path, providers=onnxruntime.get_available_providers()
-        )
+        self.session = create_inference_session(path)
         encoder_input = self.session.get_inputs()[0]
         self.input_name: str = encoder_input.name
         self.input_shape = encoder_input.shape
@@ -233,9 +232,7 @@ class SAM3LanguageEncoder:
     """
 
     def __init__(self, path: str) -> None:
-        self.session = onnxruntime.InferenceSession(
-            path, providers=onnxruntime.get_available_providers()
-        )
+        self.session = create_inference_session(path)
         try:
             from osam._models.yoloworld.clip import tokenize
 
@@ -270,9 +267,7 @@ class SAM3ImageDecoder:
     """
 
     def __init__(self, path: str) -> None:
-        self.session = onnxruntime.InferenceSession(
-            path, providers=onnxruntime.get_available_providers()
-        )
+        self.session = create_inference_session(path)
         self.input_names: list[str] = [i.name for i in self.session.get_inputs()]
 
     def __call__(

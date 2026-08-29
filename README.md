@@ -85,8 +85,44 @@ conda install -c conda-forge pyqt=6
 - Install anylabeling:
 
 ```bash
-pip install anylabeling # or pip install anylabeling-gpu for GPU support
+pip install anylabeling
 ```
+
+For NVIDIA CUDA inference on Linux or Windows, use the GPU distribution in a
+fresh environment:
+
+```bash
+pip install anylabeling-gpu
+```
+
+Apple Silicon users can enable both ONNX Runtime CoreML and native CoreML SAM2
+models with:
+
+```bash
+pip install "anylabeling[macos]"
+export ANYLABELING_DEVICE=COREML
+```
+
+AnyLabeling automatically selects CUDA for GPU builds and CoreML on macOS,
+with CPU fallback for unsupported model operations. Advanced ONNX Runtime
+packages can be selected with `ANYLABELING_DEVICE`; supported values include
+`CUDA`, `COREML`, `DIRECTML`, `ROCM`, `MIGRAPHX`, `OPENVINO`, `TENSORRT`,
+`CANN`, `QNN`, `VITISAI`, and `WEBGPU`. NPU aliases include `NPU`,
+`INTEL_NPU`, `QUALCOMM_NPU`, `AMD_NPU`, and `ASCEND_NPU`. On Windows
+PowerShell, set the override with `$env:ANYLABELING_DEVICE = "DIRECTML"`.
+
+The GPU distribution includes pip-managed CUDA 12 and cuDNN runtime libraries,
+so a compatible NVIDIA driver is sufficient; a system CUDA toolkit is not
+required.
+
+NPU execution requires the matching vendor ONNX Runtime package in a fresh,
+dedicated environment. For example, Intel Core Ultra systems use
+`onnxruntime-openvino` with `ANYLABELING_DEVICE=INTEL_NPU`; Qualcomm Snapdragon
+Windows ARM64 systems use `onnxruntime-qnn` with
+`ANYLABELING_DEVICE=QUALCOMM_NPU`. Replace the default `onnxruntime` package,
+because ONNX Runtime requires only one variant in an environment. Qualcomm HTP
+models generally need QDQ quantization, and support still depends on the
+operator coverage of the selected model.
 
 - Start labeling:
 

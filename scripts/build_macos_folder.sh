@@ -18,17 +18,46 @@ cat > anylabeling_folder.spec << EOL
 # vim: ft=python
 
 import sys
+from importlib.util import find_spec
+from pathlib import Path
 
-from PyInstaller.utils.hooks import collect_data_files
+from PyInstaller.utils.hooks import collect_data_files, collect_dynamic_libs
 
 sys.setrecursionlimit(5000)  # required on Windows
 
 _osam_datas = collect_data_files('osam')
+_ort_binaries = collect_dynamic_libs('onnxruntime')
+_nvidia_spec = find_spec('nvidia')
+if _nvidia_spec is not None and _nvidia_spec.submodule_search_locations:
+    for _root_name in _nvidia_spec.submodule_search_locations:
+        _root = Path(_root_name)
+        for _source in _root.rglob('*'):
+            _name = _source.name.lower()
+            _package = _source.relative_to(_root).parts[0]
+            _is_runtime_library = (
+                _name.endswith(('.dll', '.dylib', '.so')) or '.so.' in _name
+            )
+            # NVRTC/JitLink are compiler tooling and are not linked by ORT's
+            # CUDA/cuDNN inference libraries. Wrapper and alternate binaries
+            # are also unnecessary and can push release assets over 2 GiB.
+            _is_optional_duplicate = (
+                _package in {'cuda_nvrtc', 'nvjitlink'}
+                or '.alt.' in _name
+                or _name.startswith(('libnvblas.', 'nvblas'))
+                or _name.startswith(('libcufftw.', 'cufftw'))
+            )
+            if (
+                _source.is_file()
+                and _is_runtime_library
+                and not _is_optional_duplicate
+            ):
+                _destination = _source.parent.relative_to(_root.parent)
+                _ort_binaries.append((str(_source), _destination.as_posix()))
 
 a = Analysis(
     ['anylabeling/app.py'],
     pathex=['anylabeling'],
-    binaries=[],
+    binaries=_ort_binaries,
     datas=[
        ('anylabeling/configs/auto_labeling/*.yaml', 'anylabeling/configs/auto_labeling'),
        ('anylabeling/configs/*.yaml', 'anylabeling/configs'),
