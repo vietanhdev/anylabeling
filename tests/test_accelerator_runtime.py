@@ -166,6 +166,11 @@ class TestOnnxRuntimeModel(unittest.TestCase):
                 mock.patch.object(runtime.sys, "platform", "win32"),
                 mock.patch.object(runtime, "find_spec", return_value=nvidia_spec),
                 mock.patch.object(
+                    runtime.onnxruntime,
+                    "__file__",
+                    str(Path(tmp) / "isolated" / "onnxruntime" / "__init__.py"),
+                ),
+                mock.patch.object(
                     runtime.os, "add_dll_directory", create=True
                 ) as add_directory,
                 mock.patch.dict(os.environ, {"PATH": "existing"}, clear=True),
