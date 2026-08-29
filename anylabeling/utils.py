@@ -1,3 +1,5 @@
+import logging
+
 from PyQt6.QtCore import QObject, pyqtSignal, pyqtSlot
 
 
@@ -12,5 +14,9 @@ class GenericWorker(QObject):
 
     @pyqtSlot()
     def run(self):
-        self.func(*self.args, **self.kwargs)
-        self.finished.emit()
+        try:
+            self.func(*self.args, **self.kwargs)
+        except Exception:
+            logging.exception("Unhandled error in background task")
+        finally:
+            self.finished.emit()

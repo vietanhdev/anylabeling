@@ -82,6 +82,38 @@ class TestModelManager(unittest.TestCase):
 
         self.assertEqual(completions, [{}])
 
+    @patch(
+        "anylabeling.services.auto_labeling.model_manager.ModelManager.load_model_configs"
+    )
+    def test_download_error_is_reported_without_escaping_worker(self, mock_load):
+        manager = ModelManager()
+        manager.model_configs = [
+            {
+                "display_name": "Broken download",
+                "has_downloaded": False,
+                "type": "yolov8",
+            }
+        ]
+        statuses = []
+        completions = []
+        manager.new_model_status.connect(statuses.append)
+        manager.model_loaded.connect(completions.append)
+
+        with (
+            patch.object(
+                manager,
+                "_download_and_extract_model",
+                side_effect=ValueError("invalid model archive"),
+            ),
+            patch("anylabeling.services.auto_labeling.model_manager.logging.exception"),
+        ):
+            result = manager._load_model(0)
+
+        self.assertIsNone(result)
+        self.assertEqual(statuses, ["Error in loading model: invalid model archive"])
+        manager.on_model_download_finished()
+        self.assertEqual(completions, [{}])
+
 
 if __name__ == "__main__":
     unittest.main()
