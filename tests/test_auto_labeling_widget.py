@@ -24,6 +24,7 @@ class MinimalAutoLabelingWidget(AutoLabelingWidget):
         self.model_select_combobox = QtWidgets.QComboBox(self)
         self.model_select_combobox.addItems(["No Model", "SAM"])
         self.model_select_combobox.setCurrentIndex(1)
+        self.model_select_combobox.currentIndexChanged.connect(lambda: None)
 
 
 class TestAutoLabelingWidget(unittest.TestCase):
@@ -45,6 +46,15 @@ class TestAutoLabelingWidget(unittest.TestCase):
         parent.set_edit_mode.assert_called_once_with()
         self.assertEqual(self.widget.model_select_combobox.currentIndex(), 0)
         self.assertFalse(self.widget.isVisible())
+
+    def test_failed_model_load_reenables_model_picker(self):
+        self.widget = MinimalAutoLabelingWidget(mock.Mock())
+        self.widget.model_select_combobox.setEnabled(False)
+
+        self.widget.on_new_model_loaded({})
+
+        self.assertTrue(self.widget.model_select_combobox.isEnabled())
+        self.assertEqual(self.widget.model_select_combobox.currentIndex(), 0)
 
 
 if __name__ == "__main__":
