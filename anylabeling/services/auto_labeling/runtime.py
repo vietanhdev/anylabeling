@@ -10,6 +10,10 @@ from anylabeling.app_info import __preferred_device__
 CPU_PROVIDER = "CPUExecutionProvider"
 TENSORRT_PROVIDER = "TensorrtExecutionProvider"
 CUDA_PROVIDER = "CUDAExecutionProvider"
+OPENVINO_PROVIDER = "OpenVINOExecutionProvider"
+QNN_PROVIDER = "QNNExecutionProvider"
+VITISAI_PROVIDER = "VitisAIExecutionProvider"
+CANN_PROVIDER = "CANNExecutionProvider"
 
 _PROVIDER_ALIASES = {
     "CUDA": CUDA_PROVIDER,
@@ -18,11 +22,18 @@ _PROVIDER_ALIASES = {
     "DML": "DmlExecutionProvider",
     "ROCM": "ROCMExecutionProvider",
     "MIGRAPHX": "MIGraphXExecutionProvider",
-    "OPENVINO": "OpenVINOExecutionProvider",
+    "OPENVINO": OPENVINO_PROVIDER,
+    "OPENVINO_NPU": OPENVINO_PROVIDER,
+    "INTEL_NPU": OPENVINO_PROVIDER,
     "TENSORRT": TENSORRT_PROVIDER,
-    "CANN": "CANNExecutionProvider",
-    "QNN": "QNNExecutionProvider",
-    "VITISAI": "VitisAIExecutionProvider",
+    "CANN": CANN_PROVIDER,
+    "ASCEND_NPU": CANN_PROVIDER,
+    "QNN": QNN_PROVIDER,
+    "QUALCOMM_NPU": QNN_PROVIDER,
+    "SNAPDRAGON_NPU": QNN_PROVIDER,
+    "VITISAI": VITISAI_PROVIDER,
+    "AMD_NPU": VITISAI_PROVIDER,
+    "RYZENAI": VITISAI_PROVIDER,
     "WEBGPU": "WebGpuExecutionProvider",
 }
 
@@ -35,12 +46,19 @@ _ACCELERATOR_PRIORITY = [
     "DmlExecutionProvider",
     "ROCMExecutionProvider",
     "MIGraphXExecutionProvider",
-    "OpenVINOExecutionProvider",
-    "CANNExecutionProvider",
-    "QNNExecutionProvider",
-    "VitisAIExecutionProvider",
+    OPENVINO_PROVIDER,
+    CANN_PROVIDER,
+    QNN_PROVIDER,
+    VITISAI_PROVIDER,
     "WebGpuExecutionProvider",
     TENSORRT_PROVIDER,
+]
+
+_NPU_PRIORITY = [
+    QNN_PROVIDER,
+    OPENVINO_PROVIDER,
+    VITISAI_PROVIDER,
+    CANN_PROVIDER,
 ]
 
 
@@ -63,12 +81,14 @@ def select_onnx_providers(available_providers, preferred_device):
             return [CPU_PROVIDER]
         return available
 
-    if requested in {"GPU", "AUTO"}:
-        for provider in _ACCELERATOR_PRIORITY:
+    if requested in {"GPU", "AUTO", "NPU"}:
+        priority = _NPU_PRIORITY if requested == "NPU" else _ACCELERATOR_PRIORITY
+        for provider in priority:
             if provider in available:
                 return _with_cpu_fallback([provider], available)
         logging.warning(
-            "No supported accelerator provider is available; falling back to CPU"
+            "No supported %s provider is available; falling back to CPU",
+            requested,
         )
         return [CPU_PROVIDER] if CPU_PROVIDER in available else available
 
@@ -92,21 +112,43 @@ def select_onnx_providers(available_providers, preferred_device):
     return _with_cpu_fallback(selected, available)
 
 
-def get_onnx_providers(preferred_device=None):
-    """Return providers for the build preference or runtime environment override."""
-    device = os.environ.get(
+def _get_requested_device(preferred_device=None):
+    return os.environ.get(
         "ANYLABELING_DEVICE",
         preferred_device or __preferred_device__,
     )
+
+
+def get_onnx_providers(preferred_device=None):
+    """Return providers for the build preference or runtime environment override."""
     return select_onnx_providers(
         onnxruntime.get_available_providers(),
-        device,
+        _get_requested_device(preferred_device),
     )
+
+
+def get_onnx_provider_options(providers, preferred_device=None):
+    """Return hardware-specific options aligned with the provider list."""
+    requested = _get_requested_device(preferred_device).strip().upper()
+    options = [{} for _provider in providers]
+
+    if requested in {"NPU", "OPENVINO_NPU", "INTEL_NPU"}:
+        if OPENVINO_PROVIDER in providers:
+            options[providers.index(OPENVINO_PROVIDER)] = {"device_type": "NPU"}
+
+    if requested in {"NPU", "QNN", "QUALCOMM_NPU", "SNAPDRAGON_NPU"}:
+        if QNN_PROVIDER in providers:
+            options[providers.index(QNN_PROVIDER)] = {"backend_type": "htp"}
+
+    return options
 
 
 def create_inference_session(model_path, preferred_device=None, **kwargs):
     """Create an ONNX Runtime session with controlled accelerator fallback."""
     providers = get_onnx_providers(preferred_device)
+    provider_options = get_onnx_provider_options(providers, preferred_device)
+    if any(provider_options) and "provider_options" not in kwargs:
+        kwargs["provider_options"] = provider_options
     if CUDA_PROVIDER in providers:
         preload_dlls = getattr(onnxruntime, "preload_dlls", None)
         if preload_dlls is not None:

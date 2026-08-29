@@ -9,6 +9,7 @@ import numpy as np
 from anylabeling.services.auto_labeling.runtime import (
     OnnxRuntimeModel,
     create_inference_session,
+    get_onnx_provider_options,
     get_onnx_providers,
     select_onnx_providers,
 )
@@ -60,6 +61,50 @@ class TestSelectOnnxProviders(unittest.TestCase):
             ["DmlExecutionProvider", "CPUExecutionProvider"],
         )
 
+    def test_generic_npu_prefers_qualcomm_then_intel(self):
+        providers = select_onnx_providers(
+            [
+                "OpenVINOExecutionProvider",
+                "QNNExecutionProvider",
+                "CPUExecutionProvider",
+            ],
+            "NPU",
+        )
+
+        self.assertEqual(
+            providers,
+            ["QNNExecutionProvider", "CPUExecutionProvider"],
+        )
+
+    def test_vendor_npu_aliases(self):
+        cases = [
+            ("INTEL_NPU", "OpenVINOExecutionProvider"),
+            ("QUALCOMM_NPU", "QNNExecutionProvider"),
+            ("AMD_NPU", "VitisAIExecutionProvider"),
+            ("ASCEND_NPU", "CANNExecutionProvider"),
+        ]
+        for device, expected in cases:
+            with self.subTest(device=device):
+                providers = select_onnx_providers(
+                    [expected, "CPUExecutionProvider"],
+                    device,
+                )
+                self.assertEqual(providers, [expected, "CPUExecutionProvider"])
+
+    def test_npu_provider_options_target_hardware(self):
+        with mock.patch.dict(os.environ, {}, clear=True):
+            openvino = get_onnx_provider_options(
+                ["OpenVINOExecutionProvider", "CPUExecutionProvider"],
+                "INTEL_NPU",
+            )
+            qnn = get_onnx_provider_options(
+                ["QNNExecutionProvider", "CPUExecutionProvider"],
+                "QUALCOMM_NPU",
+            )
+
+        self.assertEqual(openvino, [{"device_type": "NPU"}, {}])
+        self.assertEqual(qnn, [{"backend_type": "htp"}, {}])
+
     def test_explicit_tensorrt_keeps_cuda_fallback(self):
         providers = select_onnx_providers(
             [
@@ -106,6 +151,25 @@ class TestSelectOnnxProviders(unittest.TestCase):
 
 
 class TestOnnxRuntimeModel(unittest.TestCase):
+    @mock.patch(
+        "anylabeling.services.auto_labeling.runtime.onnxruntime.InferenceSession"
+    )
+    @mock.patch("anylabeling.services.auto_labeling.runtime.get_onnx_providers")
+    def test_passes_intel_npu_provider_options(self, get_providers, inference_session):
+        get_providers.return_value = [
+            "OpenVINOExecutionProvider",
+            "CPUExecutionProvider",
+        ]
+
+        with mock.patch.dict(os.environ, {}, clear=True):
+            create_inference_session("model.onnx", preferred_device="INTEL_NPU")
+
+        inference_session.assert_called_once_with(
+            "model.onnx",
+            providers=["OpenVINOExecutionProvider", "CPUExecutionProvider"],
+            provider_options=[{"device_type": "NPU"}, {}],
+        )
+
     @mock.patch(
         "anylabeling.services.auto_labeling.runtime.onnxruntime.InferenceSession"
     )
