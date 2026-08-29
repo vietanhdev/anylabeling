@@ -68,6 +68,9 @@ class TestPyInstallerSpec(unittest.TestCase):
             nvidia_library.touch()
             optional_duplicate = library_dir / "libnvblas.so.12"
             optional_duplicate.touch()
+            compile_tool = nvidia_root / "cuda_nvrtc" / "lib" / "libnvrtc.so.12"
+            compile_tool.parent.mkdir(parents=True)
+            compile_tool.touch()
             nvidia_spec = SimpleNamespace(submodule_search_locations=[str(nvidia_root)])
 
             spec_path = Path(__file__).parents[1] / "anylabeling.spec"
@@ -87,6 +90,10 @@ class TestPyInstallerSpec(unittest.TestCase):
         )
         self.assertNotIn(
             (str(optional_duplicate), "nvidia/cublas/lib"),
+            analysis_arguments["binaries"],
+        )
+        self.assertNotIn(
+            (str(compile_tool), "nvidia/cuda_nvrtc/lib"),
             analysis_arguments["binaries"],
         )
 

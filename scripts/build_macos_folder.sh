@@ -33,11 +33,16 @@ if _nvidia_spec is not None and _nvidia_spec.submodule_search_locations:
         _root = Path(_root_name)
         for _source in _root.rglob('*'):
             _name = _source.name.lower()
+            _package = _source.relative_to(_root).parts[0]
             _is_runtime_library = (
                 _name.endswith(('.dll', '.dylib', '.so')) or '.so.' in _name
             )
+            # NVRTC/JitLink are compiler tooling and are not linked by ORT's
+            # CUDA/cuDNN inference libraries. Wrapper and alternate binaries
+            # are also unnecessary and can push release assets over 2 GiB.
             _is_optional_duplicate = (
-                '.alt.' in _name
+                _package in {'cuda_nvrtc', 'nvjitlink'}
+                or '.alt.' in _name
                 or _name.startswith(('libnvblas.', 'nvblas'))
                 or _name.startswith(('libcufftw.', 'cufftw'))
             )
