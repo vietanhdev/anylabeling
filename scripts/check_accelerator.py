@@ -61,6 +61,11 @@ def main() -> None:
     parser.add_argument("--device", default=None)
     parser.add_argument("--expect", default=None)
     parser.add_argument("--operation", choices=("matmul", "conv"), default="matmul")
+    parser.add_argument(
+        "--selection-only",
+        action="store_true",
+        help="Validate provider selection without requiring physical hardware",
+    )
     args = parser.parse_args()
 
     selected = get_onnx_providers(args.device)
@@ -71,6 +76,11 @@ def main() -> None:
             f"Expected {args.expect}, selected {selected[0]} from "
             f"{ort.get_available_providers()}"
         )
+    if args.selection_only:
+        print("Available providers:", ort.get_available_providers())
+        print("Selected providers:", selected)
+        print("Provider selection: OK")
+        return
 
     with tempfile.TemporaryDirectory(prefix="anylabeling-accelerator-") as tmp:
         model_path = Path(tmp) / f"{args.operation}.onnx"
