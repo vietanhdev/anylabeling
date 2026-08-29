@@ -75,10 +75,16 @@ def get_config(config_file_or_yaml=None, config_from_args=None):
         config_file_or_yaml = current_config_file
     if config_file_or_yaml is not None:
         config_from_yaml = yaml.safe_load(config_file_or_yaml)
-        if not isinstance(config_from_yaml, dict):
+        if config_from_yaml is None:
+            config_from_yaml = {}
+        elif not isinstance(config_from_yaml, dict):
             with open(config_from_yaml) as f:
                 logger.info("Loading config file from: %s", config_from_yaml)
                 config_from_yaml = yaml.safe_load(f)
+            if config_from_yaml is None:
+                config_from_yaml = {}
+            elif not isinstance(config_from_yaml, dict):
+                raise ValueError("Config file must contain a YAML mapping")
         update_dict(config, config_from_yaml, validate_item=validate_config_item)
 
     # 3. command line argument or specified config file
