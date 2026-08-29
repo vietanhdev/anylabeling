@@ -89,6 +89,9 @@ class TestPyInstallerSpec(unittest.TestCase):
         }
 
         with tempfile.TemporaryDirectory() as tmp:
+            conda_expat = Path(tmp) / "lib" / "libexpat.so.1"
+            conda_expat.parent.mkdir(parents=True)
+            conda_expat.touch()
             nvidia_root = Path(tmp) / "nvidia"
             library_dir = nvidia_root / "cublas" / "lib"
             library_dir.mkdir(parents=True)
@@ -104,6 +107,8 @@ class TestPyInstallerSpec(unittest.TestCase):
             spec_path = Path(__file__).parents[1] / "anylabeling.spec"
             with (
                 mock.patch.dict(sys.modules, fake_modules),
+                mock.patch.object(sys, "platform", "linux"),
+                mock.patch.object(sys, "prefix", tmp),
                 mock.patch("importlib.util.find_spec", return_value=nvidia_spec),
             ):
                 runpy.run_path(str(spec_path), init_globals=fake_globals)
@@ -112,6 +117,10 @@ class TestPyInstallerSpec(unittest.TestCase):
         collect_dynamic_libs.assert_called_once_with("onnxruntime")
         self.assertTrue(set(collected_data).issubset(analysis_arguments["datas"]))
         self.assertTrue(set(ort_binaries).issubset(analysis_arguments["binaries"]))
+        self.assertIn(
+            (str(conda_expat), "."),
+            analysis_arguments["binaries"],
+        )
         self.assertIn(
             (str(nvidia_library), "nvidia/cublas/lib"),
             analysis_arguments["binaries"],
