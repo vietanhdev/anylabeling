@@ -19,6 +19,7 @@ cat > anylabeling_folder.spec << EOL
 
 import sys
 from importlib.util import find_spec
+from pathlib import Path
 
 from PyInstaller.utils.hooks import collect_data_files, collect_dynamic_libs
 
@@ -26,18 +27,17 @@ sys.setrecursionlimit(5000)  # required on Windows
 
 _osam_datas = collect_data_files('osam')
 _ort_binaries = collect_dynamic_libs('onnxruntime')
-_nvidia_runtime_packages = (
-    'nvidia.cublas',
-    'nvidia.cuda_nvrtc',
-    'nvidia.cuda_runtime',
-    'nvidia.cudnn',
-    'nvidia.cufft',
-    'nvidia.curand',
-    'nvidia.nvjitlink',
-)
-for _package in _nvidia_runtime_packages:
-    if find_spec(_package) is not None:
-        _ort_binaries += collect_dynamic_libs(_package)
+_nvidia_spec = find_spec('nvidia')
+if _nvidia_spec is not None and _nvidia_spec.submodule_search_locations:
+    for _root_name in _nvidia_spec.submodule_search_locations:
+        _root = Path(_root_name)
+        for _source in _root.rglob('*'):
+            _name = _source.name.lower()
+            if _source.is_file() and (
+                _name.endswith(('.dll', '.dylib', '.so')) or '.so.' in _name
+            ):
+                _destination = _source.parent.relative_to(_root.parent)
+                _ort_binaries.append((str(_source), str(_destination)))
 
 a = Analysis(
     ['anylabeling/app.py'],

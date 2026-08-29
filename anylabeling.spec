@@ -4,6 +4,7 @@
 import os
 import sys
 from importlib.util import find_spec
+from pathlib import Path
 
 from PyInstaller.utils.hooks import collect_data_files, collect_dynamic_libs
 
@@ -12,18 +13,17 @@ sys.setrecursionlimit(5000)  # required on Windows
 # Collect all ONNX Runtime provider libraries.  This includes CUDA/TensorRT shared
 # libraries on accelerator builds, not only the two DLLs needed by a CPU build.
 _ort_binaries = collect_dynamic_libs('onnxruntime')
-_nvidia_runtime_packages = (
-    'nvidia.cublas',
-    'nvidia.cuda_nvrtc',
-    'nvidia.cuda_runtime',
-    'nvidia.cudnn',
-    'nvidia.cufft',
-    'nvidia.curand',
-    'nvidia.nvjitlink',
-)
-for _package in _nvidia_runtime_packages:
-    if find_spec(_package) is not None:
-        _ort_binaries += collect_dynamic_libs(_package)
+_nvidia_spec = find_spec('nvidia')
+if _nvidia_spec is not None and _nvidia_spec.submodule_search_locations:
+    for _root_name in _nvidia_spec.submodule_search_locations:
+        _root = Path(_root_name)
+        for _source in _root.rglob('*'):
+            _name = _source.name.lower()
+            if _source.is_file() and (
+                _name.endswith(('.dll', '.dylib', '.so')) or '.so.' in _name
+            ):
+                _destination = _source.parent.relative_to(_root.parent)
+                _ort_binaries.append((str(_source), str(_destination)))
 
 # Windows also needs the core ONNX Runtime DLLs at the bundle root because ORT's
 # internal LoadLibrary calls do not use Python's AddDllDirectory search path.

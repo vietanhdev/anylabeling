@@ -2,6 +2,7 @@
 
 import runpy
 import sys
+import tempfile
 import types
 import unittest
 from pathlib import Path
@@ -24,29 +25,7 @@ class TestPyInstallerSpec(unittest.TestCase):
                 "onnxruntime/capi",
             )
         ]
-        nvidia_packages = [
-            "nvidia.cublas",
-            "nvidia.cuda_nvrtc",
-            "nvidia.cuda_runtime",
-            "nvidia.cudnn",
-            "nvidia.cufft",
-            "nvidia.curand",
-            "nvidia.nvjitlink",
-        ]
-        nvidia_binaries = [
-            (
-                f"/site-packages/{package.replace('.', '/')}/lib/runtime.so",
-                f"{package.replace('.', '/')}/lib",
-            )
-            for package in nvidia_packages
-        ]
-
-        def collect_binaries(package):
-            if package == "onnxruntime":
-                return ort_binaries
-            return [nvidia_binaries[nvidia_packages.index(package)]]
-
-        collect_dynamic_libs = mock.Mock(side_effect=collect_binaries)
+        collect_dynamic_libs = mock.Mock(return_value=ort_binaries)
 
         hooks = types.ModuleType("PyInstaller.utils.hooks")
         hooks.collect_data_files = collect_data_files
@@ -81,22 +60,28 @@ class TestPyInstallerSpec(unittest.TestCase):
             "PyInstaller.utils.hooks": hooks,
         }
 
-        spec_path = Path(__file__).parents[1] / "anylabeling.spec"
-        with (
-            mock.patch.dict(sys.modules, fake_modules),
-            mock.patch("importlib.util.find_spec", return_value=object()),
-        ):
-            runpy.run_path(str(spec_path), init_globals=fake_globals)
+        with tempfile.TemporaryDirectory() as tmp:
+            nvidia_root = Path(tmp) / "nvidia"
+            library_dir = nvidia_root / "cublas" / "lib"
+            library_dir.mkdir(parents=True)
+            nvidia_library = library_dir / "libcublas.so.12"
+            nvidia_library.touch()
+            nvidia_spec = SimpleNamespace(submodule_search_locations=[str(nvidia_root)])
+
+            spec_path = Path(__file__).parents[1] / "anylabeling.spec"
+            with (
+                mock.patch.dict(sys.modules, fake_modules),
+                mock.patch("importlib.util.find_spec", return_value=nvidia_spec),
+            ):
+                runpy.run_path(str(spec_path), init_globals=fake_globals)
 
         collect_data_files.assert_called_once_with("osam")
-        self.assertEqual(
-            collect_dynamic_libs.call_args_list,
-            [mock.call("onnxruntime")]
-            + [mock.call(package) for package in nvidia_packages],
-        )
+        collect_dynamic_libs.assert_called_once_with("onnxruntime")
         self.assertTrue(set(collected_data).issubset(analysis_arguments["datas"]))
-        self.assertTrue(
-            set(ort_binaries + nvidia_binaries).issubset(analysis_arguments["binaries"])
+        self.assertTrue(set(ort_binaries).issubset(analysis_arguments["binaries"]))
+        self.assertIn(
+            (str(nvidia_library), "nvidia/cublas/lib"),
+            analysis_arguments["binaries"],
         )
 
 
