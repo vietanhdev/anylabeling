@@ -1,5 +1,7 @@
 """Regression tests for data files included in release executables."""
 
+import ctypes
+import os
 import runpy
 import sys
 import tempfile
@@ -11,6 +13,32 @@ from unittest import mock
 
 
 class TestPyInstallerSpec(unittest.TestCase):
+    def test_windows_runtime_hook_preloads_ort_dlls_from_capi(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            capi = Path(tmp) / "onnxruntime" / "capi"
+            capi.mkdir(parents=True)
+            shared = capi / "onnxruntime_providers_shared.dll"
+            runtime_dll = capi / "onnxruntime.dll"
+            shared.touch()
+            runtime_dll.touch()
+
+            hook_path = Path(__file__).parents[1] / "rthooks" / "rthook_onnxruntime.py"
+            with (
+                mock.patch.object(sys, "platform", "win32"),
+                mock.patch.object(sys, "_MEIPASS", tmp, create=True),
+                mock.patch.object(ctypes, "WinDLL", create=True) as win_dll,
+                mock.patch.object(
+                    os, "add_dll_directory", create=True
+                ) as add_directory,
+            ):
+                runpy.run_path(str(hook_path))
+
+            self.assertEqual(
+                win_dll.call_args_list,
+                [mock.call(str(shared)), mock.call(str(runtime_dll))],
+            )
+            add_directory.assert_called_once_with(str(capi))
+
     def test_bundles_osam_tokenizer_data(self):
         collected_data = [
             (

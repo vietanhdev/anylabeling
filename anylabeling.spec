@@ -40,8 +40,9 @@ if _nvidia_spec is not None and _nvidia_spec.submodule_search_locations:
                 _destination = _source.parent.relative_to(_root.parent)
                 _ort_binaries.append((str(_source), _destination.as_posix()))
 
-# Windows also needs the core ONNX Runtime DLLs at the bundle root because ORT's
-# internal LoadLibrary calls do not use Python's AddDllDirectory search path.
+# Ensure Windows core DLLs are present under onnxruntime/capi. The runtime hook
+# preloads them from there by absolute path, so a duplicate bundle-root copy is
+# unnecessary and would add hundreds of megabytes to GPU executables.
 try:
     import onnxruntime as _ort
     _ort_capi = os.path.join(os.path.dirname(_ort.__file__), 'capi')
@@ -50,10 +51,12 @@ try:
         for f in os.listdir(_ort_capi)
         if f.endswith('.dll')
     ]
-    # Place DLLs in both locations:
-    #   onnxruntime/capi/ — matches package structure, found via DLL_LOAD_DIR
-    #   .  (root _MEIPASS)  — found via PyInstaller's SetDllDirectory(_MEIPASS)
-    _ort_binaries += [(dll, '.') for dll in _ort_dlls]
+    _existing_binaries = {str(Path(source).resolve()) for source, _ in _ort_binaries}
+    _ort_binaries += [
+        (dll, 'onnxruntime/capi')
+        for dll in _ort_dlls
+        if str(Path(dll).resolve()) not in _existing_binaries
+    ]
 except Exception:
     pass
 
