@@ -4,6 +4,8 @@
 import os
 import sys
 
+from PyInstaller.utils.hooks import collect_data_files
+
 sys.setrecursionlimit(5000)  # required on Windows
 
 # Collect onnxruntime native DLLs (onnxruntime.dll, onnxruntime_providers_shared.dll).
@@ -27,6 +29,8 @@ try:
 except Exception:
     _ort_binaries = []
 
+_osam_datas = collect_data_files('osam')
+
 a = Analysis(
     ['anylabeling/app.py'],
     pathex=['anylabeling'],
@@ -35,7 +39,7 @@ a = Analysis(
        ('anylabeling/configs/auto_labeling/*.yaml', 'anylabeling/configs/auto_labeling'),
        ('anylabeling/configs/*.yaml', 'anylabeling/configs'),
        ('anylabeling/views/labeling/widgets/auto_labeling/auto_labeling.ui', 'anylabeling/views/labeling/widgets/auto_labeling')
-    ],
+    ] + _osam_datas,
     hiddenimports=[],
     hookspath=[],
     runtime_hooks=['rthooks/rthook_onnxruntime.py'],
