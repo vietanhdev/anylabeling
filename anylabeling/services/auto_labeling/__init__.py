@@ -1,4 +1,5 @@
 # Import models to ensure they register themselves via @ModelRegistry.register
+from . import remote_model as remote_model  # noqa: F401
 from . import segment_anything as segment_anything  # noqa: F401
 from . import yolov5 as yolov5  # noqa: F401
 from . import yolov8 as yolov8  # noqa: F401

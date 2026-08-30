@@ -1,7 +1,6 @@
 import logging
 import os
 import socket
-import ssl
 from abc import abstractmethod
 
 import yaml
@@ -16,11 +15,6 @@ from .types import AutoLabelingResult
 os.environ["no_proxy"] = "*"
 
 socket.setdefaulttimeout(240)  # Prevent timeout when downloading models
-
-
-ssl._create_default_https_context = (
-    ssl._create_unverified_context
-)  # Prevent issue when downloading models behind a proxy
 
 
 class Model(QObject):

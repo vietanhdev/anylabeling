@@ -4,7 +4,6 @@ import logging
 import os
 import pathlib
 import shutil
-import ssl
 import tempfile
 import time
 import urllib.request
@@ -21,10 +20,6 @@ from anylabeling.services.auto_labeling.types import AutoLabelingResult
 from anylabeling.utils import GenericWorker
 
 from .registry import ModelRegistry
-
-ssl._create_default_https_context = (
-    ssl._create_unverified_context
-)  # Prevent issue when downloading models behind a proxy
 
 
 class ModelManager(QObject):
@@ -162,7 +157,11 @@ class ModelManager(QObject):
             self.model_loaded.emit(self.loaded_model_config)
             self.output_modes_changed.emit(
                 self.loaded_model_config["model"].Meta.output_modes,
-                self.loaded_model_config["model"].Meta.default_output_mode,
+                getattr(
+                    self.loaded_model_config["model"],
+                    "output_mode",
+                    self.loaded_model_config["model"].Meta.default_output_mode,
+                ),
             )
         else:
             self.model_loaded.emit({})
@@ -208,7 +207,8 @@ class ModelManager(QObject):
             "type" not in model_config
             or "display_name" not in model_config
             or "name" not in model_config
-            or model_config["type"] not in ["segment_anything", "yolov5", "yolov8"]
+            or model_config["type"]
+            not in ["remote", "segment_anything", "yolov5", "yolov8"]
         ):
             self._report_model_load_error(
                 self.tr("Error in loading custom model: Invalid config file format.")
@@ -439,7 +439,9 @@ class ModelManager(QObject):
 
             # Specific logic for interactive models (like SAM) vs detection models
             # Ideally this should be a property of the model class (capabilities)
-            if model_type == "segment_anything":
+            if model_type == "segment_anything" or getattr(
+                model_config["model"], "supports_interactive_prompts", False
+            ):
                 self.auto_segmentation_model_selected.emit()
                 # Request next files for prediction
                 self.request_next_files_requested.emit()
@@ -460,9 +462,13 @@ class ModelManager(QObject):
         """Set auto labeling marks
         (For example, for segment_anything model, it is the marks for)
         """
-        if (
-            self.loaded_model_config is None
-            or self.loaded_model_config["type"] != "segment_anything"
+        if self.loaded_model_config is None or not (
+            self.loaded_model_config["type"] == "segment_anything"
+            or getattr(
+                self.loaded_model_config["model"],
+                "supports_interactive_prompts",
+                False,
+            )
         ):
             return
         self.loaded_model_config["model"].set_auto_labeling_marks(marks)
@@ -534,8 +540,11 @@ class ModelManager(QObject):
                 self.model_execution_thread is not None
                 and self.model_execution_thread.isRunning()
             ):
-                if hasattr(self.loaded_model_config["model"], "unload"):
-                    self.loaded_model_config["model"].unload()
+                model = self.loaded_model_config["model"]
+                if hasattr(model, "cancel_prediction"):
+                    model.cancel_prediction()
+                elif hasattr(model, "unload"):
+                    model.unload()
 
                 # Wait for the thread to finish
                 self.model_execution_thread.quit()
@@ -573,7 +582,14 @@ class ModelManager(QObject):
             return
 
         # Currently only segment_anything model supports this feature
-        if self.loaded_model_config["type"] != "segment_anything":
+        if not (
+            self.loaded_model_config["type"] == "segment_anything"
+            or getattr(
+                self.loaded_model_config["model"],
+                "supports_interactive_prompts",
+                False,
+            )
+        ):
             return
 
         self.loaded_model_config["model"].on_next_files_changed(next_files)
