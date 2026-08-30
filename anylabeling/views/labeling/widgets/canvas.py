@@ -1243,6 +1243,8 @@ class Canvas(QtWidgets.QWidget):  # pylint: disable=too-many-public-methods, too
         if len(self.selected_shapes) == 0:
             return
 
+        previous_group_ids = [shape.group_id for shape in self.shapes]
+
         # List all group ids for selected shapes
         group_ids = set()
         has_non_group_shape = False
@@ -1269,12 +1271,17 @@ class Canvas(QtWidgets.QWidget):  # pylint: disable=too-many-public-methods, too
                 if shape.group_id is None:
                     shape.group_id = new_group_id
 
+        if previous_group_ids != [shape.group_id for shape in self.shapes]:
+            self.store_shapes()
+            self.shape_moved.emit()
         self.update()
 
     def ungroup_selected_shapes(self):
         """Ungroup selected shapes"""
         if len(self.selected_shapes) == 0:
             return
+
+        previous_group_ids = [shape.group_id for shape in self.shapes]
 
         # List all group ids for selected shapes
         group_ids = set()
@@ -1287,4 +1294,7 @@ class Canvas(QtWidgets.QWidget):  # pylint: disable=too-many-public-methods, too
                 if shape.group_id == group_id:
                     shape.group_id = None
 
+        if previous_group_ids != [shape.group_id for shape in self.shapes]:
+            self.store_shapes()
+            self.shape_moved.emit()
         self.update()
