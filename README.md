@@ -12,9 +12,9 @@
 [![open issues](https://isitmaintained.com/badge/open/vietanhdev/anylabeling.svg)](https://github.com/vietanhdev/anylabeling/issues)
 [![Pypi Downloads](https://pepy.tech/badge/anylabeling)](https://pypi.org/project/anylabeling/)
 [![Documentation](https://img.shields.io/badge/Read-Documentation-green)](https://anylabeling.nrl.ai/)
-[![Follow](https://img.shields.io/badge/+Follow-vietanhdev-blue)]([[https://anylabeling.nrl.ai/](https://twitter.com/vietanhdev)](https://twitter.com/vietanhdev))
+[![Follow](https://img.shields.io/badge/+Follow-vietanhdev-blue)](https://twitter.com/vietanhdev)
 
-[![AnyLearning — label data and train models locally, with no account or activation](assets/anylearning-oss-banner.webp)](https://anylearning-oss.nrl.ai/)
+[![AnyLearning — open-source, offline data labeling and local model training](https://raw.githubusercontent.com/nrl-ai/anylearning-oss/main/website/public/screenshot.png)](https://github.com/nrl-ai/anylearning-oss)
 
 
 <a href="https://youtu.be/5qVJiYNX5Kk">
@@ -30,8 +30,9 @@
 
 - **Youtube Demo:** [https://www.youtube.com/watch?v=5qVJiYNX5Kk](https://www.youtube.com/watch?v=5qVJiYNX5Kk)
 - **Documentation:** [https://anylabeling.nrl.ai](https://anylabeling.nrl.ai)
+- **Download:** [https://anylabeling.nrl.ai/download](https://anylabeling.nrl.ai/download)
 
-**Features:**
+## Features
 
 - [x] Image annotation for polygon, rectangle, circle, line and point.
 - [x] Auto-labeling with **YOLOv8** (object detection).
@@ -40,7 +41,8 @@
   - **SAM 2** and **SAM 2.1** (Hiera-Tiny / Small / Base+ / Large)
   - **SAM 3** (ViT-H) — open-vocabulary segmentation with text prompts
 - [x] Text detection, recognition and KIE (Key Information Extraction) labeling.
-- [x] Multiple languages availables: English, Vietnamese, Chinese.
+- [x] Hardware acceleration with CUDA, CoreML, DirectML, OpenVINO, and vendor NPU providers.
+- [x] Multiple languages available: English, Vietnamese, Chinese.
 
 ### Supported Models
 
@@ -53,18 +55,31 @@
 | SAM 3 ViT-H | **Text**, Point, Rectangle | Open-vocabulary; text drives detection |
 | YOLOv8n / s / m / l / x | — | Object detection & auto-labeling |
 
-All models are downloaded automatically on first use from Hugging Face.
+Required model weights are downloaded automatically on first use.
+
+## Latest Release
+
+[AnyLabeling v0.4.42](https://github.com/vietanhdev/anylabeling/releases/tag/v0.4.42) is the current stable release. It includes cross-platform accelerator selection, packaged CUDA/CoreML support, stability fixes for the file dialog and canvas, 16-bit TIFF editing, SAM 3 frozen-build support, and corrected Linux/macOS packaging.
+
+All six v0.4.42 CPU and accelerated artifacts were checksum-verified and launch-tested on Linux, Windows, and Apple Silicon macOS. Avoid the superseded v0.4.40 macOS and Linux artifacts.
+
+Use the [Download page](https://anylabeling.nrl.ai/download) for direct platform links, or see [all GitHub releases](https://github.com/vietanhdev/anylabeling/releases).
 
 ## Install and Run
 
 ### 1. Download and run executable
 
-- Download and run newest version from [Releases](https://github.com/vietanhdev/anylabeling/releases).
-- For MacOS:
-  - Download the folder mode build (`AnyLabeling-Folder.zip`) from [Releases](https://github.com/vietanhdev/anylabeling/releases)
-  - See [macOS folder mode instructions](docs/macos_folder_mode.md) for details
+- Download the latest build from the [Download page](https://anylabeling.nrl.ai/download) or [GitHub Releases](https://github.com/vietanhdev/anylabeling/releases/latest).
 
-### Install from Pypi
+| Platform | CPU | Accelerated |
+| --- | --- | --- |
+| Linux x64 | `AnyLabeling-Linux-CPU-x64` | `AnyLabeling-Linux-GPU-x64` (NVIDIA CUDA) |
+| Windows x64 | `AnyLabeling-Windows-CPU-x64.exe` | `AnyLabeling-Windows-GPU-x64.exe` (NVIDIA CUDA) |
+| Apple Silicon macOS | `AnyLabeling-macOS-CPU.zip` | `AnyLabeling-macOS-GPU.zip` (CoreML) |
+
+For macOS, preserve the archive's symlinks while extracting it. See the [macOS folder mode instructions](docs/macos_folder_mode.md).
+
+### 2. Install from PyPI
 
 - Requirements: Python 3.11+. Recommended: Python 3.12.
 - Recommended: [Miniconda/Anaconda](https://docs.conda.io/en/latest/miniconda.html).
@@ -103,9 +118,10 @@ pip install "anylabeling[macos]"
 export ANYLABELING_DEVICE=COREML
 ```
 
-AnyLabeling automatically selects CUDA for GPU builds and CoreML on macOS,
-with CPU fallback for unsupported model operations. Advanced ONNX Runtime
-packages can be selected with `ANYLABELING_DEVICE`; supported values include
+AnyLabeling automatically selects CUDA for Linux/Windows GPU builds and CoreML
+for the macOS GPU build, with CPU fallback for unsupported model operations.
+Advanced ONNX Runtime packages can be selected with `ANYLABELING_DEVICE`;
+supported values include
 `CUDA`, `COREML`, `DIRECTML`, `ROCM`, `MIGRAPHX`, `OPENVINO`, `TENSORRT`,
 `CANN`, `QNN`, `VITISAI`, and `WEBGPU`. NPU aliases include `NPU`,
 `INTEL_NPU`, `QUALCOMM_NPU`, `AMD_NPU`, and `ASCEND_NPU`. On Windows
@@ -123,6 +139,8 @@ Windows ARM64 systems use `onnxruntime-qnn` with
 because ONNX Runtime requires only one variant in an environment. Qualcomm HTP
 models generally need QDQ quantization, and support still depends on the
 operator coverage of the selected model.
+
+See the [Hardware Acceleration guide](https://anylabeling.nrl.ai/docs/gpu) for isolated DirectML, OpenVINO, CUDA, CoreML, and NPU environment setup.
 
 - Start labeling:
 
@@ -145,17 +163,16 @@ anylabeling
 | <img src='https://user-images.githubusercontent.com/72010077/277670825-8797ac7e-e593-45ea-be6a-65c3af17b12b.png' height="126px" width="180px"> | <img src='https://user-images.githubusercontent.com/72010077/277395955-aab54ea0-88f5-41af-ab0a-f4158a673f5e.png' height="126px" width="180px"> | Your applications here! |
 ## Development
 
-- Install packages:
+- Install the project and development tools in a dedicated environment:
 
 ```bash
-pip install -r requirements-dev.txt
-# or pip install -r requirements-macos-dev.txt for MacOS
+python -m pip install -e ".[dev]"
 ```
 
-- Generate resources:
+- Recompile translations and Qt resources when they change:
 
 ```bash
-pyrcc5 -o anylabeling/resources/resources.py anylabeling/resources/resources.qrc
+python scripts/compile_languages.py
 ```
 
 - Run app:
@@ -169,13 +186,14 @@ python anylabeling/app.py
 - Install PyInstaller:
 
 ```bash
-pip install -r requirements-dev.txt
+python -m pip install -e ".[dev]"
+python -m pip install pyinstaller
 ```
 
 - Build:
 
 ```bash
-bash build_executable.sh
+bash scripts/build_executable.sh
 ```
 
 - Check the outputs in: `dist/`.
