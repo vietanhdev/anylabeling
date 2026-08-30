@@ -1,4 +1,5 @@
 import os
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -11,6 +12,27 @@ from anylabeling.services.auto_labeling.model_manager import ModelManager
 
 
 class TestModelManager(unittest.TestCase):
+    def test_import_does_not_disable_process_tls_verification(self):
+        source = """
+import ssl
+original = ssl._create_default_https_context
+import anylabeling.services.auto_labeling.model_manager
+assert ssl._create_default_https_context is original
+assert ssl._create_default_https_context is not ssl._create_unverified_context
+"""
+        environment = dict(os.environ)
+        environment["QT_QPA_PLATFORM"] = "offscreen"
+        completed = subprocess.run(
+            [sys.executable, "-c", source],
+            cwd=os.path.dirname(os.path.dirname(__file__)),
+            env=environment,
+            capture_output=True,
+            text=True,
+            timeout=30,
+            check=False,
+        )
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+
     @patch(
         "anylabeling.services.auto_labeling.model_manager.ModelManager.load_model_configs"
     )
@@ -34,6 +56,30 @@ class TestModelManager(unittest.TestCase):
         manager.unload_model()
         mock_model.unload.assert_called_once()
         self.assertIsNone(manager.loaded_model_config)
+
+    @patch(
+        "anylabeling.services.auto_labeling.model_manager.ModelManager.load_model_configs"
+    )
+    @patch("anylabeling.services.auto_labeling.model_manager.QThread")
+    @patch("anylabeling.services.auto_labeling.model_manager.GenericWorker")
+    def test_new_prediction_cancels_without_unloading_remote_model(
+        self, worker_cls, thread_cls, mock_load
+    ):
+        del mock_load
+        manager = ModelManager()
+        model = MagicMock()
+        manager.loaded_model_config = {"model": model, "type": "remote"}
+        old_thread = MagicMock()
+        old_thread.isRunning.return_value = True
+        old_thread.wait.return_value = True
+        manager.model_execution_thread = old_thread
+        manager.predict_shapes_threading(MagicMock(), "image.png")
+        model.cancel_prediction.assert_called_once_with()
+        model.unload.assert_not_called()
+        old_thread.quit.assert_called_once_with()
+        old_thread.wait.assert_called_once_with(1000)
+        worker_cls.assert_called_once()
+        thread_cls.return_value.start.assert_called_once_with()
 
     @patch(
         "anylabeling.services.auto_labeling.model_manager.ModelManager.load_model_configs"

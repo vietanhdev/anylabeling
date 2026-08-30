@@ -42,6 +42,7 @@
   - **SAM 3** (ViT-H) — open-vocabulary segmentation with text prompts
 - [x] Text detection, recognition and KIE (Key Information Extraction) labeling.
 - [x] Hardware acceleration with CUDA, CoreML, DirectML, OpenVINO, and vendor NPU providers.
+- [x] Authenticated shared ONNX inference through an AnyLearning server.
 - [x] Multiple languages available: English, Vietnamese, Chinese.
 
 ### Supported Models
@@ -56,6 +57,8 @@
 | YOLOv8n / s / m / l / x | — | Object detection & auto-labeling |
 
 Required model weights are downloaded automatically on first use.
+
+For centrally hosted models, see the [authenticated remote inference guide](docs/remote_inference.md).
 
 ## Latest Release
 

@@ -72,6 +72,11 @@ class TestModelRegistry(unittest.TestCase):
         import anylabeling.services.auto_labeling.segment_anything  # noqa: F401
         self.assertIn("segment_anything", ModelRegistry.list_models())
 
+    def test_remote_model_registered(self):
+        import anylabeling.services.auto_labeling.remote_model  # noqa: F401
+
+        self.assertIn("remote", ModelRegistry.list_models())
+
 
 if __name__ == "__main__":
     unittest.main()

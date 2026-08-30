@@ -1,0 +1,108 @@
+name: Remote real model E2E
+
+on:
+  pull_request:
+    branches: [develop]
+    paths:
+      - "anylabeling/services/auto_labeling/remote_client.py"
+      - "anylabeling/services/auto_labeling/remote_model.py"
+      - "anylabeling/services/auto_labeling/model_manager.py"
+      - "scripts/validate_remote_inference.py"
+      - ".github/workflows/remote-real-model-e2e.yml"
+  push:
+    branches: [develop]
+    paths:
+      - "anylabeling/services/auto_labeling/remote_client.py"
+      - "anylabeling/services/auto_labeling/remote_model.py"
+      - "anylabeling/services/auto_labeling/model_manager.py"
+      - "scripts/validate_remote_inference.py"
+      - ".github/workflows/remote-real-model-e2e.yml"
+  schedule:
+    - cron: "41 3 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: remote-real-model-e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  yolox-s:
+    name: Authenticated YOLOX-S / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    env:
+      ASSET_DIR: _anylearning/tests/fixtures/inference/real_models
+      MODEL_SHA256: c5c2d13e59ae883e6af3b45daea64af4833a4951c92d116ec270d9ddbe998063
+      IMAGE_SHA256: 5a9522051c3cec2bbd2f6323fccba32e8fbf3ddcc2b3e2fd46b04c720bc6f866
+      OPENBLAS_NUM_THREADS: "1"
+      OMP_NUM_THREADS: "1"
+      QT_QPA_PLATFORM: offscreen
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Check out the pinned AnyLearning server contract
+        uses: actions/checkout@v7
+        with:
+          repository: nrl-ai/anylearning-oss
+          ref: 7cabc1e8caaec070410fbc47e8ee250ae50454ce
+          path: _anylearning
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+          cache: pip
+
+      - name: Install Qt system libraries (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libegl1 libxkbcommon-x11-0 libdbus-1-3 libxcb-cursor0 \
+            libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 \
+            libxcb-render-util0 libxcb-shape0 libxcb-xinerama0 libxcb-xkb1
+
+      - name: Install PyQt6 (macOS)
+        if: runner.os == 'macOS'
+        run: python -m pip install "PyQt6>=6.7.0"
+
+      - name: Install client and isolated server dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install .
+          python -m pip install "fastapi>=0.141,<1" "pydantic>=2.13,<3" "argon2-cffi>=25.1,<26" "psutil>=7.2,<8" "uvicorn>=0.41,<1"
+
+      - name: Download immutable Apache-2.0 test assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          python _anylearning/scripts/download_verified_file.py \
+            "https://github.com/Megvii-BaseDetection/YOLOX/releases/download/0.1.1rc0/yolox_s.onnx" \
+            "$ASSET_DIR/yolox_s.onnx" --sha256 "$MODEL_SHA256" --max-bytes 104857600
+          python _anylearning/scripts/download_verified_file.py \
+            "https://raw.githubusercontent.com/Megvii-BaseDetection/YOLOX/6ddff4824372906469a7fae2dc3206c7aa4bbaee/assets/dog.jpg" \
+            "$ASSET_DIR/dog.jpg" --sha256 "$IMAGE_SHA256" --max-bytes 10485760
+
+      - name: Run AnyLabeling through the real authenticated server
+        run: >-
+          python scripts/validate_remote_inference.py
+          --anylearning-root _anylearning
+          --manifest _anylearning/tests/fixtures/inference/real_models/yolox_s_official.json
+          --model _anylearning/tests/fixtures/inference/real_models/yolox_s.onnx
+          --image _anylearning/tests/fixtures/inference/real_models/dog.jpg
+          --output-root validation-results/${{ runner.os }}
+
+      - name: Retain visual, result, and timing evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: anylabeling-remote-yolox-s-${{ runner.os }}
+          path: validation-results/
+          if-no-files-found: error
+          retention-days: 30
