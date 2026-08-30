@@ -14,7 +14,7 @@
 [![Documentation](https://img.shields.io/badge/Read-Documentation-green)](https://anylabeling.nrl.ai/)
 [![Follow](https://img.shields.io/badge/+Follow-vietanhdev-blue)](https://twitter.com/vietanhdev)
 
-[![AnyLearning — open-source, offline data labeling and local model training](https://raw.githubusercontent.com/nrl-ai/anylearning-oss/main/website/public/screenshot.png)](https://github.com/nrl-ai/anylearning-oss)
+[![AnyLearning — open-source, offline data labeling and local model training](assets/anylearning-oss-banner.webp)](https://github.com/nrl-ai/anylearning-oss)
 
 
 <a href="https://youtu.be/5qVJiYNX5Kk">
