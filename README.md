@@ -59,9 +59,9 @@ Required model weights are downloaded automatically on first use.
 
 ## Latest Release
 
-[AnyLabeling v0.4.42](https://github.com/vietanhdev/anylabeling/releases/tag/v0.4.42) is the current stable release. It includes cross-platform accelerator selection, packaged CUDA/CoreML support, stability fixes for the file dialog and canvas, 16-bit TIFF editing, SAM 3 frozen-build support, and corrected Linux/macOS packaging.
+[AnyLabeling v0.4.43](https://github.com/vietanhdev/anylabeling/releases/tag/v0.4.43) is the current stable release. It fixes recovery after model download/load failures, skips invalid images during SAM preload, persists grouped shapes with undo support, and closes label files reliably after saving and loading.
 
-All six v0.4.42 CPU and accelerated artifacts were checksum-verified and launch-tested on Linux, Windows, and Apple Silicon macOS. Avoid the superseded v0.4.40 macOS and Linux artifacts.
+The release workflow tests Python 3.11–3.13 on Linux, Windows, and macOS, then builds and launch-smoke-tests all six CPU and accelerated artifacts on their native runners.
 
 Use the [Download page](https://anylabeling.nrl.ai/download) for direct platform links, or see [all GitHub releases](https://github.com/vietanhdev/anylabeling/releases).
 
