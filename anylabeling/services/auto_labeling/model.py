@@ -115,7 +115,7 @@ class Model(QObject):
 
     @staticmethod
     def load_image_from_filename(filename):
-        """Load image from labeling file and return image data and image path."""
+        """Load an image for background inference, or return ``None``."""
         label_file = os.path.splitext(filename)[0] + ".json"
         if QFile.exists(label_file) and LabelFile.is_label_file(label_file):
             try:
@@ -126,9 +126,13 @@ class Model(QObject):
             image_data = label_file.image_data
         else:
             image_data = LabelFile.load_image_file(filename)
+        if not image_data:
+            logging.error(f"Error reading {filename}")
+            return None
         image = QImage.fromData(image_data)
         if image.isNull():
             logging.error(f"Error reading {filename}")
+            return None
         return image
 
     def on_next_files_changed(self, next_files):
