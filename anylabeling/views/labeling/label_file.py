@@ -17,7 +17,8 @@ PIL.Image.MAX_IMAGE_PIXELS = None
 def io_open(name, mode):
     assert mode in ["r", "w"]
     encoding = "utf-8"
-    yield open(name, mode, encoding=encoding)
+    with open(name, mode, encoding=encoding) as file:
+        yield file
 
 
 class LabelFileError(Exception):
