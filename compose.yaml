@@ -1,0 +1,38 @@
+services:
+  anylabeling:
+    hostname: ${HOST_HOSTNAME:-${HOSTNAME:-anylabeling}}
+    build:
+      context: .
+      args:
+        USER_ID: ${LOCAL_UID:-1000}
+        GROUP_ID: ${LOCAL_GID:-1000}
+    init: true
+    environment:
+      DISPLAY: ${DISPLAY:?Set DISPLAY to your local X11 or XWayland display}
+      XAUTHORITY: /tmp/anylabeling.xauth
+    volumes:
+      - type: bind
+        source: /tmp/.X11-unix
+        target: /tmp/.X11-unix
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${ANYLABELING_XAUTHORITY:-${XAUTHORITY_FILE:-${XAUTHORITY:-${HOME}/.Xauthority}}}
+        target: /tmp/anylabeling.xauth
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${ANYLABELING_DATA_DIR:-${DATASET_DIR:-./data}}
+        target: /data
+        bind:
+          create_host_path: false
+      - anylabeling-home:/home/anylabeling
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  anylabeling-home:
