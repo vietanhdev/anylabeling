@@ -148,6 +148,12 @@ See the [Hardware Acceleration guide](https://anylabeling.nrl.ai/docs/gpu) for i
 anylabeling
 ```
 
+### 3. Run with Docker Compose (Linux)
+
+Run the desktop GUI on Linux with X11 or XWayland, using CPU inference and
+persistent datasets, models, and settings. See the [Docker Compose guide](docs/docker.md)
+for display authentication, user permissions, and startup instructions.
+
 ## Documentation
 
 **Website:** [https://anylabeling.nrl.ai](https://anylabeling.nrl.ai)/
